@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    container_name: clickone_db
+    environment:
+      POSTGRES_DB: clickone
+      POSTGRES_USER: clickone
+      POSTGRES_PASSWORD: clickone
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - clickone_network
+
+  app:
+    build: .
+    container_name: clickone_app
+    ports:
+      - '3000:3000'
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: clickone
+      DB_PASSWORD: clickone
+      DB_DATABASE: clickone
+    depends_on:
+      - db
+    networks:
+      - clickone_network
+
+volumes:
+  postgres_data:
+
+networks:
+  clickone_network:
