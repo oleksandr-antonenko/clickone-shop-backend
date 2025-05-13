@@ -27,7 +27,35 @@ export default tseslint.config(
   },
   {
     rules: {
+      'prettier/prettier': [
+        'warn',
+        {
+          endOfLine: 'lf',
+          parser: 'typescript',
+          singleQuote: true,
+        },
+        {
+          usePrettierrc: false,
+        },
+      ],
+      "no-console": [
+        "warn",
+        {
+          "allow": ["warn", "error"]
+        }
+      ],
+      "import/order": [
+        "off",
+        {
+          groups: [
+            ["builtin", "external", "internal"],
+            ["parent", "sibling", "index"],
+          ],
+          "newlines-between": "always",
+        },
+      ],
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-require-imports':'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn'
     },
