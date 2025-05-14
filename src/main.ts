@@ -1,8 +1,18 @@
+if (!process.env.IS_TS_NODE) {
+  require('module-alias/register');
+}
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import {
+  NestFastifyApplication,
+  FastifyAdapter,
+} from '@nestjs/platform-fastify';
+import { AppModule } from '~/app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 3000);
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter(),
+  );
+  await app.listen(process.env.PORT ?? 3310);
 }
-bootstrap();
+void bootstrap();
