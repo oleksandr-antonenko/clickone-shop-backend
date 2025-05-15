@@ -7,7 +7,7 @@ services:
       dockerfile: docker/Dockerfile
     container_name: store-app
     ports:
-      - '3310:3000'
+      - '3310:3310'
     volumes:
       - ../:/usr/src/app:cached
       - /usr/src/app/node_modules
