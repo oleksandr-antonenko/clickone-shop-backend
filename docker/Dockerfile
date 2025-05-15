@@ -1,29 +1,32 @@
-# Build stage
+
 FROM node:20-alpine AS builder
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
 RUN apk add --no-cache python3 make g++
-RUN npm install -g @nestjs/cli
 
-COPY ../package*.json ./
+COPY package*.json ./
+
 RUN npm ci
-COPY ../ ./
-COPY .env .env
+
+COPY . .
+
 RUN npm run build
-# Production stage
+
+
 FROM node:20-alpine AS runner
 
-WORKDIR /usr/src/app
+ENV NODE_ENV=production
 
-# Копіюємо лише необхідні файли
-RUN npm prune --production
-COPY --from=builder /usr/src/app/node_modules ./node_modules
-COPY --from=builder /usr/src/app/dist ./dist
-COPY --from=builder /usr/src/app/package.json ./package.json
-COPY .env .env
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/dist ./dist
+
 
 EXPOSE 3310
 
-CMD ["npm", "run", "start"]
+CMD ["node", "dist/main"]
 

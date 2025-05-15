@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   nest-app:
     build:
@@ -7,19 +9,22 @@ services:
     ports:
       - '3310:3000'
     volumes:
-      - ../:/usr/src/app
+      - ../:/usr/src/app:cached
       - /usr/src/app/node_modules
     env_file:
-      - .env
+      - ../.env
     environment:
       - CHOKIDAR_USEPOLLING=true
       - NODE_ENV=development
-    command: npm run start
+    command: npm run start:dev
     depends_on:
-      - postgres-db
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - devnet
 
   postgres-db:
-    image: postgres:17.2-alpine
+    image: postgres:15-alpine
     container_name: store-db
     restart: unless-stopped
     ports:
@@ -27,11 +32,19 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     env_file:
-      - .env
+      - ../.env
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U admin -d store_db']
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - devnet
+
 volumes:
   postgres_data:
+
+networks:
+  devnet:
+    driver: bridge
+
