@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from '~/app.controller';
@@ -6,6 +6,7 @@ import { AppService } from '~/app.service';
 import { CategoryModule } from '~/category/category.module';
 import { OrderModule } from '~/order/order.module';
 import { ProductModule } from '~/product/product.module';
+import { AuthMiddleware } from './middleware/auth0.middleware';
 
 @Module({
   imports: [
@@ -32,4 +33,8 @@ import { ProductModule } from '~/product/product.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(AuthMiddleware).forRoutes('*');
+  }
+}
