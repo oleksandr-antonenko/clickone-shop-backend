@@ -11,6 +11,7 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({ ignoreTrailingSlash: true }),
   );
+  
   const PORT = process.env.PORT ?? 3310;
 
   app.setGlobalPrefix('api');
