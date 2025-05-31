@@ -1,16 +1,14 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
-    container_name: clickone_db
+    container_name: ${CONTAINER_NAME}
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - '5433:5432'
+      - ${POSTGRES_PORT}:5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -18,35 +16,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - clickone_network
-
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: clickone_app
-    restart: unless-stopped
-    environment:
-      NODE_ENV: ${NODE_ENV}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_DATABASE: ${DB_DATABASE}
-      APP_PORT: ${APP_PORT}
-    ports:
-      - '${APP_PORT}:${APP_PORT}'
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - clickone_network
 
 volumes:
   postgres_data:
-
-networks:
-  clickone_network:
-    driver: bridge
-
