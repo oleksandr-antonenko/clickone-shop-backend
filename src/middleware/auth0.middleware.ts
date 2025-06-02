@@ -1,4 +1,4 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import * as jwt from 'jsonwebtoken';
 import * as jwksRsa from 'jwks-rsa';
@@ -39,7 +39,6 @@ export class Auth0Middleware implements NestMiddleware {
       const key = await client.getSigningKey(kid);
       return key.getPublicKey();
     } catch (err) {
-      console.error('Error getting signing key:', err);
       throw new Error('Unable to get signing key');
     }
   }
@@ -65,8 +64,7 @@ export class Auth0Middleware implements NestMiddleware {
       
       return verifiedToken;
     } catch (error) {
-      console.error('Token verification failed:', error);
-      throw error;
+      throw new UnauthorizedException('Failed to verify token');
     }
   }
 
@@ -90,20 +88,17 @@ export class Auth0Middleware implements NestMiddleware {
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching user info:', error);
-      throw error;
+      throw new UnauthorizedException('Failed to fetch user info');
     }
   }
 
   async use(req: any, res: any, next: () => void) {
     try {
       const request = req as FastifyRequestWithUser;
-      console.log('Auth middleware processing request for path:', request.url);
       
       request.isAuthenticated = false;
       
       if (!request.headers.authorization || !request.headers.authorization.startsWith('Bearer ')) {
-        console.log('No valid authorization header, authentication failed');
         res.status(401).send({
           statusCode: 401,
           message: 'Unauthorized',
@@ -115,7 +110,6 @@ export class Auth0Middleware implements NestMiddleware {
       const token = request.headers.authorization.split(' ')[1];
       
       if (!token) {
-        console.log('Empty token provided, authentication failed');
         res.status(401).send({
           statusCode: 401,
           message: 'Unauthorized',
@@ -124,22 +118,17 @@ export class Auth0Middleware implements NestMiddleware {
         return;
       }
       
-      console.log('Authorization token received');
       
       try {
         const decodedToken = await this.verifyToken(token);
-        console.log('Token verified successfully');
-        console.log(JSON.stringify(decodedToken, null, 2));
         
         request.user = decodedToken;
         request.isAuthenticated = true;
         try {
           const userInfo = await this.getUserInfo(token);
-          console.log('User info retrieved successfully:');
-          console.log(JSON.stringify(userInfo, null, 2));
           request.userInfo = userInfo;
         } catch (userInfoError) {
-          console.error('Failed to get user info:', userInfoError);
+         throw new UnauthorizedException('Failed to get user info');
         }
       } catch (authError) {
         res.status(401).send({
@@ -152,7 +141,7 @@ export class Auth0Middleware implements NestMiddleware {
       
       next();
     } catch (error) {
-      console.error('Middleware error:', error);
+      throw new UnauthorizedException('Failed to verify token');
       next();
     }
   }
