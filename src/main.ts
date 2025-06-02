@@ -5,6 +5,7 @@ import {
 } from '@nestjs/platform-fastify';
 import { AppModule } from '~/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -13,6 +14,25 @@ async function bootstrap() {
   );
   
   const PORT = process.env.PORT ?? 3310;
+
+  await app.register(require('@fastify/multipart'), {
+    limits: {
+      fileSize: 5 * 1024 * 1024, 
+    },
+  });
+
+  await app.register(require('@fastify/static'), {
+    root: process.cwd(),
+    prefix: '/uploads/',
+    constraints: { host: 'localhost' }
+  });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    }),
+  );
 
   app.setGlobalPrefix('api');
 
