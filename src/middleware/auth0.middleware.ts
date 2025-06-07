@@ -99,7 +99,8 @@ export class Auth0Middleware implements NestMiddleware {
       request.isAuthenticated = false;
       
       if (!request.headers.authorization || !request.headers.authorization.startsWith('Bearer ')) {
-        res.status(401).send({
+
+        res.code(401).send({
           statusCode: 401,
           message: 'Unauthorized',
           error: 'Unauthorized',
@@ -110,7 +111,7 @@ export class Auth0Middleware implements NestMiddleware {
       const token = request.headers.authorization.split(' ')[1];
       
       if (!token) {
-        res.status(401).send({
+        res.code(401).send({
           statusCode: 401,
           message: 'Unauthorized',
           error: 'Unauthorized',
@@ -124,14 +125,22 @@ export class Auth0Middleware implements NestMiddleware {
         
         request.user = decodedToken;
         request.isAuthenticated = true;
-        try {
-          const userInfo = await this.getUserInfo(token);
-          request.userInfo = userInfo;
-        } catch (userInfoError) {
-         throw new UnauthorizedException('Failed to get user info');
+        
+        if (decodedToken.gty === 'client-credentials') {
+          request.userInfo = { 
+            sub: decodedToken.sub,
+            type: 'machine-to-machine'
+          };
+        } else {
+          try {
+            const userInfo = await this.getUserInfo(token);
+            request.userInfo = userInfo;
+          } catch (userInfoError) {
+            throw new UnauthorizedException('Failed to get user info');
+          }
         }
       } catch (authError) {
-        res.status(401).send({
+        res.code(401).send({
           statusCode: 401,
           message: 'Unauthorized',
           error: 'Unauthorized',

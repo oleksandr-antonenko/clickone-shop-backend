@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { FamiliesService } from '../service/families.service';
 import { CreateProductFamilyDto } from '../dto/product-family.dto';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -15,6 +15,11 @@ async create(@Body() createProductFamilyDto: CreateProductFamilyDto) {
     return this.familiesService.create(createProductFamilyDto);
 }
 
-
+@Get()
+@ApiOperation({ summary: 'Get all product families' })
+@ApiResponse({ status: 200, description: 'Product families retrieved successfully' })
+async findAll() {
+    return this.familiesService.findAll();
+}
 
 }

@@ -55,13 +55,11 @@ export class ProductService {
   }
   
   async createProducts(createProductDto: CreateProduct, file?: any) {
-    console.log('Input data:', createProductDto);
     
     let imagePath: string | undefined = undefined;
     
     if (file) {
       imagePath = await this.saveFileToDisc(file);
-      console.log('File saved to:', imagePath);
     }
 
     const productData = {
@@ -69,12 +67,10 @@ export class ProductService {
       image: imagePath,
     };
 
-    console.log('Creating product with data:', productData);
     const product = this.productRepository.create(productData);
     
     try {
       const savedProduct = await this.productRepository.save(product);
-      console.log('Product saved successfully with ID:', savedProduct.id);
       return savedProduct;
     } catch (error) {
       if (imagePath) {
