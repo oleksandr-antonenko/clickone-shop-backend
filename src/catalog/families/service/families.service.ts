@@ -19,4 +19,8 @@ export class FamiliesService {
         throw new BadRequestException('Failed to create product family');
        }
     }
+
+    async findAll(){
+        return await this.productFamilyRepository.find();
+    }
 }
