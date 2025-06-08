@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProductFamily } from '../entity/product-family.entity';
-import { CreateProductFamilyDto } from '../dto/product-family.dto';
+import { CreateProductFamilyDto } from '../dto/create-product-family.dto';
 
 @Injectable()
 export class FamiliesService {
@@ -18,6 +18,7 @@ export class FamiliesService {
       );
       return await this.productFamilyRepository.save(productFamily);
     } catch (error) {
+      console.error('CreateProductFamily error:', error);
       throw new BadRequestException('Failed to create product family');
     }
   }
