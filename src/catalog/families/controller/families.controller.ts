@@ -5,21 +5,26 @@ import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('families')
 export class FamiliesController {
-    constructor(private readonly familiesService: FamiliesService) {}
+  constructor(private readonly familiesService: FamiliesService) {}
 
-@Post()
-@ApiOperation({ summary: 'Create a new product family' })
-@ApiResponse({ status: 201, description: 'Product family created successfully' })
-@ApiBody({ type: CreateProductFamilyDto })
-async create(@Body() createProductFamilyDto: CreateProductFamilyDto) {
+  @Post()
+  @ApiOperation({ summary: 'Create a new product family' })
+  @ApiResponse({
+    status: 201,
+    description: 'Product family created successfully',
+  })
+  @ApiBody({ type: CreateProductFamilyDto })
+  async create(@Body() createProductFamilyDto: CreateProductFamilyDto) {
     return this.familiesService.create(createProductFamilyDto);
-}
+  }
 
-@Get()
-@ApiOperation({ summary: 'Get all product families' })
-@ApiResponse({ status: 200, description: 'Product families retrieved successfully' })
-async findAll() {
+  @Get()
+  @ApiOperation({ summary: 'Get all product families' })
+  @ApiResponse({
+    status: 200,
+    description: 'Product families retrieved successfully',
+  })
+  async findAll() {
     return this.familiesService.findAll();
-}
-
+  }
 }
