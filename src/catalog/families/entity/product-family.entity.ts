@@ -41,7 +41,9 @@ export class ProductFamily {
     description: 'Category relationship',
     type: () => Category,
   })
-  @ManyToOne(() => Category, (category) => category.families)
+  @ManyToOne(() => Category, (category) => category.families, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'category_id' })
   category: Category;
 

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateProductFamilyDto {
   @IsString()
@@ -19,4 +20,12 @@ export class CreateProductFamilyDto {
   })
   @IsOptional()
   description: string;
+
+  @IsNumber()
+  @ApiProperty({ description: 'Category ID', example: 1, required: false })
+  @IsOptional()
+  @Transform(({ value }: { value: string }) =>
+    value ? parseInt(value) : undefined,
+  )
+  categoryId?: number;
 }
