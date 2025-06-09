@@ -59,7 +59,7 @@ export default tseslint.config(
         },
       ],
       'object-curly-spacing': ['error', 'never'],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-require-imports':'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn'

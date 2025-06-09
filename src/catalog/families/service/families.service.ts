@@ -1,8 +1,9 @@
-import {BadRequestException, Injectable} from '@nestjs/common';
+import {Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository} from 'typeorm';
 import {ProductFamily} from '../entity/product-family.entity';
 import {CreateProductFamilyDto} from '../dto/product-family.dto';
+import {FastifyReply} from 'fastify';
 
 @Injectable()
 export class FamiliesService {
@@ -11,7 +12,10 @@ export class FamiliesService {
     private productFamilyRepository: Repository<ProductFamily>
   ) {}
 
-  async create(createProductFamilyDto: CreateProductFamilyDto) {
+  async create(
+    createProductFamilyDto: CreateProductFamilyDto,
+    res: FastifyReply
+  ) {
     try {
       const productFamily = this.productFamilyRepository.create(
         createProductFamilyDto
@@ -19,9 +23,15 @@ export class FamiliesService {
       return await this.productFamilyRepository.save(productFamily);
     } catch (error: unknown) {
       if (error instanceof Error) {
-        throw new BadRequestException(error.message);
+        return res.code(400).send({
+          statusCode: 400,
+          message: 'Failed to create product family',
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to create product family',
+        });
       }
-      throw new BadRequestException('Failed to create product family');
     }
   }
 

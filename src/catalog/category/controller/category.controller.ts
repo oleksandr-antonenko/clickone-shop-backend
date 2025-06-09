@@ -12,6 +12,7 @@ import {CategoryService} from '../service/category.service';
 import {CreateCategoryDto} from '../dto/create-category.dto';
 import {UpdateCategoryDto} from '../dto/update-category.dto';
 import {FilterCategoryDto} from '../dto/filter-category.dto';
+import {FastifyReply} from 'fastify';
 import {
   ApiBody,
   ApiOperation,
@@ -47,8 +48,11 @@ export class CategoryController {
       },
     },
   })
-  async create(@Body() createCategoryDto: CreateCategoryDto) {
-    return this.categoryService.create(createCategoryDto);
+  async create(
+    @Body() createCategoryDto: CreateCategoryDto,
+    res: FastifyReply
+  ) {
+    return this.categoryService.create(createCategoryDto, res);
   }
 
   @Get()
@@ -60,8 +64,8 @@ export class CategoryController {
   @ApiResponse({status: 404, description: 'Category not found.'})
   @ApiQuery({name: 'isActive', type: Boolean, required: false})
   @ApiQuery({name: 'parentId', type: Number, required: false})
-  findAll(@Query() filterCategoryDto: FilterCategoryDto) {
-    return this.categoryService.findAll(filterCategoryDto);
+  findAll(@Query() filterCategoryDto: FilterCategoryDto, res: FastifyReply) {
+    return this.categoryService.findAll(filterCategoryDto, res);
   }
 
   @Get(':id')
@@ -72,8 +76,8 @@ export class CategoryController {
   })
   @ApiResponse({status: 404, description: 'Category not found.'})
   @ApiParam({name: 'id', description: 'Category ID', example: 1})
-  async findOne(@Param('id') id: string) {
-    return this.categoryService.findOne(+id);
+  async findOne(@Param('id') id: string, res: FastifyReply) {
+    return this.categoryService.findOne(+id, res);
   }
 
   @Patch(':id')
@@ -85,8 +89,12 @@ export class CategoryController {
   @ApiResponse({status: 404, description: 'Category not found.'})
   @ApiParam({name: 'id', description: 'Category ID', example: 1})
   @ApiBody({type: UpdateCategoryDto})
-  update(@Param('id') id: string, @Body() updateCategory: UpdateCategoryDto) {
-    return this.categoryService.update(+id, updateCategory);
+  update(
+    @Param('id') id: string,
+    @Body() updateCategory: UpdateCategoryDto,
+    res: FastifyReply
+  ) {
+    return this.categoryService.update(+id, updateCategory, res);
   }
 
   @Delete(':id')
@@ -97,7 +105,7 @@ export class CategoryController {
   })
   @ApiResponse({status: 404, description: 'Category not found.'})
   @ApiParam({name: 'id', description: 'Category ID', example: 1})
-  remove(@Param('id') id: string) {
-    return this.categoryService.remove(+id);
+  remove(@Param('id') id: string, res: FastifyReply) {
+    return this.categoryService.remove(+id, res);
   }
 }

@@ -20,7 +20,7 @@ export class Auth0Middleware implements NestMiddleware {
 
     const domain = process.env.AUTH0_DOMAIN;
     if (!domain) {
-      throw new Error('AUTH0_DOMAIN is not configured!');
+      return null;
     }
 
     this.jwksClient = jwksRsa({
@@ -33,77 +33,77 @@ export class Auth0Middleware implements NestMiddleware {
     return this.jwksClient;
   }
 
-  private async getSigningKey(kid: string, res: FastifyReply): Promise<string> {
+  private async getSigningKey(kid: string): Promise<string | null> {
     try {
       const client = this.getJwksClient();
       const key = await client.getSigningKey(kid);
       return key.getPublicKey();
-    } catch (error: unknown) {
-      res.code(401).send({
-        statusCode: 401,
-        message: 'Unauthorized',
-        error:
-          error instanceof Error ? error.message : 'Failed to verify token',
-      });
-      throw new Error('Unable to get signing key');
+    } catch {
+      return null;
     }
   }
 
   private async verifyToken(
-    token: string,
-    res: FastifyReply
-  ): Promise<string | jwt.JwtPayload> {
-    const decoded = jwt.decode(token, {complete: true});
+    token: string
+  ): Promise<string | jwt.JwtPayload | null> {
+    try {
+      const decoded = jwt.decode(token, {complete: true});
 
-    if (
-      !decoded ||
-      typeof decoded !== 'object' ||
-      !('header' in decoded) ||
-      typeof decoded.header !== 'object' ||
-      !('kid' in decoded.header) ||
-      typeof decoded.header.kid !== 'string'
-    ) {
-      throw new Error('Invalid token');
+      if (
+        !decoded ||
+        typeof decoded !== 'object' ||
+        !('header' in decoded) ||
+        typeof decoded.header !== 'object' ||
+        !('kid' in decoded.header) ||
+        typeof decoded.header.kid !== 'string'
+      ) {
+        return null;
+      }
+
+      const kid = decoded.header.kid;
+
+      const signingKey = await this.getSigningKey(kid);
+
+      if (!signingKey) {
+        return null;
+      }
+
+      const audience = process.env.AUTH0_AUDIENCE;
+      const issuer = `https://${process.env.AUTH0_DOMAIN}/`;
+
+      const verifiedToken = jwt.verify(token, signingKey, {
+        audience,
+        issuer,
+        algorithms: ['RS256'],
+      });
+
+      return verifiedToken;
+    } catch {
+      return null;
     }
-
-    const kid = decoded.header.kid;
-
-    const signingKey = await this.getSigningKey(kid, res);
-
-    if (!signingKey) {
-      throw new Error('Unable to get signing key');
-    }
-
-    const audience = process.env.AUTH0_AUDIENCE;
-    const issuer = `https://${process.env.AUTH0_DOMAIN}/`;
-
-    const verifiedToken = jwt.verify(token, signingKey, {
-      audience,
-      issuer,
-      algorithms: ['RS256'],
-    });
-
-    return verifiedToken;
   }
 
   private async getUserInfo(token: string): Promise<any> {
     if (!process.env.AUTH0_DOMAIN) {
-      throw new Error('AUTH0_DOMAIN is not configured');
+      return null;
     }
 
-    const userInfoUrl = `https://${process.env.AUTH0_DOMAIN}/userinfo`;
-    const response = await fetch(userInfoUrl, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      const userInfoUrl = `https://${process.env.AUTH0_DOMAIN}/userinfo`;
+      const response = await fetch(userInfoUrl, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to fetch user info: ${errorText}`);
+      if (!response.ok) {
+        return null;
+      }
+
+      return await response.json();
+    } catch {
+      return null;
     }
-
-    return await response.json();
   }
 
   async use(req: FastifyRequest, res: FastifyReply) {
@@ -136,7 +136,15 @@ export class Auth0Middleware implements NestMiddleware {
       }
 
       try {
-        const decodedToken = await this.verifyToken(token, res);
+        const decodedToken = await this.verifyToken(token);
+
+        if (!decodedToken) {
+          return res.code(401).send({
+            statusCode: 401,
+            message: 'Unauthorized',
+            error: 'Token verification failed',
+          });
+        }
 
         request.user = decodedToken;
         request.isAuthenticated = true;

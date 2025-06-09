@@ -1,14 +1,10 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import {Injectable} from '@nestjs/common';
 import {MultipartFile} from '@fastify/multipart';
 import {Repository} from 'typeorm';
 import {InjectRepository} from '@nestjs/typeorm';
 import {promises as fs} from 'fs';
 import * as path from 'path';
-import {FastifyRequest} from 'fastify';
+import {FastifyReply, FastifyRequest} from 'fastify';
 import {Product} from '../entities/product.entity';
 import {CreateProduct} from '../interface/create.interface';
 import {Pagination} from '../interface/pagination.interface';
@@ -24,12 +20,15 @@ export class ProductService {
     void this.ensureUploadsDir();
   }
 
-  async createProductFromRequest(req: FastifyRequest): Promise<Product> {
+  async createProductFromRequest(
+    req: FastifyRequest,
+    res: FastifyReply
+  ): Promise<Product> {
     const {formData, file} = await this.parseMultipartRequest(req);
 
     const createInput = this.transformFormDataToDto(formData);
 
-    return this.createProducts(createInput, file);
+    return this.createProducts(createInput, res, file);
   }
 
   private async parseMultipartRequest(req: FastifyRequest): Promise<{
@@ -62,7 +61,11 @@ export class ProductService {
     };
   }
 
-  async createProducts(createProductDto: CreateProduct, file?: MultipartFile) {
+  async createProducts(
+    createProductDto: CreateProduct,
+    res: FastifyReply,
+    file?: MultipartFile
+  ) {
     let imagePath: string | undefined = undefined;
 
     if (file) {
@@ -81,10 +84,14 @@ export class ProductService {
       return savedProduct;
     } catch (error) {
       if (imagePath) {
-        await this.deleteFile(imagePath);
+        await this.deleteFile(imagePath, res);
       }
       console.error('Error saving product:', error);
-      throw error;
+      return res.code(400).send({
+        statusCode: 400,
+        message: error instanceof Error ? error.message : 'Bad request',
+        error: error instanceof Error ? error.message : 'Bad request',
+      });
     }
   }
 
@@ -109,15 +116,19 @@ export class ProductService {
     }
   }
 
-  private async deleteFile(filePath: string): Promise<void> {
+  private async deleteFile(filePath: string, res: FastifyReply): Promise<void> {
     try {
       const fullPath = path.join(process.cwd(), filePath);
       await fs.unlink(fullPath);
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        throw new BadRequestException(error.message);
-      }
       console.warn('Failed to delete file:', filePath);
+      return res.code(409).send({
+        statusCode: 409,
+        message:
+          error instanceof Error
+            ? error.message
+            : `Failed to delete file: ${filePath}`,
+      });
     }
   }
 
@@ -142,9 +153,12 @@ export class ProductService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, res: FastifyReply) {
     if (!id) {
-      throw new BadRequestException('ID is required');
+      return res.code(404).send({
+        statusCode: 404,
+        message: `${id} not found`,
+      });
     }
     const product = await this.productRepository.findOne({
       where: {
@@ -152,19 +166,33 @@ export class ProductService {
       },
     });
     if (!product) {
-      throw new NotFoundException('Product not found');
+      {
+        return res.code(400).send({
+          statusCode: 400,
+          message: 'Product not found',
+        });
+      }
     }
     return product;
   }
 
-  async updateProduct(id: number, req: FastifyRequest) {
-    if (!id) throw new BadRequestException('ID is required');
+  async updateProduct(id: number, req: FastifyRequest, res: FastifyReply) {
+    if (!id) {
+      return res.code(400).send({
+        statusCode: 400,
+        message: `${id} is required`,
+      });
+    }
 
     const {formData, file} = await this.parseMultipartRequest(req);
 
     const product = await this.productRepository.findOne({where: {id}});
-    if (!product)
-      throw new NotFoundException(`Product with ID ${id} not found`);
+    if (!product) {
+      return res.code(404).send({
+        statusCode: 404,
+        message: `Product with ID ${id} not found`,
+      });
+    }
 
     const updateDto: UpdateProduct = {
       name: formData.name ?? product.name,
@@ -177,7 +205,7 @@ export class ProductService {
     let imagePath = product.image;
     if (file) {
       if (product.image) {
-        await this.deleteFile(product.image);
+        await this.deleteFile(product.image, res);
       }
 
       imagePath = await this.saveFileToDisc(file);
@@ -190,10 +218,14 @@ export class ProductService {
     return await this.productRepository.save(updated);
   }
 
-  async remove(id: number) {
+  async remove(id: number, res: FastifyReply) {
     const product = await this.productRepository.findOne({where: {id}});
-    if (!product)
-      throw new NotFoundException(`Product with ID ${id} not found`);
+    if (!product) {
+      return res.code(400).send({
+        statusCode: 400,
+        message: `Product with ID ${id} not found`,
+      });
+    }
     await this.productRepository.delete(id);
     return {message: 'Product deleted successfully'};
   }

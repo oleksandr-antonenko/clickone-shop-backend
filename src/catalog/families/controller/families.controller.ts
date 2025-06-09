@@ -2,6 +2,7 @@ import {Body, Controller, Get, Post} from '@nestjs/common';
 import {FamiliesService} from '../service/families.service';
 import {CreateProductFamilyDto} from '../dto/product-family.dto';
 import {ApiBody, ApiOperation, ApiResponse} from '@nestjs/swagger';
+import {FastifyReply} from 'fastify';
 
 @Controller('families')
 export class FamiliesController {
@@ -14,8 +15,11 @@ export class FamiliesController {
     description: 'Product family created successfully',
   })
   @ApiBody({type: CreateProductFamilyDto})
-  async create(@Body() createProductFamilyDto: CreateProductFamilyDto) {
-    return this.familiesService.create(createProductFamilyDto);
+  async create(
+    @Body() createProductFamilyDto: CreateProductFamilyDto,
+    res: FastifyReply
+  ) {
+    return this.familiesService.create(createProductFamilyDto, res);
   }
 
   @Get()
