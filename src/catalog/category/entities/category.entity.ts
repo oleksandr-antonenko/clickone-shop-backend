@@ -1,5 +1,12 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { ProductFamily } from "../../families/entity/product-family.entity";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import {ProductFamily} from '../../families/entity/product-family.entity';
 
 @Entity('categories')
 export class Category {
@@ -9,7 +16,7 @@ export class Category {
   @Column()
   name: string;
 
-  @Column({ unique: true })
+  @Column({unique: true})
   slug: string;
 
   @Column({nullable: true})

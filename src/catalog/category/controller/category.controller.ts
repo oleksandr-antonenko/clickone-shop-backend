@@ -8,74 +8,95 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
-import { CategoryService } from '../service/category.service';
-import { CreateCategoryDto } from '../dto/create-category.dto';
-import { UpdateCategoryDto } from '../dto/update-category.dto';
-import { FilterCategoryDto } from '../dto/filter-category.dto';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import {CategoryService} from '../service/category.service';
+import {CreateCategoryDto} from '../dto/create-category.dto';
+import {UpdateCategoryDto} from '../dto/update-category.dto';
+import {FilterCategoryDto} from '../dto/filter-category.dto';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+} from '@nestjs/swagger';
 
 @Controller('category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new category' })
-  @ApiResponse({ status: 201, description: 'The category has been successfully created.' })
-  @ApiResponse({ status: 400, description: 'Invalid input data.' })
-  @ApiBody({ type: CreateCategoryDto, examples: {
-    'example 1': {
-      value: {
-        name: 'Category 1',
-        slug: 'category-1',
-        description: 'Description of category 1',
-        image: 'image.jpg',
-        parentId: '1',
-        isActive: true,
-        sortOrder: 1,
+  @ApiOperation({summary: 'Create a new category'})
+  @ApiResponse({
+    status: 201,
+    description: 'The category has been successfully created.',
+  })
+  @ApiResponse({status: 400, description: 'Invalid input data.'})
+  @ApiBody({
+    type: CreateCategoryDto,
+    examples: {
+      'example 1': {
+        value: {
+          name: 'Category 1',
+          slug: 'category-1',
+          description: 'Description of category 1',
+          image: 'image.jpg',
+          parentId: '1',
+          isActive: true,
+          sortOrder: 1,
+        },
       },
     },
-  } })
+  })
   async create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoryService.create(createCategoryDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get a category by ID' })
-  @ApiResponse({ status: 200, description: 'The category has been successfully retrieved.' })
-  @ApiResponse({ status: 404, description: 'Category not found.' })
-  @ApiQuery({ name: 'isActive', type: Boolean, required: false })
-  @ApiQuery({ name: 'parentId', type: Number, required: false })
+  @ApiOperation({summary: 'Get a category by ID'})
+  @ApiResponse({
+    status: 200,
+    description: 'The category has been successfully retrieved.',
+  })
+  @ApiResponse({status: 404, description: 'Category not found.'})
+  @ApiQuery({name: 'isActive', type: Boolean, required: false})
+  @ApiQuery({name: 'parentId', type: Number, required: false})
   findAll(@Query() filterCategoryDto: FilterCategoryDto) {
     return this.categoryService.findAll(filterCategoryDto);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get a category by ID' })
-  @ApiResponse({ status: 200, description: 'The category has been successfully retrieved.' })
-  @ApiResponse({ status: 404, description: 'Category not found.' })
-  @ApiParam({ name: 'id', description: 'Category ID', example: 1 })
+  @ApiOperation({summary: 'Get a category by ID'})
+  @ApiResponse({
+    status: 200,
+    description: 'The category has been successfully retrieved.',
+  })
+  @ApiResponse({status: 404, description: 'Category not found.'})
+  @ApiParam({name: 'id', description: 'Category ID', example: 1})
   async findOne(@Param('id') id: string) {
     return this.categoryService.findOne(+id);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a category by ID' })
-  @ApiResponse({ status: 200, description: 'The category has been successfully updated.' })
-  @ApiResponse({ status: 404, description: 'Category not found.' })
-  @ApiParam({ name: 'id', description: 'Category ID', example: 1 })
-  @ApiBody({ type: UpdateCategoryDto })
-  update(
-    @Param('id') id: string,
-    @Body() updateCategory: UpdateCategoryDto,
-  ) {
+  @ApiOperation({summary: 'Update a category by ID'})
+  @ApiResponse({
+    status: 200,
+    description: 'The category has been successfully updated.',
+  })
+  @ApiResponse({status: 404, description: 'Category not found.'})
+  @ApiParam({name: 'id', description: 'Category ID', example: 1})
+  @ApiBody({type: UpdateCategoryDto})
+  update(@Param('id') id: string, @Body() updateCategory: UpdateCategoryDto) {
     return this.categoryService.update(+id, updateCategory);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete a category by ID' })
-  @ApiResponse({ status: 200, description: 'The category has been successfully deleted.' })
-  @ApiResponse({ status: 404, description: 'Category not found.' })
-  @ApiParam({ name: 'id', description: 'Category ID', example: 1 })
+  @ApiOperation({summary: 'Delete a category by ID'})
+  @ApiResponse({
+    status: 200,
+    description: 'The category has been successfully deleted.',
+  })
+  @ApiResponse({status: 404, description: 'Category not found.'})
+  @ApiParam({name: 'id', description: 'Category ID', example: 1})
   remove(@Param('id') id: string) {
     return this.categoryService.remove(+id);
   }

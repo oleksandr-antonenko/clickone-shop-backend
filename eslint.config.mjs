@@ -33,6 +33,10 @@ export default tseslint.config(
           endOfLine: 'lf',
           parser: 'typescript',
           singleQuote: true,
+          tabWidth: 2,
+          printWidth: 80,
+          bracketSpacing: false,
+          trailingComma: 'es5',
         },
         {
           usePrettierrc: false,
@@ -54,7 +58,8 @@ export default tseslint.config(
           "newlines-between": "always",
         },
       ],
-      '@typescript-eslint/no-explicit-any': 'off',
+      'object-curly-spacing': ['error', 'never'],
+      '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-require-imports':'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn'
