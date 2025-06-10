@@ -1,4 +1,8 @@
-import { Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NestMiddleware,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import * as jwt from 'jsonwebtoken';
 import * as jwksRsa from 'jwks-rsa';
@@ -46,22 +50,22 @@ export class Auth0Middleware implements NestMiddleware {
   private async verifyToken(token: string): Promise<any> {
     try {
       const decoded = jwt.decode(token, { complete: true }) as any;
-      
+
       if (!decoded || !decoded.header || !decoded.header.kid) {
         throw new Error('Invalid token');
       }
 
       const signingKey = await this.getSigningKey(decoded.header.kid);
-      
+
       const audience = process.env.AUTH0_AUDIENCE;
       const issuer = `https://${process.env.AUTH0_DOMAIN}/`;
-      
+
       const verifiedToken = jwt.verify(token, signingKey, {
         audience,
         issuer,
         algorithms: ['RS256'],
       });
-      
+
       return verifiedToken;
     } catch (error) {
       throw new UnauthorizedException('Failed to verify token');
@@ -95,11 +99,13 @@ export class Auth0Middleware implements NestMiddleware {
   async use(req: any, res: any, next: () => void) {
     try {
       const request = req as FastifyRequestWithUser;
-      
-      request.isAuthenticated = false;
-      
-      if (!request.headers.authorization || !request.headers.authorization.startsWith('Bearer ')) {
 
+      request.isAuthenticated = false;
+
+      if (
+        !request.headers.authorization ||
+        !request.headers.authorization.startsWith('Bearer ')
+      ) {
         res.code(401).send({
           statusCode: 401,
           message: 'Unauthorized',
@@ -107,9 +113,9 @@ export class Auth0Middleware implements NestMiddleware {
         });
         return;
       }
-      
+
       const token = request.headers.authorization.split(' ')[1];
-      
+
       if (!token) {
         res.code(401).send({
           statusCode: 401,
@@ -118,18 +124,17 @@ export class Auth0Middleware implements NestMiddleware {
         });
         return;
       }
-      
-      
+
       try {
         const decodedToken = await this.verifyToken(token);
-        
+
         request.user = decodedToken;
         request.isAuthenticated = true;
-        
+
         if (decodedToken.gty === 'client-credentials') {
-          request.userInfo = { 
+          request.userInfo = {
             sub: decodedToken.sub,
-            type: 'machine-to-machine'
+            type: 'machine-to-machine',
           };
         } else {
           try {
@@ -147,7 +152,7 @@ export class Auth0Middleware implements NestMiddleware {
         });
         return;
       }
-      
+
       next();
     } catch (error) {
       throw new UnauthorizedException('Failed to verify token');

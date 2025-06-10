@@ -12,19 +12,19 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter({ ignoreTrailingSlash: true }),
   );
-  
+
   const PORT = process.env.PORT ?? 3310;
 
   await app.register(require('@fastify/multipart'), {
     limits: {
-      fileSize: 5 * 1024 * 1024, 
+      fileSize: 5 * 1024 * 1024,
     },
   });
 
   await app.register(require('@fastify/static'), {
     root: process.cwd(),
     prefix: '/uploads/',
-    constraints: { host: 'localhost' }
+    constraints: { host: 'localhost' },
   });
 
   app.useGlobalPipes(

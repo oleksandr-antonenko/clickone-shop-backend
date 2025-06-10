@@ -1,4 +1,9 @@
-import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import {
+  Module,
+  NestModule,
+  MiddlewareConsumer,
+  RequestMethod,
+} from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from '~/app.controller';
@@ -35,16 +40,19 @@ import { OrderModule } from './order/order.module';
     AttributesModule,
     SettingsModule,
     FamiliesModule,
-    CategoryModule
+    CategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(Auth0Middleware).exclude(
-      { path: 'api/docs', method: RequestMethod.GET },
-      { path: 'api/swagger', method: RequestMethod.GET },
-    ).forRoutes('*');
+    consumer
+      .apply(Auth0Middleware)
+      .exclude(
+        { path: 'api/docs', method: RequestMethod.GET },
+        { path: 'api/swagger', method: RequestMethod.GET },
+      )
+      .forRoutes('*');
   }
 }
