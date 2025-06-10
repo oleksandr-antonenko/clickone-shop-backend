@@ -170,8 +170,8 @@ export class Auth0Middleware implements NestMiddleware {
           error:
             error instanceof Error ? error.message : 'Failed to verify token',
         });
+        next();
       }
-      next();
     } catch (error: unknown) {
       return res.code(401).send({
         statusCode: 401,
