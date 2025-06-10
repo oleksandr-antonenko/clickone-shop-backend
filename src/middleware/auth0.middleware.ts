@@ -49,14 +49,7 @@ export class Auth0Middleware implements NestMiddleware {
     try {
       const decoded = jwt.decode(token, {complete: true});
 
-      if (
-        !decoded ||
-        typeof decoded !== 'object' ||
-        !('header' in decoded) ||
-        typeof decoded.header !== 'object' ||
-        !('kid' in decoded.header) ||
-        typeof decoded.header.kid !== 'string'
-      ) {
+      if (!decoded) {
         return null;
       }
 
