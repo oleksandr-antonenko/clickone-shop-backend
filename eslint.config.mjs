@@ -55,7 +55,6 @@ export default tseslint.config(
           importOrderSeparation: true,
           importOrderSortSpecifiers: true,
           endOfLine: 'lf',
-          plugins: ['@trivago/prettier-plugin-sort-imports'],
         },
         {
           usePrettierrc: false,
@@ -67,16 +66,7 @@ export default tseslint.config(
           "allow": ["warn", "error"]
         }
       ],
-      "import/order": [
-        "off",
-        {
-          groups: [
-            ["builtin", "external", "internal"],
-            ["parent", "sibling", "index"],
-          ],
-          "newlines-between": "always",
-        },
-      ],
+      'import/order': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-require-imports':'off',
       '@typescript-eslint/no-floating-promises': 'warn',
