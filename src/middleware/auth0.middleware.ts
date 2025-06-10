@@ -99,7 +99,7 @@ export class Auth0Middleware implements NestMiddleware {
     }
   }
 
-  async use(req: FastifyRequest, res: FastifyReply) {
+  async use(req: FastifyRequest, res: FastifyReply, next: () => void) {
     try {
       const request = req as FastifyRequestWithUser;
 
@@ -162,6 +162,7 @@ export class Auth0Middleware implements NestMiddleware {
             });
           }
         }
+        next();
       } catch (error: unknown) {
         return res.code(401).send({
           statusCode: 401,
@@ -170,6 +171,7 @@ export class Auth0Middleware implements NestMiddleware {
             error instanceof Error ? error.message : 'Failed to verify token',
         });
       }
+      next();
     } catch (error: unknown) {
       return res.code(401).send({
         statusCode: 401,
@@ -177,6 +179,7 @@ export class Auth0Middleware implements NestMiddleware {
         error:
           error instanceof Error ? error.message : 'Failed to verify token',
       });
+      next();
     }
   }
 }
