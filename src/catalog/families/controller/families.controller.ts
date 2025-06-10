@@ -50,7 +50,7 @@ export class FamiliesController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a product by ID' })
+  @ApiOperation({ summary: 'Update a product family by ID' })
   @ApiResponse({
     status: 200,
     description: 'Product family updated successfully',
