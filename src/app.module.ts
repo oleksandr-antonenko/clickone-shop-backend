@@ -51,7 +51,7 @@ export class AppModule implements NestModule {
       .apply(Auth0Middleware)
       .exclude(
         { path: 'api/docs', method: RequestMethod.GET },
-        { path: 'api/swagger', method: RequestMethod.GET },
+        { path: 'api/swagger', method: RequestMethod.GET }
       )
       .forRoutes('*');
   }

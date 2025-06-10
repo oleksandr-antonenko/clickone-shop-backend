@@ -1,5 +1,5 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { AttributeValue } from "./attributes-value.entity";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { AttributeValue } from './attributes-value.entity';
 
 @Entity('attribute_types')
 export class AttributeType {
@@ -12,6 +12,6 @@ export class AttributeType {
   @Column()
   slug: string;
 
-  @OneToMany(()=>AttributeValue, value => value.type)
+  @OneToMany(() => AttributeValue, (value) => value.type)
   values: AttributeValue[];
 }

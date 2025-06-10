@@ -8,7 +8,12 @@ import {
   Req,
   Query,
 } from '@nestjs/common';
-import { ApiBody, ApiConsumes, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { CreateProductDto } from '../dto/create-product.dto';
 import { FastifyRequest } from 'fastify';
 import { PaginationQueryDto } from '../dto/pagination-query.dto';

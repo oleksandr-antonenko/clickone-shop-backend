@@ -60,17 +60,17 @@ export default tseslint.config(
           usePrettierrc: false,
         },
       ],
-      "no-console": [
-        "warn",
+      'no-console': [
+        'warn',
         {
-          "allow": ["warn", "error"]
-        }
+          allow: ['warn', 'error'],
+        },
       ],
       'import/order': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-require-imports':'off',
+      '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn'
+      '@typescript-eslint/no-unsafe-argument': 'warn',
     },
-  },
+  }
 );

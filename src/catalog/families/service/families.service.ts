@@ -6,21 +6,23 @@ import { CreateProductFamilyDto } from '../dto/product-family.dto';
 
 @Injectable()
 export class FamiliesService {
-    constructor(
-        @InjectRepository(ProductFamily)
-        private productFamilyRepository: Repository<ProductFamily>,
-    ) {}
+  constructor(
+    @InjectRepository(ProductFamily)
+    private productFamilyRepository: Repository<ProductFamily>
+  ) {}
 
-    async create(createProductFamilyDto: CreateProductFamilyDto){
-       try {
-        const productFamily = this.productFamilyRepository.create(createProductFamilyDto);
-        return await this.productFamilyRepository.save(productFamily);
-       } catch (error) {
-        throw new BadRequestException('Failed to create product family');
-       }
+  async create(createProductFamilyDto: CreateProductFamilyDto) {
+    try {
+      const productFamily = this.productFamilyRepository.create(
+        createProductFamilyDto
+      );
+      return await this.productFamilyRepository.save(productFamily);
+    } catch (error) {
+      throw new BadRequestException('Failed to create product family');
     }
+  }
 
-    async findAll(){
-        return await this.productFamilyRepository.find();
-    }
+  async findAll() {
+    return await this.productFamilyRepository.find();
+  }
 }

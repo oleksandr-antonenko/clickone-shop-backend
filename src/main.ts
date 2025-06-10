@@ -10,7 +10,7 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ ignoreTrailingSlash: true }),
+    new FastifyAdapter({ ignoreTrailingSlash: true })
   );
 
   const PORT = process.env.PORT ?? 3310;
@@ -31,7 +31,7 @@ async function bootstrap() {
     new ValidationPipe({
       transform: true,
       whitelist: true,
-    }),
+    })
   );
 
   app.setGlobalPrefix('api');

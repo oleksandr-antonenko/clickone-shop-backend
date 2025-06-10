@@ -23,6 +23,5 @@
   ],
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true,
-  "endOfLine": "lf",
-  "plugins": ["@trivago/prettier-plugin-sort-imports"]
+  "endOfLine": "lf"
 }
