@@ -6,9 +6,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ProductFamily } from '../entity/product-family.entity';
-import { CreateProductFamilyDto } from '../dto/create-product-family.dto';
-import { UpdateProductFamilyDto } from '../dto/update-product-family.dto';
+import { ProductFamily } from '../entity/family.entity';
+import { CreateFamilyDto } from '../dto/create-family.dto';
+import { UpdateFamilyDto } from '../dto/update-family.dto';
 import { UpdateFamily } from '../interface/updateFamily.interface';
 
 @Injectable()
@@ -18,7 +18,7 @@ export class FamiliesService {
     private productFamilyRepository: Repository<ProductFamily>,
   ) {}
 
-  async create(createProductFamilyDto: CreateProductFamilyDto) {
+  async create(createProductFamilyDto: CreateFamilyDto) {
     try {
       const productFamily = this.productFamilyRepository.create(
         createProductFamilyDto,
@@ -53,7 +53,7 @@ export class FamiliesService {
     return family;
   }
 
-  async update(id: number, @Body() formData: UpdateProductFamilyDto) {
+  async update(id: number, @Body() formData: UpdateFamilyDto) {
     const family = await this.productFamilyRepository.findOne({
       where: { id },
     });

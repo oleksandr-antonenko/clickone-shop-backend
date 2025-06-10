@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class CreateProductFamilyDto {
+export class CreateFamilyDto {
   @IsString()
   @ApiProperty({
     description: 'Name of the product family',
@@ -15,11 +15,11 @@ export class CreateProductFamilyDto {
   @IsString()
   @ApiProperty({
     description: 'Description of the product family',
-    example: 'Description of product family 1',
+    example: 'Description of the product family 1',
     required: false,
   })
   @IsOptional()
-  description: string;
+  description?: string;
 
   @IsNumber()
   @ApiProperty({ description: 'Category ID', example: 1, required: false })

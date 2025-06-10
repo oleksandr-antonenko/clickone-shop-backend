@@ -1,4 +1,4 @@
-export interface CreateProductsFamily {
+export interface CreateFamily {
   name: string;
   description?: string;
   categoryId?: number;

@@ -8,9 +8,9 @@ import {
   Post,
 } from '@nestjs/common';
 import { FamiliesService } from '../service/families.service';
-import { CreateProductFamilyDto } from '../dto/create-product-family.dto';
+import { CreateFamilyDto } from '../dto/create-family.dto';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { UpdateProductFamilyDto } from '../dto/update-product-family.dto';
+import { UpdateFamilyDto } from '../dto/update-family.dto';
 
 @Controller('families')
 export class FamiliesController {
@@ -22,9 +22,9 @@ export class FamiliesController {
     status: 201,
     description: 'Product family created successfully',
   })
-  @ApiBody({ type: CreateProductFamilyDto })
-  async create(@Body() createProductFamilyDto: CreateProductFamilyDto) {
-    return this.familiesService.create(createProductFamilyDto);
+  @ApiBody({ type: CreateFamilyDto })
+  async create(@Body() createFamilyDto: CreateFamilyDto) {
+    return this.familiesService.create(createFamilyDto);
   }
 
   @Get()
@@ -58,9 +58,9 @@ export class FamiliesController {
   @ApiResponse({ status: 404, description: 'Product family not found' })
   async update(
     @Param('id') id: string,
-    @Body() updateProductFamilyDto: UpdateProductFamilyDto,
+    @Body() updateFamilyDto: UpdateFamilyDto,
   ) {
-    return this.familiesService.update(+id, updateProductFamilyDto);
+    return this.familiesService.update(+id, updateFamilyDto);
   }
 
   @Delete(':id')

@@ -1,3 +1,3 @@
-import { CreateProductsFamily } from './createFamily.interface';
+import { CreateFamily } from './createFamily.interface';
 
-export type UpdateFamily = Partial<CreateProductsFamily>;
+export type UpdateFamily = Partial<CreateFamily>;

@@ -12,7 +12,7 @@ import { Product } from '../../product/entities/product.entity';
 import { Category } from '../../category/entities/category.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
-@Entity('product_families')
+@Entity('families')
 export class ProductFamily {
   @ApiProperty({ description: 'Unique identifier of the product family' })
   @PrimaryGeneratedColumn()
