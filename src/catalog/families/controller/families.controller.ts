@@ -33,7 +33,7 @@ export class FamiliesController {
     status: 200,
     description: 'Product families fetched successfully',
   })
-  @ApiResponse({ status: 404, description: 'No products found' })
+  @ApiResponse({ status: 404, description: 'No products families found' })
   async findAll() {
     return this.familiesService.findAll();
   }
