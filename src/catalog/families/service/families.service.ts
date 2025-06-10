@@ -20,21 +20,25 @@ export class FamiliesService {
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
   ) {}
+  private async findCategoryById(
+    categoryId?: number,
+  ): Promise<Category | null> {
+    if (!categoryId) return null;
+
+    const category = await this.categoryRepository.findOne({
+      where: { id: categoryId },
+    });
+    if (!category) {
+      throw new NotFoundException(`Category with ID ${categoryId} not found`);
+    }
+
+    return category;
+  }
 
   async create(createProductFamilyDto: CreateFamilyDto) {
-    let category: Category | null = null;
-
-    if (createProductFamilyDto.categoryId) {
-      category = await this.categoryRepository.findOne({
-        where: { id: createProductFamilyDto.categoryId },
-      });
-
-      if (!category) {
-        throw new NotFoundException(
-          `Category with ID ${createProductFamilyDto.categoryId} not found`,
-        );
-      }
-    }
+    const category = await this.findCategoryById(
+      createProductFamilyDto.categoryId,
+    );
 
     const productFamily = this.productFamilyRepository.create({
       ...createProductFamilyDto,
@@ -80,19 +84,7 @@ export class FamiliesService {
     if (!family)
       throw new NotFoundException(`Product family with ID ${id} not found`);
 
-    let category: Category | null = null;
-
-    if (formData.categoryId) {
-      category = await this.categoryRepository.findOne({
-        where: { id: formData.categoryId },
-      });
-
-      if (!category) {
-        throw new NotFoundException(
-          `Category with ID ${formData.categoryId} not found`,
-        );
-      }
-    }
+    const category = await this.findCategoryById(formData.categoryId);
 
     const updateDto: UpdateFamily = {
       name: formData.name ?? family.name,
