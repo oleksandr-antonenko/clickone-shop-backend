@@ -70,7 +70,7 @@ export class FamiliesService {
     });
 
     if (!family) {
-      throw new NotFoundException('Product family not found');
+      throw new NotFoundException(`Product family with ID ${id} not found`);
     }
 
     return family;
