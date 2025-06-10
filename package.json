@@ -97,7 +97,7 @@
   "lint-staged": {
     "**/*.{ts,json}": [
       "eslint --fix",
-      "prettier --write"
+      "prettier --write ."
     ]
   },
   "_moduleAliases": {
