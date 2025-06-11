@@ -94,6 +94,7 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   },
+  "eslint --max-warnings 0 .": "якщо це додати в масив lint-staged: {**/*.{ts,json}:[сюди]} то всі помилки які є в проекті що пов'язані з правилами eslint, а не з prettier будуть виявленні та commit не буде виконаний",
   "lint-staged": {
     "**/*.{ts,json}": [
       "eslint --fix",
