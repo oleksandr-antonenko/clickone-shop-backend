@@ -98,7 +98,8 @@
     "**/*.{ts,json}": [
       "eslint --fix",
       "prettier --write ."
-    ]
+    ],
+    "*.js": "eslint --cache --fix"
   },
   "_moduleAliases": {
     "~": "./dist"
