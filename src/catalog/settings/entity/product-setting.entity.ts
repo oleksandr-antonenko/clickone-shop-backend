@@ -10,7 +10,7 @@ import {
 import { Product } from '../../product/entities/product.entity';
 import { ApiProperty } from '@nestjs/swagger';
 
-@Entity('settings')
+@Entity('product_settings')
 export class ProductSetting {
   @ApiProperty({ description: 'Unique identifier of the settings' })
   @PrimaryGeneratedColumn()
