@@ -1,6 +1,5 @@
 node_modules/
 dist/
-.husky/
 .env
 .Dockerfile
 docker-compose.yaml
