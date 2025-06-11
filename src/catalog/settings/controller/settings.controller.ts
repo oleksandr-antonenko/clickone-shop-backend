@@ -1,10 +1,22 @@
-import { Controller, Delete, Get, Param } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 import { SettingsService } from '../service/settings.service';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { CreateSettingDto } from '../dto/create-setting.dto';
 
 @Controller('settings')
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Create a new product setting' })
+  @ApiResponse({
+    status: 201,
+    description: 'Product setting created successfully',
+  })
+  @ApiBody({ type: CreateSettingDto })
+  async create(@Body() createSettingDto: CreateSettingDto) {
+    return this.settingsService.create(createSettingDto);
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all product settings' })
