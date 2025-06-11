@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { SettingsService } from '../service/settings.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
@@ -15,5 +15,16 @@ export class SettingsController {
   @ApiResponse({ status: 404, description: 'No products settings found' })
   async findAll() {
     return this.settingsService.findAll();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a product setting by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Product setting fetched successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Product family not found' })
+  async findOne(@Param('id') id: string) {
+    return this.settingsService.findOne(+id);
   }
 }
