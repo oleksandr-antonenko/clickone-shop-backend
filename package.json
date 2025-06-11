@@ -97,9 +97,9 @@
   "lint-staged": {
     "**/*.{ts,json}": [
       "eslint --fix",
-      "prettier --write ."
-    ],
-    "*.js": "eslint --cache --fix"
+      "prettier --write .",
+      "eslint --cache --fix"
+    ]
   },
   "_moduleAliases": {
     "~": "./dist"
