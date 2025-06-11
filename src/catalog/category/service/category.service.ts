@@ -11,7 +11,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from '../entities/category.entity';
 
-
 @Injectable()
 export class CategoryService {
   constructor(
@@ -37,7 +36,7 @@ export class CategoryService {
       const category = this.categoryRepository.create(categoryData);
 
       return await this.categoryRepository.save(category);
-    } catch (error) {
+    } catch (error: unknown) {
       throw new BadRequestException(error.message);
     }
   }
@@ -59,7 +58,7 @@ export class CategoryService {
         throw new NotFoundException('No categories found');
       }
       return categories;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new BadRequestException(error.message);
     }
   }
@@ -71,7 +70,7 @@ export class CategoryService {
         throw new NotFoundException('Category not found');
       }
       return category;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new BadRequestException(error.message);
     }
   }
@@ -101,7 +100,7 @@ export class CategoryService {
 
       await this.categoryRepository.update(id, updateData);
       return { message: 'Category updated successfully' };
-    } catch (error) {
+    } catch (error: unknown) {
       throw new BadRequestException(error.message);
     }
   }
@@ -116,7 +115,7 @@ export class CategoryService {
       }
       await this.categoryRepository.delete(id);
       return { message: 'Category deleted successfully' };
-    } catch (error) {
+    } catch (error: unknown) {
       throw new BadRequestException(error.message);
     }
   }
