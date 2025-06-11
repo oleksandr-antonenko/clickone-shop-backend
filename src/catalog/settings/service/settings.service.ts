@@ -38,4 +38,16 @@ export class SettingsService {
 
     return setting;
   }
+
+  async remove(id: number) {
+    const setting = await this.settingsServiceRepository.findOne({
+      where: { id },
+    });
+
+    if (!setting)
+      throw new NotFoundException(`Product setting with ID ${id} not found`);
+    await this.settingsServiceRepository.delete(id);
+
+    return { message: 'Product setting deleted successfully' };
+  }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Delete, Get, Param } from '@nestjs/common';
 import { SettingsService } from '../service/settings.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
@@ -23,8 +23,19 @@ export class SettingsController {
     status: 200,
     description: 'Product setting fetched successfully',
   })
-  @ApiResponse({ status: 404, description: 'Product family not found' })
+  @ApiResponse({ status: 404, description: 'Product setting not found' })
   async findOne(@Param('id') id: string) {
     return this.settingsService.findOne(+id);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a product setting by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Product setting deleted successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Product setting not found' })
+  async remove(@Param('id') id: string) {
+    return this.settingsService.remove(+id);
   }
 }
