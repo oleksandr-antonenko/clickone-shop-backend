@@ -10,7 +10,7 @@ export class CreateSettingDto {
     required: true,
   })
   @IsNotEmpty()
-  name: string;
+  key: string;
 
   @IsString()
   @ApiProperty({

@@ -1,7 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { SettingsService } from '../service/settings.service';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CreateSettingDto } from '../dto/create-setting.dto';
+import { UpdateSettingDto } from '../dto/update-setting.dto';
 
 @Controller('settings')
 export class SettingsController {
@@ -38,6 +47,20 @@ export class SettingsController {
   @ApiResponse({ status: 404, description: 'Product setting not found' })
   async findOne(@Param('id') id: string) {
     return this.settingsService.findOne(+id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update a product setting by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Product setting updated successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Product setting not found' })
+  async update(
+    @Param('id') id: string,
+    @Body() updateSettingDto: UpdateSettingDto,
+  ) {
+    return this.settingsService.update(+id, updateSettingDto);
   }
 
   @Delete(':id')

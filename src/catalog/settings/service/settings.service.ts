@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,6 +9,8 @@ import { ProductSetting } from '../entity/product-setting.entity';
 import { Repository } from 'typeorm';
 import { Product } from '~/catalog/product/entities/product.entity';
 import { CreateSettingDto } from '../dto/create-setting.dto';
+import { UpdateSettingDto } from '../dto/update-setting.dto';
+import { UpdateSetting } from '../interface/updateSetting.interface';
 
 @Injectable()
 export class SettingsService {
@@ -69,6 +72,38 @@ export class SettingsService {
     }
 
     return setting;
+  }
+
+  async update(id: number, @Body() formData: UpdateSettingDto) {
+    const setting = await this.settingsServiceRepository.findOne({
+      where: { id },
+    });
+
+    if (!setting)
+      throw new NotFoundException(`Product setting with ID ${id} not found`);
+
+    const product = await this.findProductById(formData.productId);
+
+    const updateDto: UpdateSetting = {
+      key: formData.key ?? setting.key,
+      value: formData.value ?? setting.value,
+    };
+
+    const productSetting = this.settingsServiceRepository.create({
+      ...updateDto,
+      product: product ?? undefined,
+    });
+
+    const updated = this.settingsServiceRepository.merge(setting, {
+      ...productSetting,
+    });
+
+    try {
+      return await this.settingsServiceRepository.save(updated);
+    } catch (error) {
+      console.error('UpdateProductFamily error:', error);
+      throw new BadRequestException('Failed to update product family');
+    }
   }
 
   async remove(id: number) {
