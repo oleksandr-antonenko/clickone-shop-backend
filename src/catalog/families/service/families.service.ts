@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ProductFamily } from '../entity/family.entity';
+import { ProductFamily } from '../entity/product-family.entity';
 import { CreateFamilyDto } from '../dto/create-family.dto';
 import { UpdateFamilyDto } from '../dto/update-family.dto';
 import { UpdateFamily } from '../interface/updateFamily.interface';

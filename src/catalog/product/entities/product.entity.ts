@@ -1,5 +1,5 @@
 import { Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { ProductFamily } from "../../families/entity/family.entity";
+import { ProductFamily } from "../../families/entity/product-family.entity";
 // import { ProductOptionValue } from "./product-option-value.entity";
 // import { ProductSetting } from "./product-setting.entity";
 import { ApiProperty } from "@nestjs/swagger";
