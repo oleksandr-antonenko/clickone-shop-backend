@@ -13,8 +13,6 @@ import { UpdateCategoryDto } from '../dto/update-category.dto';
 import { Category } from '../entities/category.entity';
 import { FilterCategoryInterface } from '../interface/filter.interface';
 
-
-
 @Injectable()
 export class CategoryService {
   constructor(
