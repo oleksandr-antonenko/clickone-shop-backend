@@ -121,6 +121,7 @@ export class ProductService {
     const [products, total] = await this.productRepository.findAndCount({
       skip,
       take: limit,
+      relations: ['settings'],
       order:{
         id: 'ASC',
       }
@@ -142,6 +143,7 @@ export class ProductService {
       where: {
         id,
       },
+      relations: ['settings']
     });
     if (!product) {
       throw new NotFoundException('Product not found');
