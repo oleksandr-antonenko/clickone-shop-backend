@@ -1,157 +1,229 @@
-import { Injectable, NestMiddleware, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import * as jwt from 'jsonwebtoken';
 import * as jwksRsa from 'jwks-rsa';
 
+export interface UserInfo {
+  sub: string;
+  type?: 'machine-to-machine';
+  email?: string;
+  name?: string;
+  picture?: string;
+  [key: string]: any;
+}
+
 export interface FastifyRequestWithUser extends FastifyRequest {
-  user?: any;
-  userInfo?: any;
+  user?: jwt.JwtPayload;
+  userInfo?: UserInfo;
   isAuthenticated?: boolean;
 }
 
 @Injectable()
 export class Auth0Middleware implements NestMiddleware {
-  private jwksClient: any;
+  private static readonly BEARER_PREFIX = 'Bearer ';
+  private static readonly JWT_ALGORITHM = 'RS256';
+  private static readonly MACHINE_TO_MACHINE_GRANT_TYPE = 'client-credentials';
+  
+  private readonly logger = new Logger(Auth0Middleware.name);
+  private jwksClient: jwksRsa.JwksClient | null = null;
+  private configurationValid: boolean | null = null;
 
-  private getJwksClient() {
+
+  private validateConfiguration(): boolean {
+    if (this.configurationValid !== null) {
+      return this.configurationValid;
+    }
+
+    const domain = process.env.AUTH0_DOMAIN;
+    const audience = process.env.AUTH0_AUDIENCE;
+
+    if (!domain || !audience) {
+      this.logger.error('AUTH0_DOMAIN and AUTH0_AUDIENCE environment variables must be configured');
+      this.configurationValid = false;
+      return false;
+    }
+
+    this.configurationValid = true;
+    return true;
+  }
+
+  private getJwksClient(): jwksRsa.JwksClient | null {
+    if (!this.validateConfiguration()) {
+      return null;
+    }
+
     if (this.jwksClient) {
       return this.jwksClient;
     }
 
-    const domain = process.env.AUTH0_DOMAIN;
-    if (!domain) {
-      throw new Error('AUTH0_DOMAIN is not configured!');
+    const domain = process.env.AUTH0_DOMAIN!;
+
+    try {
+      this.jwksClient = jwksRsa({
+        jwksUri: `https://${domain}/.well-known/jwks.json`,
+        cache: true,
+        rateLimit: true,
+        jwksRequestsPerMinute: 5,
+      });
+
+      return this.jwksClient;
+    } catch (error) {
+      this.logger.error('Failed to create JWKS client:', error);
+      return null;
     }
-
-    this.jwksClient = jwksRsa({
-      jwksUri: `https://${domain}/.well-known/jwks.json`,
-      cache: true,
-      rateLimit: true,
-      jwksRequestsPerMinute: 5,
-    });
-
-    return this.jwksClient;
   }
 
-  private async getSigningKey(kid: string): Promise<string> {
+  private async getSigningKey(kid: string): Promise<string | null> {
     try {
       const client = this.getJwksClient();
+      if (!client) {
+        return null;
+      }
+
       const key = await client.getSigningKey(kid);
       return key.getPublicKey();
-    } catch (err) {
-      throw new Error('Unable to get signing key');
+    } catch (error) {
+      this.logger.error('Unable to retrieve signing key from JWKS:', error);
+      return null;
     }
   }
 
-  private async verifyToken(token: string): Promise<any> {
+  private async verifyToken(token: string): Promise<jwt.JwtPayload | null> {
     try {
-      const decoded = jwt.decode(token, { complete: true }) as any;
+      if (!this.validateConfiguration()) {
+        return null;
+      }
+
+      const decoded = jwt.decode(token, { complete: true }) as jwt.Jwt;
       
-      if (!decoded || !decoded.header || !decoded.header.kid) {
-        throw new Error('Invalid token');
+      if (!decoded?.header?.kid) {
+        this.logger.warn('Invalid token format - missing kid in header');
+        return null;
       }
 
       const signingKey = await this.getSigningKey(decoded.header.kid);
-      
-      const audience = process.env.AUTH0_AUDIENCE;
-      const issuer = `https://${process.env.AUTH0_DOMAIN}/`;
+      if (!signingKey) {
+        return null;
+      }
+
+      const audience = process.env.AUTH0_AUDIENCE!;
+      const domain = process.env.AUTH0_DOMAIN!;
+      const issuer = `https://${domain}/`;
       
       const verifiedToken = jwt.verify(token, signingKey, {
         audience,
         issuer,
-        algorithms: ['RS256'],
-      });
+        algorithms: [Auth0Middleware.JWT_ALGORITHM],
+      }) as jwt.JwtPayload;
       
       return verifiedToken;
     } catch (error) {
-      throw new UnauthorizedException('Failed to verify token');
+      this.logger.warn('Token verification failed:', error.message);
+      return null;
     }
   }
 
-  private async getUserInfo(token: string): Promise<any> {
-    try {
-      if (!process.env.AUTH0_DOMAIN) {
-        throw new Error('AUTH0_DOMAIN is not configured');
-      }
+  private async getUserInfo(token: string): Promise<UserInfo | null> {
+    if (!this.validateConfiguration()) {
+      return null;
+    }
 
-      const userInfoUrl = `https://${process.env.AUTH0_DOMAIN}/userinfo`;
+    const domain = process.env.AUTH0_DOMAIN!;
+
+    try {
+      const userInfoUrl = `https://${domain}/userinfo`;
       const response = await fetch(userInfoUrl, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `${Auth0Middleware.BEARER_PREFIX}${token}`,
         },
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to fetch user info: ${errorText}`);
+        this.logger.warn(`Failed to fetch user info: ${response.status} ${response.statusText}`);
+        return null;
       }
 
       return await response.json();
     } catch (error) {
-      throw new UnauthorizedException('Failed to fetch user info');
+      this.logger.warn('Failed to retrieve user information:', error.message);
+      return null;
     }
   }
 
-  async use(req: any, res: any, next: () => void) {
-    try {
-      const request = req as FastifyRequestWithUser;
-      
-      request.isAuthenticated = false;
-      
-      if (!request.headers.authorization || !request.headers.authorization.startsWith('Bearer ')) {
+  private createMachineToMachineUserInfo(sub: string): UserInfo {
+    return {
+      sub,
+      type: 'machine-to-machine'
+    };
+  }
 
-        res.code(401).send({
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        });
-        return;
-      }
-      
-      const token = request.headers.authorization.split(' ')[1];
-      
-      if (!token) {
-        res.code(401).send({
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        });
-        return;
-      }
-      
-      
-      try {
-        const decodedToken = await this.verifyToken(token);
-        
-        request.user = decodedToken;
-        request.isAuthenticated = true;
-        
-        if (decodedToken.gty === 'client-credentials') {
-          request.userInfo = { 
-            sub: decodedToken.sub,
-            type: 'machine-to-machine'
-          };
-        } else {
-          try {
-            const userInfo = await this.getUserInfo(token);
-            request.userInfo = userInfo;
-          } catch (userInfoError) {
-            throw new UnauthorizedException('Failed to get user info');
-          }
-        }
-      } catch (authError) {
-        res.code(401).send({
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        });
-        return;
-      }
-      
-      next();
-    } catch (error) {
-      throw new UnauthorizedException('Failed to verify token');
-      next();
+  private extractBearerToken(authHeader?: string): string | null {
+    if (!authHeader?.startsWith(Auth0Middleware.BEARER_PREFIX)) {
+      return null;
     }
+    return authHeader.split(' ')[1] || null;
+  }
+
+  private sendUnauthorizedResponse(reply: FastifyReply, message: string = 'Unauthorized'): void {
+    reply.code(401).send({
+      statusCode: 401,
+      message,
+      error: 'Unauthorized',
+    });
+  }
+
+
+  use(req: FastifyRequest, reply: FastifyReply, next: () => void): void {
+    const request = req as FastifyRequestWithUser;
+
+    request.isAuthenticated = false;
+
+    if (!this.validateConfiguration()) {
+      this.logger.error('Auth0 configuration is invalid - allowing request without authentication');
+      next();
+      return;
+    }
+    
+    const token = this.extractBearerToken(request.headers.authorization);
+    if (!token) {
+      this.sendUnauthorizedResponse(reply);
+      return;
+    }
+    
+    this.processAuthentication(request, reply, token, next).catch((error) => {
+      this.logger.error('Unexpected error in Auth0Middleware:', error);
+      this.sendUnauthorizedResponse(reply, 'Authentication service temporarily unavailable');
+    });
+  }
+
+  private async processAuthentication(
+    req: FastifyRequestWithUser,
+    reply: FastifyReply,
+    token: string,
+    next: () => void
+  ): Promise<void> {
+    const decodedToken = await this.verifyToken(token);
+    if (!decodedToken) {
+      this.sendUnauthorizedResponse(reply, 'Invalid or expired token');
+      return;
+    }
+
+    req.user = decodedToken;
+    req.isAuthenticated = true;
+    
+    if (decodedToken.gty === Auth0Middleware.MACHINE_TO_MACHINE_GRANT_TYPE) {
+      req.userInfo = this.createMachineToMachineUserInfo(decodedToken.sub!);
+    } else {
+      const userInfo = await this.getUserInfo(token);
+      if (userInfo) {
+        req.userInfo = userInfo;
+      } else {
+        req.userInfo = {
+          sub: decodedToken.sub!,
+        };
+      }
+    }
+    
+    next();
   }
 }
