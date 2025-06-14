@@ -57,6 +57,7 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-require-imports':'off',
       '@typescript-eslint/no-floating-promises': 'warn',
+      "linebreak-style": ["error", "unix"],
       '@typescript-eslint/no-unsafe-argument': 'warn'
     },
   },
