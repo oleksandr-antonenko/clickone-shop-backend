@@ -122,7 +122,9 @@ export class CategoryService {
   }
 
   async remove(id: number) {
-    try {
+
+    try 
+    {
       const removedCategory = await this.categoryRepository.findOne({
         where: { id },
       });
