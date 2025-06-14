@@ -127,6 +127,7 @@ export class CategoryService {
     try
      
 
+
     
     {
       const removedCategory = await this.categoryRepository.findOne({
