@@ -4,12 +4,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { Repository } from 'typeorm';
+
 import { CreateCategoryDto } from '../dto/create-category.dto';
 import { UpdateCategoryDto } from '../dto/update-category.dto';
-import { FilterCategoryInterface } from '../interface/filter.interface';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Category } from '../entities/category.entity';
+import { FilterCategoryInterface } from '../interface/filter.interface';
+
 
 
 @Injectable()
@@ -37,8 +40,8 @@ export class CategoryService {
       const category = this.categoryRepository.create(categoryData);
 
       return await this.categoryRepository.save(category);
-    } catch (error: unknown) {
-      throw new BadRequestException(error.message);
+    } catch (error) {
+      throw new BadRequestException(error);
     }
   }
 
@@ -59,8 +62,8 @@ export class CategoryService {
         throw new NotFoundException('No categories found');
       }
       return categories;
-    } catch (error: unknown) {
-      throw new BadRequestException(error.message);
+    } catch (error) {
+      throw new BadRequestException(error);
     }
   }
 
@@ -71,8 +74,8 @@ export class CategoryService {
         throw new NotFoundException('Category not found');
       }
       return category;
-    } catch (error: unknown) {
-      throw new BadRequestException(error.message);
+    } catch (error) {
+      throw new BadRequestException(error);
     }
   }
 
@@ -101,8 +104,8 @@ export class CategoryService {
 
       await this.categoryRepository.update(id, updateData);
       return { message: 'Category updated successfully' };
-    } catch (error: unknown) {
-      throw new BadRequestException(error.message);
+    } catch (error) {
+      throw new BadRequestException(error);
     }
   }
 
@@ -116,8 +119,8 @@ export class CategoryService {
       }
       await this.categoryRepository.delete(id);
       return { message: 'Category deleted successfully' };
-    } catch (error: unknown) {
-      throw new BadRequestException(error.message);
+    } catch (error) {
+      throw new BadRequestException(error);
     }
   }
 }
