@@ -1,17 +1,13 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
   Query,
 } from '@nestjs/common';
-import { CategoryService } from '../service/category.service';
-import { CreateCategoryDto } from '../dto/create-category.dto';
-import { UpdateCategoryDto } from '../dto/update-category.dto';
-import { FilterCategoryDto } from '../dto/filter-category.dto';
 import {
   ApiBody,
   ApiOperation,
@@ -19,6 +15,11 @@ import {
   ApiQuery,
   ApiResponse,
 } from '@nestjs/swagger';
+
+import { CreateCategoryDto } from '../dto/create-category.dto';
+import { FilterCategoryDto } from '../dto/filter-category.dto';
+import { UpdateCategoryDto } from '../dto/update-category.dto';
+import { CategoryService } from '../service/category.service';
 
 @Controller('category')
 export class CategoryController {

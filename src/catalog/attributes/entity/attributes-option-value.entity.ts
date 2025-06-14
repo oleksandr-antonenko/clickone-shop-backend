@@ -5,6 +5,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
 import { Product } from '../../product/entities/product.entity';
 import { AttributeValue } from './attributes-value.entity';
 

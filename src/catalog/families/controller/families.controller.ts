@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
-import { FamiliesService } from '../service/families.service';
-import { CreateProductFamilyDto } from '../dto/product-family.dto';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+
+import { CreateProductFamilyDto } from '../dto/product-family.dto';
+import { FamiliesService } from '../service/families.service';
 
 @Controller('families')
 export class FamiliesController {

@@ -1,3 +1,7 @@
+// import { ProductOptionValue } from "./product-option-value.entity";
+// import { ProductSetting } from "./product-setting.entity";
+import { ApiProperty } from '@nestjs/swagger';
+
 import {
   Column,
   CreateDateColumn,
@@ -7,12 +11,10 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ProductFamily } from '../../families/entity/product-family.entity';
-// import { ProductOptionValue } from "./product-option-value.entity";
-// import { ProductSetting } from "./product-setting.entity";
-import { ApiProperty } from '@nestjs/swagger';
-import { ProductSetting } from '../../settings/entity/product-setting.entity';
+
 import { ProductOptionValue } from '../../attributes/entity/attributes-option-value.entity';
+import { ProductFamily } from '../../families/entity/product-family.entity';
+import { ProductSetting } from '../../settings/entity/product-setting.entity';
 
 @Entity('products')
 export class Product {

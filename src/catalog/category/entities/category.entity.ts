@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+
 import { ProductFamily } from '../../families/entity/product-family.entity';
 
 @Entity('categories')

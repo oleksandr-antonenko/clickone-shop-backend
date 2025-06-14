@@ -6,6 +6,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
 import { ProductOptionValue } from './attributes-option-value.entity';
 import { AttributeType } from './attributes-type.entity';
 

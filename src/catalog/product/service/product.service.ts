@@ -4,11 +4,13 @@ import {
   NotFoundException,
   Query,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+
+import { FastifyRequest } from 'fastify';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { FastifyRequest } from 'fastify';
+import { Repository } from 'typeorm';
+
 import { Product } from '../entities/product.entity';
 import { CreateProduct } from '../interface/create.interface';
 import { Pagination } from '../interface/pagination.interface';
