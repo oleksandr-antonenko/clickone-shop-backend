@@ -35,18 +35,11 @@ export class CategoryService {
 
   async findAll(filterCategoryDto: FilterCategoryInterface) {
     try {
-      const { isActive, parentId } = filterCategoryDto;
-      const query = this.categoryRepository.createQueryBuilder('category');
-      if(isActive !== undefined) {
-        query.andWhere('category.isActive = :isActive', { isActive });
-      }
-      if(parentId !== undefined) {
-        query.andWhere('category.parentId = :parentId', { parentId });
-
-      }
-
-      const categories = await query.getMany();
-
+      const categories = await this.categoryRepository.find({
+        where: filterCategoryDto,
+        relations: ['families']
+      });
+      
       if(!categories.length) {
         throw new NotFoundException('No categories found');
       }
@@ -58,7 +51,10 @@ export class CategoryService {
 
   async findOne(id: number) {
     try {
-      const category = await this.categoryRepository.findOne({ where: { id } });
+      const category = await this.categoryRepository.findOne({ 
+        where: { id },
+        relations: ['families']
+      });
       if(!category) {
         throw new NotFoundException('Category not found');
       }
