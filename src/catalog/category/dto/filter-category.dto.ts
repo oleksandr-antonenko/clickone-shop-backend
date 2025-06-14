@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNumber, IsOptional } from 'class-validator';
+
 import { Transform } from 'class-transformer';
+import { IsBoolean, IsNumber, IsOptional } from 'class-validator';
 
 export class FilterCategoryDto {
   @IsOptional()

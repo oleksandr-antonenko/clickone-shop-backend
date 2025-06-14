@@ -5,13 +5,14 @@ import {
   NotFoundException,
   Logger,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { Repository } from 'typeorm';
+
 import { CreateCategoryDto } from '../dto/create-category.dto';
 import { UpdateCategoryDto } from '../dto/update-category.dto';
-import { FilterCategoryInterface } from '../interface/filter.interface';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Category } from '../entities/category.entity';
-
+import { FilterCategoryInterface } from '../interface/filter.interface';
 
 @Injectable()
 export class CategoryService {
@@ -136,6 +137,6 @@ export class CategoryService {
       return { message: 'Category deleted successfully' };
     } catch (error: unknown) {
       this.handleError(error, 'Failed to delete category');
-    }
+    } 
   }
 }

@@ -6,7 +6,15 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', "node_modules/**", "dist/**", ".husky/**", ".env", "docker-compose.yaml", "Dockerfile"],
+    ignores: [
+      'eslint.config.mjs',
+      'node_modules/**',
+      'dist/**',
+      '.husky/**',
+      '.env',
+      'docker-compose.yaml',
+      'Dockerfile',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

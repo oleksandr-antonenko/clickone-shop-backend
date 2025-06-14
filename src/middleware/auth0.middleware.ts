@@ -3,7 +3,8 @@ import {
   NestMiddleware,
   UnauthorizedException,
 } from '@nestjs/common';
-import { FastifyRequest, FastifyReply } from 'fastify';
+
+import { FastifyReply, FastifyRequest } from 'fastify';
 import * as jwt from 'jsonwebtoken';
 import * as jwksRsa from 'jwks-rsa';
 
