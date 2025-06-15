@@ -2,8 +2,8 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  NotFoundException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -22,15 +22,25 @@ export class CategoryService {
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>
   ) {}
-  private handleError(error: unknown, defaultMessage = 'An unexpected error occurred'): never {
-    const errorMessage = error instanceof Error ? error.message : defaultMessage;
-    
-    this.logger.error(`CategoryService error: ${errorMessage}`, error instanceof Error ? error.stack : undefined);
-    
-    if (error instanceof NotFoundException || error instanceof ConflictException) {
+  private handleError(
+    error: unknown,
+    defaultMessage = 'An unexpected error occurred'
+  ): never {
+    const errorMessage =
+      error instanceof Error ? error.message : defaultMessage;
+
+    this.logger.error(
+      `CategoryService error: ${errorMessage}`,
+      error instanceof Error ? error.stack : undefined
+    );
+
+    if (
+      error instanceof NotFoundException ||
+      error instanceof ConflictException
+    ) {
       throw error;
     }
-    
+
     throw new BadRequestException(errorMessage);
   }
 
@@ -123,14 +133,7 @@ export class CategoryService {
   }
 
   async remove(id: number) {
-
-    try
-     
-
-
-
-    
-    {
+    try {
       const removedCategory = await this.categoryRepository.findOne({
         where: { id },
       });
@@ -141,6 +144,6 @@ export class CategoryService {
       return { message: 'Category deleted successfully' };
     } catch (error: unknown) {
       this.handleError(error, 'Failed to delete category');
-    } 
+    }
   }
 }
