@@ -19,6 +19,7 @@ export class AttributeType {
   @ApiProperty({
     description: 'AttributeValue relationship',
     type: () => [AttributeValue],
+    required: true,
   })
   @OneToMany(() => AttributeValue, (value) => value.type)
   values: AttributeValue[];
