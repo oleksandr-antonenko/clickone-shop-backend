@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateFamilyDto {
+export class CreateAttributesTypeDto {
   @IsString()
   @ApiProperty({
     description: 'Name of the attributes type',
