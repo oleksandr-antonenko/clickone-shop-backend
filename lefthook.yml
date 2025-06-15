@@ -2,21 +2,38 @@ pre-commit:
   parallel: true
   commands:
     eslint:
-      run: npx eslint --fix "{staged_files}"
+      run: npx eslint --fix {staged_files}
       glob:
-        - '*.ts'
-        - '*.js'
-        - '*.tsx'
-        - '*.jsx'
+        - "*.ts"
+        - "*.js"
+        - "*.tsx"
+        - "*.jsx"
+        - "*.mjs"
       stage_fixed: true
+      fail_text: "ESLint failed. Please fix the errors and try again."
 
     prettier:
       run: npx prettier --write {staged_files}
       glob:
-        - '*.ts'
-        - '*.js'
-        - '*.tsx'
-        - '*.jsx'
-        - '*.json'
-        - '*.css'
+        - "*.ts"
+        - "*.js"
+        - "*.tsx"
+        - "*.jsx"
+        - "*.mjs"
+        - "*.json"
+        - "*.yaml"
+        - "*.yml"
+        - "*.md"
       stage_fixed: true
+      fail_text: "Prettier formatting failed. Please check the files and try again."
+
+commit-msg:
+  commands:
+    conventionalcommits:
+      run: |
+        # Simple commit message validation (can be enhanced)
+        if ! grep -qE "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .{1,50}" "$1"; then
+          echo "Invalid commit message format. Use: type(scope): description"
+          echo "Examples: feat: add user authentication, fix(api): handle null response"
+          exit 1
+        fi
