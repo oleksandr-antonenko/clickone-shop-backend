@@ -30,7 +30,7 @@ export class AttributeValue {
   @ApiProperty({
     description: 'AttributeType relationship',
     type: () => [AttributeType],
-    required: true,
+    required: false,
   })
   @ManyToOne(() => AttributeType, (type) => type.values)
   @JoinColumn({ name: 'type_id' })
@@ -39,7 +39,7 @@ export class AttributeValue {
   @ApiProperty({
     description: 'ProductOptionValue relationship',
     type: () => [ProductOptionValue],
-    required: true,
+    required: false,
   })
   @OneToMany(() => ProductOptionValue, (value) => value.optionValue)
   productOptionValues: ProductOptionValue[];
