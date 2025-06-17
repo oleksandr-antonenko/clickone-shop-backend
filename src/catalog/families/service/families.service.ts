@@ -19,10 +19,10 @@ export class FamiliesService {
     @InjectRepository(ProductFamily)
     private productFamilyRepository: Repository<ProductFamily>,
     @InjectRepository(Category)
-    private categoryRepository: Repository<Category>,
+    private categoryRepository: Repository<Category>
   ) {}
   private async findCategoryById(
-    categoryId?: number,
+    categoryId?: number
   ): Promise<Category | null> {
     if (!categoryId) return null;
 
@@ -44,7 +44,7 @@ export class FamiliesService {
   async create(createProductFamilyDto: CreateFamilyDto) {
     try {
       const category = await this.findCategoryById(
-        createProductFamilyDto.categoryId,
+        createProductFamilyDto.categoryId
       );
 
       const productFamily = this.productFamilyRepository.create({
