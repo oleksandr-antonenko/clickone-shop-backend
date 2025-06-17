@@ -20,6 +20,7 @@ export class AttributesValueService {
     @InjectRepository(AttributeType)
     private attributeTypeRepository: Repository<AttributeType>,
   ) {}
+
   private async findTypeById(
     attributesTypeId?: number,
   ): Promise<AttributeType | null> {
@@ -108,7 +109,7 @@ export class AttributesValueService {
     }
   }
 
-  async remove(id: number) {
+  async delete(id: number) {
     const attributeValue = await this.attributeValueRepository.findOne({
       where: { id },
     });
