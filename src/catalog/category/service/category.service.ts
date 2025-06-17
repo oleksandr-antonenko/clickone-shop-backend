@@ -72,10 +72,10 @@ export class CategoryService {
     try {
       const categories = await this.categoryRepository.find({
         where: filterCategoryDto,
-        relations: ['families']
+        relations: ['families'],
       });
-      
-      if(!categories.length) {
+
+      if (!categories.length) {
         throw new NotFoundException('No categories found');
       }
       return categories;
@@ -86,11 +86,11 @@ export class CategoryService {
 
   async findOne(id: number) {
     try {
-      const category = await this.categoryRepository.findOne({ 
+      const category = await this.categoryRepository.findOne({
         where: { id },
-        relations: ['families']
+        relations: ['families'],
       });
-      if(!category) {
+      if (!category) {
         throw new NotFoundException('Category not found');
       }
       return category;

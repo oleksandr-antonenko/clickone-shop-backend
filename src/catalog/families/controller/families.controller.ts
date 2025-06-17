@@ -15,7 +15,6 @@ import { UpdateFamilyDto } from '../dto/update-family.dto';
 @Controller('families')
 export class FamiliesController {
   constructor(private readonly familiesService: FamiliesService) {}
-  constructor(private readonly familiesService: FamiliesService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new product family' })
@@ -59,7 +58,7 @@ export class FamiliesController {
   @ApiResponse({ status: 404, description: 'Product family not found' })
   async update(
     @Param('id') id: string,
-    @Body() updateFamilyDto: UpdateFamilyDto,
+    @Body() updateFamilyDto: UpdateFamilyDto
   ) {
     return this.familiesService.update(+id, updateFamilyDto);
   }
