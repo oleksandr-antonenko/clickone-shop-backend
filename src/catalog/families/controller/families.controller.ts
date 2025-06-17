@@ -15,6 +15,7 @@ import { UpdateFamilyDto } from '../dto/update-family.dto';
 @Controller('families')
 export class FamiliesController {
   constructor(private readonly familiesService: FamiliesService) {}
+  constructor(private readonly familiesService: FamiliesService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new product family' })
