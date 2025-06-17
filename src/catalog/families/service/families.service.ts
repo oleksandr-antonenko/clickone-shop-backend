@@ -25,27 +25,32 @@ export class FamiliesService {
   ): Promise<Category | null> {
     if (!categoryId) return null;
 
-    const category = await this.categoryRepository.findOne({
-      where: { id: categoryId },
-    });
-    if (!category) {
-      throw new NotFoundException(`Category with ID ${categoryId} not found`);
-    }
+    try {
+      const category = await this.categoryRepository.findOne({
+        where: { id: categoryId },
+      });
+      if (!category) {
+        throw new NotFoundException(`Category with ID ${categoryId} not found`);
+      }
 
-    return category;
+      return category;
+    } catch (error) {
+      console.error('FindCategoryById error:', error);
+      throw new BadRequestException('Failed to find category');
+    }
   }
 
   async create(createProductFamilyDto: CreateFamilyDto) {
-    const category = await this.findCategoryById(
-      createProductFamilyDto.categoryId,
-    );
-
-    const productFamily = this.productFamilyRepository.create({
-      ...createProductFamilyDto,
-      category: category ?? undefined,
-    });
-
     try {
+      const category = await this.findCategoryById(
+        createProductFamilyDto.categoryId,
+      );
+
+      const productFamily = this.productFamilyRepository.create({
+        ...createProductFamilyDto,
+        category: category ?? undefined,
+      });
+
       return await this.productFamilyRepository.save(productFamily);
     } catch (error) {
       console.error('CreateProductFamily error:', error);
@@ -54,53 +59,61 @@ export class FamiliesService {
   }
 
   async findAll() {
-    return await this.productFamilyRepository.find({ relations: ['category'] });
+    try {
+      return await this.productFamilyRepository.find({
+        relations: ['category'],
+      });
+    } catch (error) {
+      console.error('FindAllProductFamilies error:', error);
+      throw new BadRequestException('Failed to find product families');
+    }
   }
 
   async findOne(id: number) {
-    if (!id) {
-      throw new BadRequestException('ID is required');
+    try {
+      const family = await this.productFamilyRepository.findOne({
+        where: {
+          id,
+        },
+        relations: ['category'],
+      });
+
+      if (!family) {
+        throw new NotFoundException(`Product family with ID ${id} not found`);
+      }
+
+      return family;
+    } catch (error) {
+      console.error('FindOneProductFamily error:', error);
+      throw new BadRequestException('Failed to find product family');
     }
-
-    const family = await this.productFamilyRepository.findOne({
-      where: {
-        id,
-      },
-      relations: ['category'],
-    });
-
-    if (!family) {
-      throw new NotFoundException(`Product family with ID ${id} not found`);
-    }
-
-    return family;
   }
 
   async update(id: number, @Body() formData: UpdateFamilyDto) {
-    const family = await this.productFamilyRepository.findOne({
-      where: { id },
-    });
-
-    if (!family)
-      throw new NotFoundException(`Product family with ID ${id} not found`);
-
-    const category = await this.findCategoryById(formData.categoryId);
-
-    const updateDto: UpdateFamily = {
-      name: formData.name ?? family.name,
-      description: formData.description ?? family.description,
-    };
-
-    const productFamily = this.productFamilyRepository.create({
-      ...updateDto,
-      category: category ?? undefined,
-    });
-
-    const updated = this.productFamilyRepository.merge(family, {
-      ...productFamily,
-    });
-
     try {
+      const family = await this.productFamilyRepository.findOne({
+        where: { id },
+      });
+
+      if (!family)
+        throw new NotFoundException(`Product family with ID ${id} not found`);
+
+      const category = await this.findCategoryById(formData.categoryId);
+
+      const updateDto: UpdateFamily = {
+        name: formData.name ?? family.name,
+        description: formData.description ?? family.description,
+      };
+
+      const productFamily = this.productFamilyRepository.create({
+        ...updateDto,
+        category: category ?? undefined,
+      });
+
+      const updated = this.productFamilyRepository.merge(family, {
+        ...productFamily,
+      });
+
       return await this.productFamilyRepository.save(updated);
     } catch (error) {
       console.error('UpdateProductFamily error:', error);
@@ -109,14 +122,19 @@ export class FamiliesService {
   }
 
   async remove(id: number) {
-    const family = await this.productFamilyRepository.findOne({
-      where: { id },
-    });
+    try {
+      const family = await this.productFamilyRepository.findOne({
+        where: { id },
+      });
 
-    if (!family)
-      throw new NotFoundException(`Product family with ID ${id} not found`);
-    await this.productFamilyRepository.delete(id);
+      if (!family)
+        throw new NotFoundException(`Product family with ID ${id} not found`);
+      await this.productFamilyRepository.delete(id);
 
-    return { message: 'Product family deleted successfully' };
+      return { message: 'Product family deleted successfully' };
+    } catch (error) {
+      console.error('RemoveProductFamily error:', error);
+      throw new BadRequestException('Failed to delete product family');
+    }
   }
 }
