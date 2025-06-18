@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -21,9 +22,11 @@ export class FamiliesService {
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>
   ) {}
+  private readonly logger = new Logger(FamiliesService.name);
+
   private async findCategoryById(
     categoryId?: number
-  ): Promise<Category | null> {
+  ): Promise<Category | null | undefined> {
     if (!categoryId) return null;
 
     try {
@@ -36,7 +39,11 @@ export class FamiliesService {
 
       return category;
     } catch (error) {
-      console.error('FindCategoryById error:', error);
+      const err = error as Error;
+      this.logger.error(
+        `FindCategoryById error with ID ${categoryId}: ${err.message}`,
+        err.stack
+      );
       throw new BadRequestException('Failed to find category');
     }
   }
@@ -54,7 +61,11 @@ export class FamiliesService {
 
       return await this.productFamilyRepository.save(productFamily);
     } catch (error) {
-      console.error('CreateProductFamily error:', error);
+      const err = error as Error;
+      this.logger.error(
+        `CreateProductFamily error:: ${err.message}`,
+        err.stack
+      );
       throw new BadRequestException('Failed to create product family');
     }
   }
@@ -65,7 +76,11 @@ export class FamiliesService {
         relations: ['category'],
       });
     } catch (error) {
-      console.error('FindAllProductFamilies error:', error);
+      const err = error as Error;
+      this.logger.error(
+        `FindAllProductFamilies error:: ${err.message}`,
+        err.stack
+      );
       throw new BadRequestException('Failed to find product families');
     }
   }
@@ -85,7 +100,11 @@ export class FamiliesService {
 
       return family;
     } catch (error) {
-      console.error('FindOneProductFamily error:', error);
+      const err = error as Error;
+      this.logger.error(
+        `FindOneProductFamily error:: ${err.message}`,
+        err.stack
+      );
       throw new BadRequestException('Failed to find product family');
     }
   }
@@ -117,7 +136,11 @@ export class FamiliesService {
 
       return await this.productFamilyRepository.save(updated);
     } catch (error) {
-      console.error('UpdateProductFamily error:', error);
+      const err = error as Error;
+      this.logger.error(
+        `UpdateProductFamily error:: ${err.message}`,
+        err.stack
+      );
       throw new BadRequestException('Failed to update product family');
     }
   }
@@ -134,7 +157,11 @@ export class FamiliesService {
 
       return { message: 'Product family deleted successfully' };
     } catch (error) {
-      console.error('RemoveProductFamily error:', error);
+      const err = error as Error;
+      this.logger.error(
+        `RemoveProductFamily error:: ${err.message}`,
+        err.stack
+      );
       throw new BadRequestException('Failed to delete product family');
     }
   }
