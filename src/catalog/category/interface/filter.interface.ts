@@ -1,4 +1,4 @@
 export interface FilterCategoryInterface {
-    isActive?: boolean;
-    parentId?: number;
+  isActive?: boolean;
+  parentId?: number;
 }

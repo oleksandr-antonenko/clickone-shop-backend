@@ -5,6 +5,7 @@
   "printWidth": 80,
   "proseWrap": "always",
   "tabWidth": 2,
+  "plugins": ["@trivago/prettier-plugin-sort-imports"],
   "importOrderParserPlugins": ["typescript", "decorators-legacy"],
   "importOrder": [
     "^@nestjs/(.*)$",
@@ -23,6 +24,5 @@
   ],
   "importOrderSeparation": true,
   "importOrderSortSpecifiers": true,
-  "endOfLine": "lf",
-  "plugins": ["@trivago/prettier-plugin-sort-imports"]
+  "endOfLine": "lf"
 }
