@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Param,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -48,7 +49,7 @@ export class FamiliesService {
     }
   }
 
-  async create(createProductFamilyDto: CreateFamilyDto) {
+  async create(@Body() createProductFamilyDto: CreateFamilyDto) {
     try {
       const category = await this.findCategoryById(
         createProductFamilyDto.categoryId
@@ -85,7 +86,7 @@ export class FamiliesService {
     }
   }
 
-  async findOne(id: number) {
+  async findOne(@Param('id') id: number) {
     try {
       const family = await this.productFamilyRepository.findOne({
         where: {
@@ -109,7 +110,10 @@ export class FamiliesService {
     }
   }
 
-  async update(id: number, @Body() formData: UpdateFamilyDto) {
+  async update(
+    @Param('id') id: number,
+    @Body() updateFamilyDto: UpdateFamilyDto
+  ) {
     try {
       const family = await this.productFamilyRepository.findOne({
         where: { id },
@@ -118,11 +122,11 @@ export class FamiliesService {
       if (!family)
         throw new NotFoundException(`Product family with ID ${id} not found`);
 
-      const category = await this.findCategoryById(formData.categoryId);
+      const category = await this.findCategoryById(updateFamilyDto.categoryId);
 
       const updateDto: UpdateFamily = {
-        name: formData.name ?? family.name,
-        description: formData.description ?? family.description,
+        name: updateFamilyDto.name ?? family.name,
+        description: updateFamilyDto.description ?? family.description,
       };
 
       const productFamily = this.productFamilyRepository.create({
@@ -145,7 +149,7 @@ export class FamiliesService {
     }
   }
 
-  async remove(id: number) {
+  async remove(@Param('id') id: number) {
     try {
       const family = await this.productFamilyRepository.findOne({
         where: { id },
