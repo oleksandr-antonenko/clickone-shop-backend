@@ -74,7 +74,7 @@ export class FamiliesService {
   async findAll() {
     try {
       return await this.productFamilyRepository.find({
-        relations: ['category'],
+        relations: ['category', 'products'],
       });
     } catch (error) {
       const err = error as Error;
@@ -92,7 +92,7 @@ export class FamiliesService {
         where: {
           id,
         },
-        relations: ['category'],
+        relations: ['category', 'products'],
       });
 
       if (!family) {
