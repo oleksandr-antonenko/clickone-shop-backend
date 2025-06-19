@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Param,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductSetting } from '../entity/product-setting.entity';
@@ -47,7 +48,7 @@ export class SettingsService {
     }
   }
 
-  async create(createSettingDto: CreateSettingDto) {
+  async create(@Body() createSettingDto: CreateSettingDto) {
     try {
       const product = await this.findProductById(createSettingDto.productId);
 
@@ -82,7 +83,7 @@ export class SettingsService {
     }
   }
 
-  async findOne(id: number) {
+  async findOne(@Param('id') id: number) {
     try {
       const setting = await this.settingsServiceRepository.findOne({
         where: {
@@ -106,7 +107,10 @@ export class SettingsService {
     }
   }
 
-  async update(id: number, @Body() formData: UpdateSettingDto) {
+  async update(
+    @Param('id') id: number,
+    @Body() updateSettingDto: UpdateSettingDto
+  ) {
     try {
       const setting = await this.settingsServiceRepository.findOne({
         where: { id },
@@ -115,11 +119,11 @@ export class SettingsService {
       if (!setting)
         throw new NotFoundException(`Product setting with ID ${id} not found`);
 
-      const product = await this.findProductById(formData.productId);
+      const product = await this.findProductById(updateSettingDto.productId);
 
       const updateDto: UpdateSetting = {
-        key: formData.key ?? setting.key,
-        value: formData.value ?? setting.value,
+        key: updateSettingDto.key ?? setting.key,
+        value: updateSettingDto.value ?? setting.value,
       };
 
       const productSetting = this.settingsServiceRepository.create({
@@ -142,7 +146,7 @@ export class SettingsService {
     }
   }
 
-  async remove(id: number) {
+  async remove(@Param('id') id: number) {
     try {
       const setting = await this.settingsServiceRepository.findOne({
         where: { id },
