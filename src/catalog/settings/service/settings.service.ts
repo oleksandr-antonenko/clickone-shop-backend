@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -20,101 +21,145 @@ export class SettingsService {
     @InjectRepository(Product)
     private productRepository: Repository<Product>
   ) {}
-  private async findProductById(productId?: number): Promise<Product | null> {
+  private readonly logger = new Logger(SettingsService.name);
+
+  private async findProductById(
+    productId?: number
+  ): Promise<Product | null | undefined> {
     if (!productId) return null;
 
-    const product = await this.productRepository.findOne({
-      where: { id: productId },
-    });
-    if (!product) {
-      throw new NotFoundException(`Category with ID ${productId} not found`);
-    }
+    try {
+      const product = await this.productRepository.findOne({
+        where: { id: productId },
+      });
+      if (!product) {
+        throw new NotFoundException(`Product with ID ${productId} not found`);
+      }
 
-    return product;
+      return product;
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `FindProductById error with ID ${productId}: ${err.message}`,
+        err.stack
+      );
+      throw new BadRequestException('Failed to find product');
+    }
   }
 
   async create(createSettingDto: CreateSettingDto) {
-    const product = await this.findProductById(createSettingDto.productId);
-
-    const productSetting = this.settingsServiceRepository.create({
-      ...createSettingDto,
-      product: product ?? undefined,
-    });
-
     try {
+      const product = await this.findProductById(createSettingDto.productId);
+
+      const productSetting = this.settingsServiceRepository.create({
+        ...createSettingDto,
+        product: product ?? undefined,
+      });
+
       return await this.settingsServiceRepository.save(productSetting);
     } catch (error) {
-      console.error('CreateProductFamily error:', error);
-      throw new BadRequestException('Failed to create product family');
+      const err = error as Error;
+      this.logger.error(
+        `CreateProductSetting error:: ${err.message}`,
+        err.stack
+      );
+      throw new BadRequestException('Failed to create product setting');
     }
   }
 
   async findAll() {
-    return await this.settingsServiceRepository.find({
-      relations: ['product'],
-    });
+    try {
+      return await this.settingsServiceRepository.find({
+        relations: ['product'],
+      });
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `FindAllProductSettings error:: ${err.message}`,
+        err.stack
+      );
+      throw new BadRequestException('Failed to find product settings');
+    }
   }
 
   async findOne(id: number) {
-    if (!id) {
-      throw new BadRequestException('ID is required');
+    try {
+      const setting = await this.settingsServiceRepository.findOne({
+        where: {
+          id,
+        },
+        relations: ['product'],
+      });
+
+      if (!setting) {
+        throw new NotFoundException(`Setting with ID ${id} not found`);
+      }
+
+      return setting;
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `FindOneProductSetting error:: ${err.message}`,
+        err.stack
+      );
+      throw new BadRequestException('Failed to find product setting');
     }
-
-    const setting = await this.settingsServiceRepository.findOne({
-      where: {
-        id,
-      },
-      relations: ['product'],
-    });
-
-    if (!setting) {
-      throw new NotFoundException(`Setting with ID ${id} not found`);
-    }
-
-    return setting;
   }
 
   async update(id: number, @Body() formData: UpdateSettingDto) {
-    const setting = await this.settingsServiceRepository.findOne({
-      where: { id },
-    });
-
-    if (!setting)
-      throw new NotFoundException(`Product setting with ID ${id} not found`);
-
-    const product = await this.findProductById(formData.productId);
-
-    const updateDto: UpdateSetting = {
-      key: formData.key ?? setting.key,
-      value: formData.value ?? setting.value,
-    };
-
-    const productSetting = this.settingsServiceRepository.create({
-      ...updateDto,
-      product: product ?? undefined,
-    });
-
-    const updated = this.settingsServiceRepository.merge(setting, {
-      ...productSetting,
-    });
-
     try {
+      const setting = await this.settingsServiceRepository.findOne({
+        where: { id },
+      });
+
+      if (!setting)
+        throw new NotFoundException(`Product setting with ID ${id} not found`);
+
+      const product = await this.findProductById(formData.productId);
+
+      const updateDto: UpdateSetting = {
+        key: formData.key ?? setting.key,
+        value: formData.value ?? setting.value,
+      };
+
+      const productSetting = this.settingsServiceRepository.create({
+        ...updateDto,
+        product: product ?? undefined,
+      });
+
+      const updated = this.settingsServiceRepository.merge(setting, {
+        ...productSetting,
+      });
+
       return await this.settingsServiceRepository.save(updated);
     } catch (error) {
-      console.error('UpdateProductFamily error:', error);
-      throw new BadRequestException('Failed to update product family');
+      const err = error as Error;
+      this.logger.error(
+        `UpdateProductSetting error:: ${err.message}`,
+        err.stack
+      );
+      throw new BadRequestException('Failed to update product setting');
     }
   }
 
   async remove(id: number) {
-    const setting = await this.settingsServiceRepository.findOne({
-      where: { id },
-    });
+    try {
+      const setting = await this.settingsServiceRepository.findOne({
+        where: { id },
+      });
 
-    if (!setting)
-      throw new NotFoundException(`Product setting with ID ${id} not found`);
-    await this.settingsServiceRepository.delete(id);
+      if (!setting)
+        throw new NotFoundException(`Product setting with ID ${id} not found`);
+      await this.settingsServiceRepository.delete(id);
 
-    return { message: 'Product setting deleted successfully' };
+      return { message: 'Product setting deleted successfully' };
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `RemoveProductSettingerror:: ${err.message}`,
+        err.stack
+      );
+      throw new BadRequestException('Failed to delete product setting');
+    }
   }
 }
