@@ -18,7 +18,7 @@ export class SettingsService {
     @InjectRepository(ProductSetting)
     private settingsServiceRepository: Repository<ProductSetting>,
     @InjectRepository(Product)
-    private productRepository: Repository<Product>,
+    private productRepository: Repository<Product>
   ) {}
   private async findProductById(productId?: number): Promise<Product | null> {
     if (!productId) return null;

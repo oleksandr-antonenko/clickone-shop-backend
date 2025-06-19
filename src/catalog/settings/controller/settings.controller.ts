@@ -58,7 +58,7 @@ export class SettingsController {
   @ApiResponse({ status: 404, description: 'Product setting not found' })
   async update(
     @Param('id') id: string,
-    @Body() updateSettingDto: UpdateSettingDto,
+    @Body() updateSettingDto: UpdateSettingDto
   ) {
     return this.settingsService.update(+id, updateSettingDto);
   }

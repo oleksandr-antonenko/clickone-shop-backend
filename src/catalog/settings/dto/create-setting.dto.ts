@@ -25,7 +25,7 @@ export class CreateSettingDto {
   @ApiProperty({ description: 'Product ID', example: 1, required: false })
   @IsOptional()
   @Transform(({ value }: { value: string }) =>
-    value ? parseInt(value) : undefined,
+    value ? parseInt(value) : undefined
   )
   productId?: number;
 }
