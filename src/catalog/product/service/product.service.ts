@@ -1,9 +1,16 @@
-import { BadRequestException, Injectable, NotFoundException, Query } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  Query,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+
+import { FastifyRequest } from 'fastify';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { FastifyRequest } from 'fastify';
+import { Repository } from 'typeorm';
+
 import { Product } from '../entities/product.entity';
 import { CreateProduct } from '../interface/create.interface';
 import { Pagination } from '../interface/pagination.interface';
@@ -11,18 +18,18 @@ import { UpdateProduct } from '../interface/updateProduct.interface';
 
 @Injectable()
 export class ProductService {
-  constructor(@InjectRepository(Product) private readonly productRepository: Repository<Product>) {
-
+  constructor(
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>
+  ) {
     this.ensureUploadsDir();
   }
 
   async createProductFromRequest(req: FastifyRequest): Promise<Product> {
-
     const { formData, file } = await this.parseMultipartRequest(req);
-    
 
     const createInput = this.transformFormDataToDto(formData);
-    
+
     return this.createProducts(createInput, file);
   }
 
@@ -32,7 +39,7 @@ export class ProductService {
   }> {
     const formData: Record<string, any> = {};
     let file: any = null;
-    
+
     for await (const part of (req as any).parts()) {
       if (part.type === 'field') {
         formData[part.fieldname] = part.value;
@@ -40,7 +47,7 @@ export class ProductService {
         file = part;
       }
     }
-    
+
     return { formData, file };
   }
 
@@ -53,11 +60,10 @@ export class ProductService {
       familyId: formData.familyId ? parseInt(formData.familyId) : undefined,
     };
   }
-  
+
   async createProducts(createProductDto: CreateProduct, file?: any) {
-    
     let imagePath: string | undefined = undefined;
-    
+
     if (file) {
       imagePath = await this.saveFileToDisc(file);
     }
@@ -68,7 +74,7 @@ export class ProductService {
     };
 
     const product = this.productRepository.create(productData);
-    
+
     try {
       const savedProduct = await this.productRepository.save(product);
       return savedProduct;
@@ -86,11 +92,9 @@ export class ProductService {
     const fileExtension = path.extname(file.filename);
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}${fileExtension}`;
     const filePath = path.join(uploadsDir, fileName);
-    
 
     const buffer = await file.toBuffer();
     await fs.writeFile(filePath, buffer);
-    
 
     return path.join('uploads', 'products', fileName);
   }
@@ -117,26 +121,26 @@ export class ProductService {
     const page = parseInt(String(query.page || '1')) || 1;
     const limit = parseInt(String(query.limit || '10')) || 10;
     const skip = (page - 1) * limit;
-    
+
     const [products, total] = await this.productRepository.findAndCount({
       skip,
       take: limit,
       relations: ['settings'],
       order:{
         id: 'ASC',
-      }
-    })
+      },
+    });
 
     return {
       products,
       total,
       page,
       limit,
-    }
+    };
   }
 
   async findOne(id: number) {
-    if(!id) {
+    if (!id) {
       throw new BadRequestException('ID is required');
     }
     const product = await this.productRepository.findOne({
@@ -154,13 +158,11 @@ export class ProductService {
   async updateProduct(id: number, req: FastifyRequest) {
     if (!id) throw new BadRequestException('ID is required');
 
-
     const { formData, file } = await this.parseMultipartRequest(req);
 
-
     const product = await this.productRepository.findOne({ where: { id } });
-    if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
-
+    if (!product)
+      throw new NotFoundException(`Product with ID ${id} not found`);
 
     const updateDto: UpdateProduct = {
       name: formData.name ?? product.name,
@@ -170,10 +172,8 @@ export class ProductService {
       familyId: formData.familyId ? parseInt(formData.familyId) : undefined,
     };
 
-
     let imagePath = product.image;
     if (file) {
-
       if (product.image) {
         await this.deleteFile(product.image);
       }
@@ -181,14 +181,17 @@ export class ProductService {
       imagePath = await this.saveFileToDisc(file);
     }
 
-
-    const updated = this.productRepository.merge(product, { ...updateDto, image: imagePath });
+    const updated = this.productRepository.merge(product, {
+      ...updateDto,
+      image: imagePath,
+    });
     return await this.productRepository.save(updated);
   }
 
   async remove(id: number) {
     const product = await this.productRepository.findOne({ where: { id } });
-    if (!product) throw new NotFoundException(`Product with ID ${id} not found`);
+    if (!product)
+      throw new NotFoundException(`Product with ID ${id} not found`);
     await this.productRepository.delete(id);
     return { message: 'Product deleted successfully' };
   }

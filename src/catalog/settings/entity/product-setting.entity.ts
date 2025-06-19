@@ -47,3 +47,4 @@ export class ProductSetting {
   @JoinColumn({ name: 'product_id' })
   product: Product;
 }
+
