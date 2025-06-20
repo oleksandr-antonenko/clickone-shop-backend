@@ -1,4 +1,5 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
 import { AttributeValue } from './attributes-value.entity';
 
 @Entity('attribute_types')

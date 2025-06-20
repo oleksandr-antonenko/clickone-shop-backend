@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AttributesService } from './service/attributes.service';
-import { AttributesController } from './controller/attributes.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { ProductOptionValue } from '~/catalog/attributes/entity/attributes-option-value.entity';
+
+import { AttributesController } from './controller/attributes.controller';
+import { AttributesService } from './service/attributes.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ProductOptionValue])],

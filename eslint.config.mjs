@@ -35,30 +35,30 @@ export default tseslint.config(
           singleQuote: true,
         },
         {
-          usePrettierrc: false,
+          usePrettierrc: true,
         },
       ],
-      "no-console": [
-        "warn",
+      'no-console': [
+        'warn',
         {
-          "allow": ["warn", "error"]
-        }
+          allow: ['warn', 'error'],
+        },
       ],
-      "import/order": [
-        "off",
+      'import/order': [
+        'off',
         {
           groups: [
-            ["builtin", "external", "internal"],
-            ["parent", "sibling", "index"],
+            ['builtin', 'external', 'internal'],
+            ['parent', 'sibling', 'index'],
           ],
-          "newlines-between": "always",
+          'newlines-between': 'always',
         },
       ],
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-require-imports':'off',
+      '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
-      "linebreak-style": ["error", "unix"],
-      '@typescript-eslint/no-unsafe-argument': 'warn'
+      'linebreak-style': ['error', 'unix'],
+      '@typescript-eslint/no-unsafe-argument': 'warn',
     },
-  },
+  }
 );

@@ -5,6 +5,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
 import { Product } from '../../product/entities/product.entity';
 import { AttributeValue } from './attributes-value.entity';
 
@@ -14,7 +15,7 @@ export class ProductOptionValue {
   id: number;
 
   @Column()
-  valueId: number;
+  valueId: string;
 
   @ManyToOne(() => Product, (product) => product.options)
   @JoinColumn({ name: 'product_id' })

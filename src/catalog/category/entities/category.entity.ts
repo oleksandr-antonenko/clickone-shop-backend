@@ -1,5 +1,13 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { ProductFamily } from "../../families/entity/product-family.entity";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+
+import { ProductFamily } from '../../families/entity/product-family.entity';
 
 @Entity('categories')
 export class Category {
@@ -12,25 +20,25 @@ export class Category {
   @Column({ unique: true })
   slug: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   description: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   image: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   parentId: number;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   isActive: boolean;
 
-  @Column({default: 0})
+  @Column({ default: 0 })
   sortOrder: number;
 
-  @CreateDateColumn({type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @UpdateDateColumn({type: 'timestamp', default: () => 'CURRENT_TIMESTAMP'})
+  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 
   @OneToMany(() => ProductFamily, (family) => family.category)
