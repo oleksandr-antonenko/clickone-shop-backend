@@ -15,6 +15,11 @@ async function bootstrap() {
   
   const PORT = process.env.PORT ?? 3310;
 
+  await app.register(require('@fastify/cors'), {
+    origin: ['http://localhost:5173'],
+    credentials: true,
+  });
+
   await app.register(require('@fastify/multipart'), {
     limits: {
       fileSize: 5 * 1024 * 1024, 
