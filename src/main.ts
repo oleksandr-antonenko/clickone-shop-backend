@@ -6,6 +6,9 @@ import {
 } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
+import fastifyCors from '@fastify/cors';
+import fastifyMultipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
 import { AppModule } from '~/app.module';
 
 async function bootstrap() {
@@ -16,18 +19,18 @@ async function bootstrap() {
 
   const PORT = process.env.PORT ?? 3310;
 
-  await app.register(require('@fastify/cors'), {
+  await app.register(fastifyCors, {
     origin: ['http://localhost:5173'],
     credentials: true,
   });
 
-  await app.register(require('@fastify/multipart'), {
+  await app.register(fastifyMultipart, {
     limits: {
       fileSize: 5 * 1024 * 1024,
     },
   });
 
-  await app.register(require('@fastify/static'), {
+  await app.register(fastifyStatic, {
     root: process.cwd(),
     prefix: '/uploads/',
     constraints: { host: 'localhost' },
