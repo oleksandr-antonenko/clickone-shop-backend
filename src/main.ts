@@ -6,7 +6,6 @@ import {
 } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-import fastifyCors from '@fastify/cors';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import { AppModule } from '~/app.module';
@@ -19,8 +18,19 @@ async function bootstrap() {
 
   const PORT = process.env.PORT ?? 3310;
 
-  await app.register(fastifyCors, {
-    origin: ['http://localhost:5173'],
+  app.enableCors({
+    origin: 'http://localhost:5173',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'Content-Length',
+      'X-File-Name',
+    ],
+    exposedHeaders: ['Content-Length', 'X-File-Name'],
     credentials: true,
   });
 
