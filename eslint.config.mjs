@@ -6,7 +6,15 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: [
+      'eslint.config.mjs',
+      'node_modules/**',
+      'dist/**',
+      '.husky/**',
+      '.env',
+      'docker-compose.yaml',
+      'Dockerfile',
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -30,9 +38,31 @@ export default tseslint.config(
       'prettier/prettier': [
         'warn',
         {
-          endOfLine: 'lf',
-          parser: 'typescript',
+          semi: true,
+          trailingComma: 'es5',
           singleQuote: true,
+          printWidth: 80,
+          proseWrap: 'always',
+          tabWidth: 2,
+          importOrderParserPlugins: ['typescript', 'decorators-legacy'],
+          importOrder: [
+            '^@nestjs/(.*)$',
+            '<THIRD_PARTY_MODULES>',
+            '^@/lib/(.*)$',
+            '^@/components/(.*)$',
+            '^@/assets/(.*)$',
+            '^@/app/(.*)$',
+            '^@/utils/(.*)$',
+            '^@/services/(.*)$',
+            '^@/models/(.*)$',
+            '^@/controllers/(.*)$',
+            '^@/middlewares/(.*)$',
+            '^@/config/(.*)$',
+            '^[./]',
+          ],
+          importOrderSeparation: true,
+          importOrderSortSpecifiers: true,
+          endOfLine: 'lf',
         },
         {
           usePrettierrc: true,
@@ -54,6 +84,7 @@ export default tseslint.config(
           'newlines-between': 'always',
         },
       ],
+      'import/order': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',

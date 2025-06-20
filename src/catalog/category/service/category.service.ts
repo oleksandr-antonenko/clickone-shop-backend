@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,10 +16,34 @@ import { FilterCategoryInterface } from '../interface/filter.interface';
 
 @Injectable()
 export class CategoryService {
+  private readonly logger = new Logger(CategoryService.name);
+
   constructor(
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>
   ) {}
+  private handleError(
+    error: unknown,
+    defaultMessage = 'An unexpected error occurred'
+  ): never {
+    const errorMessage =
+      error instanceof Error ? error.message : defaultMessage;
+
+    this.logger.error(
+      `CategoryService error: ${errorMessage}`,
+      error instanceof Error ? error.stack : undefined
+    );
+
+    if (
+      error instanceof NotFoundException ||
+      error instanceof ConflictException
+    ) {
+      throw error;
+    }
+
+    throw new BadRequestException(errorMessage);
+  }
+
   async create(createCategoryDto: CreateCategoryDto) {
     try {
       const categoryBySlug = await this.categoryRepository.findOne({
@@ -38,8 +63,8 @@ export class CategoryService {
       const category = this.categoryRepository.create(categoryData);
 
       return await this.categoryRepository.save(category);
-    } catch (error) {
-      throw new BadRequestException(error.message);
+    } catch (error: unknown) {
+      this.handleError(error, 'Failed to create category');
     }
   }
 
@@ -60,8 +85,8 @@ export class CategoryService {
         throw new NotFoundException('No categories found');
       }
       return categories;
-    } catch (error) {
-      throw new BadRequestException(error.message);
+    } catch (error: unknown) {
+      this.handleError(error, 'Failed to fetch categories');
     }
   }
 
@@ -72,8 +97,8 @@ export class CategoryService {
         throw new NotFoundException('Category not found');
       }
       return category;
-    } catch (error) {
-      throw new BadRequestException(error.message);
+    } catch (error: unknown) {
+      this.handleError(error, 'Failed to fetch category');
     }
   }
 
@@ -102,8 +127,8 @@ export class CategoryService {
 
       await this.categoryRepository.update(id, updateData);
       return { message: 'Category updated successfully' };
-    } catch (error) {
-      throw new BadRequestException(error.message);
+    } catch (error: unknown) {
+      this.handleError(error, 'Failed to update category');
     }
   }
 
@@ -117,8 +142,8 @@ export class CategoryService {
       }
       await this.categoryRepository.delete(id);
       return { message: 'Category deleted successfully' };
-    } catch (error) {
-      throw new BadRequestException(error.message);
+    } catch (error: unknown) {
+      this.handleError(error, 'Failed to delete category');
     }
   }
 }
