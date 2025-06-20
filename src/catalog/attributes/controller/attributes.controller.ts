@@ -12,4 +12,16 @@ export class AttributesController {
   findOne(@Param() valueId: string) {
     return this.attributesService.findOne(valueId);
   }
+
+  @Post()
+  create(
+    currentProduct: Product,
+    @Body('attribute_option') creatingAttribute: CreateAttributeDto
+  ): Promise<ProductOptionValue> {
+    return this.attributesService.create(creatingAttribute, currentProduct);
+  }
+  @Delete(':id')
+  delete(@Param() valueId: string) {
+    return this.attributesService.delete(valueId);
+  }
 }

@@ -2,7 +2,7 @@ pre-commit:
   parallel: true
   commands:
     eslint:
-      run: npx eslint --fix {staged_files}
+      run: npx eslint --fix --no-warn-ignored {staged_files}
       glob:
         - '*.ts'
         - '*.js'
