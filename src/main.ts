@@ -1,18 +1,19 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
-  NestFastifyApplication,
   FastifyAdapter,
+  NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { AppModule } from '~/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
+
+import { AppModule } from '~/app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ ignoreTrailingSlash: true }),
+    new FastifyAdapter({ ignoreTrailingSlash: true })
   );
-  
+
   const PORT = process.env.PORT ?? 3310;
 
   await app.register(require('@fastify/cors'), {
@@ -22,21 +23,21 @@ async function bootstrap() {
 
   await app.register(require('@fastify/multipart'), {
     limits: {
-      fileSize: 5 * 1024 * 1024, 
+      fileSize: 5 * 1024 * 1024,
     },
   });
 
   await app.register(require('@fastify/static'), {
     root: process.cwd(),
     prefix: '/uploads/',
-    constraints: { host: 'localhost' }
+    constraints: { host: 'localhost' },
   });
 
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
       whitelist: true,
-    }),
+    })
   );
 
   app.setGlobalPrefix('api');
