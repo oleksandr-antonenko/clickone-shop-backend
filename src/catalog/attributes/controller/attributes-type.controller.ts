@@ -23,7 +23,7 @@ export class AttributesTypeController {
   })
   @ApiBody({ type: CreateAttributesTypeDto })
   async create(@Body() createAttributesTypeDto: CreateAttributesTypeDto) {
-    return this.attributesService.createType(createAttributesTypeDto);
+    return this.attributesService.create(createAttributesTypeDto);
   }
 
   @Get()
@@ -33,7 +33,7 @@ export class AttributesTypeController {
     description: 'List of attributes types',
   })
   async findAll() {
-    return this.attributesService.findAllTypes();
+    return this.attributesService.findAll();
   }
 
   @Get(':id')
@@ -43,7 +43,7 @@ export class AttributesTypeController {
     description: 'Attributes type found',
   })
   async findOne(@Body('id') id: number) {
-    return this.attributesService.findTypeById(id);
+    return this.attributesService.findOne(id);
   }
 
   @Patch(':id')
@@ -54,7 +54,7 @@ export class AttributesTypeController {
   })
   async update(
     @Param('id') id: string,
-    @Body() updateAttributesTypeDto: CreateAttributesTypeDto,
+    @Body() updateAttributesTypeDto: CreateAttributesTypeDto
   ) {
     return this.attributesService.updateType(+id, updateAttributesTypeDto);
   }
@@ -66,6 +66,6 @@ export class AttributesTypeController {
     description: 'Attributes type deleted successfully',
   })
   async remove(@Param('id') id: string) {
-    return this.attributesService.deleteType(+id);
+    return this.attributesService.remove(+id);
   }
 }

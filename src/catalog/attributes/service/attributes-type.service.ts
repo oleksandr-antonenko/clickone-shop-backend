@@ -1,4 +1,9 @@
-import { BadRequestException, Body, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { AttributeType } from '../entity/attributes-type.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,11 +13,11 @@ import { CreateAttributesTypeDto } from '../dto/create-attributes-type.dto';
 export class AttributesTypeService {
   constructor(
     @InjectRepository(AttributeType)
-    private attributesTypeRepository: Repository<AttributeType>,
+    private attributesTypeRepository: Repository<AttributeType>
   ) {}
 
   private async findTypeById(
-    attributesTypeId?: number,
+    attributesTypeId?: number
   ): Promise<AttributeType | null> {
     if (!attributesTypeId) return null;
 
@@ -27,7 +32,7 @@ export class AttributesTypeService {
   }
 
   async create(
-    createAttributesTypeDto: CreateAttributesTypeDto,
+    createAttributesTypeDto: CreateAttributesTypeDto
   ): Promise<AttributeType> {
     const createAttributesType = this.attributesTypeRepository.create({
       ...createAttributesTypeDto,
@@ -65,7 +70,7 @@ export class AttributesTypeService {
 
   async updateType(
     id: number,
-    @Body() updateAttributesTypeDto: CreateAttributesTypeDto,
+    @Body() updateAttributesTypeDto: CreateAttributesTypeDto
   ): Promise<AttributeType> {
     const type = await this.findTypeById(id);
     if (!type) {
@@ -93,7 +98,7 @@ export class AttributesTypeService {
     }
   }
 
-  async delete(id: number): Promise<void> {
+  async remove(id: number): Promise<void> {
     const type = await this.findTypeById(id);
     if (!type) {
       throw new BadRequestException('Attributes type not found');

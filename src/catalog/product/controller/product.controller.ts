@@ -1,16 +1,23 @@
 import {
   Controller,
-  Get,
-  Post,
-  Patch,
-  Param,
   Delete,
-  Req,
+  Get,
+  Param,
+  Patch,
+  Post,
   Query,
+  Req,
 } from '@nestjs/common';
-import { ApiBody, ApiConsumes, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CreateProductDto } from '../dto/create-product.dto';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
+
 import { FastifyRequest } from 'fastify';
+
+import { CreateProductDto } from '../dto/create-product.dto';
 import { PaginationQueryDto } from '../dto/pagination-query.dto';
 import { ProductService } from '../service/product.service';
 

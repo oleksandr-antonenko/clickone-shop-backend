@@ -29,7 +29,7 @@ export class CreateAttributesValueDto {
   })
   @IsOptional()
   @Transform(({ value }: { value: string }) =>
-    value ? parseInt(value) : undefined,
+    value ? parseInt(value) : undefined
   )
   attributesTypeId?: number;
 }

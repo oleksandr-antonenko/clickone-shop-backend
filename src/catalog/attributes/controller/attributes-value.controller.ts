@@ -54,7 +54,7 @@ export class AttributesValueController {
   })
   async update(
     @Param('id') id: string,
-    @Body() updateAttributesTypeDto: CreateAttributesValueDto,
+    @Body() updateAttributesTypeDto: CreateAttributesValueDto
   ) {
     return this.attributesService.update(+id, updateAttributesTypeDto);
   }

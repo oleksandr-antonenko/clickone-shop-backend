@@ -18,11 +18,11 @@ export class AttributesValueService {
     @InjectRepository(AttributeValue)
     private attributeValueRepository: Repository<AttributeValue>,
     @InjectRepository(AttributeType)
-    private attributeTypeRepository: Repository<AttributeType>,
+    private attributeTypeRepository: Repository<AttributeType>
   ) {}
 
   private async findTypeById(
-    attributesTypeId?: number,
+    attributesTypeId?: number
   ): Promise<AttributeType | null> {
     if (!attributesTypeId) return null;
 
@@ -38,7 +38,7 @@ export class AttributesValueService {
 
   async create(createAttributesValueDto: CreateAttributesValueDto) {
     const type = await this.findTypeById(
-      createAttributesValueDto.attributesTypeId,
+      createAttributesValueDto.attributesTypeId
     );
 
     const attributesValue = this.attributeValueRepository.create({
