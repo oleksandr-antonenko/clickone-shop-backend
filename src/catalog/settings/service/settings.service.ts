@@ -61,7 +61,7 @@ export class SettingsService {
     } catch (error) {
       const err = error as Error;
       this.logger.error(
-        `CreateProductSetting error:: ${err.message}`,
+        `CreateProductSetting error: ${err.message}`,
         err.stack
       );
       throw new BadRequestException('Failed to create product setting');
@@ -76,7 +76,7 @@ export class SettingsService {
     } catch (error) {
       const err = error as Error;
       this.logger.error(
-        `FindAllProductSettings error:: ${err.message}`,
+        `FindAllProductSettings error: ${err.message}`,
         err.stack
       );
       throw new BadRequestException('Failed to find product settings');
@@ -100,7 +100,7 @@ export class SettingsService {
     } catch (error) {
       const err = error as Error;
       this.logger.error(
-        `FindOneProductSetting error:: ${err.message}`,
+        `FindOneProductSetting error: ${err.message}`,
         err.stack
       );
       throw new BadRequestException('Failed to find product setting');
@@ -139,7 +139,7 @@ export class SettingsService {
     } catch (error) {
       const err = error as Error;
       this.logger.error(
-        `UpdateProductSetting error:: ${err.message}`,
+        `UpdateProductSetting error: ${err.message}`,
         err.stack
       );
       throw new BadRequestException('Failed to update product setting');
@@ -159,10 +159,7 @@ export class SettingsService {
       return { message: 'Product setting deleted successfully' };
     } catch (error) {
       const err = error as Error;
-      this.logger.error(
-        `RemoveProductSettingerror:: ${err.message}`,
-        err.stack
-      );
+      this.logger.error(`RemoveProductSettingerror: ${err.message}`, err.stack);
       throw new BadRequestException('Failed to delete product setting');
     }
   }
