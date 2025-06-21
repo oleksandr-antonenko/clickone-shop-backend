@@ -63,10 +63,7 @@ export class FamiliesService {
       return await this.productFamilyRepository.save(productFamily);
     } catch (error) {
       const err = error as Error;
-      this.logger.error(
-        `CreateProductFamily error:: ${err.message}`,
-        err.stack
-      );
+      this.logger.error(`CreateProductFamily error: ${err.message}`, err.stack);
       throw new BadRequestException('Failed to create product family');
     }
   }
@@ -79,7 +76,7 @@ export class FamiliesService {
     } catch (error) {
       const err = error as Error;
       this.logger.error(
-        `FindAllProductFamilies error:: ${err.message}`,
+        `FindAllProductFamilies error: ${err.message}`,
         err.stack
       );
       throw new BadRequestException('Failed to find product families');
@@ -103,7 +100,7 @@ export class FamiliesService {
     } catch (error) {
       const err = error as Error;
       this.logger.error(
-        `FindOneProductFamily error:: ${err.message}`,
+        `FindOneProductFamily error: ${err.message}`,
         err.stack
       );
       throw new BadRequestException('Failed to find product family');
@@ -141,10 +138,7 @@ export class FamiliesService {
       return await this.productFamilyRepository.save(updated);
     } catch (error) {
       const err = error as Error;
-      this.logger.error(
-        `UpdateProductFamily error:: ${err.message}`,
-        err.stack
-      );
+      this.logger.error(`UpdateProductFamily error: ${err.message}`, err.stack);
       throw new BadRequestException('Failed to update product family');
     }
   }
@@ -162,10 +156,7 @@ export class FamiliesService {
       return { message: 'Product family deleted successfully' };
     } catch (error) {
       const err = error as Error;
-      this.logger.error(
-        `RemoveProductFamily error:: ${err.message}`,
-        err.stack
-      );
+      this.logger.error(`RemoveProductFamily error: ${err.message}`, err.stack);
       throw new BadRequestException('Failed to delete product family');
     }
   }
