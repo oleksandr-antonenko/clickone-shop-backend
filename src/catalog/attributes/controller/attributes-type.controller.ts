@@ -56,7 +56,7 @@ export class AttributesTypeController {
     @Param('id') id: string,
     @Body() updateAttributesTypeDto: CreateAttributesTypeDto
   ) {
-    return this.attributesService.updateType(+id, updateAttributesTypeDto);
+    return this.attributesService.update(+id, updateAttributesTypeDto);
   }
 
   @Delete(':id')

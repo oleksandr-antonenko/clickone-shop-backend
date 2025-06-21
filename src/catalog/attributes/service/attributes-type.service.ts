@@ -2,7 +2,9 @@ import {
   BadRequestException,
   Body,
   Injectable,
+  Logger,
   NotFoundException,
+  Param,
 } from '@nestjs/common';
 import { AttributeType } from '../entity/attributes-type.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,65 +18,77 @@ export class AttributesTypeService {
     private attributesTypeRepository: Repository<AttributeType>
   ) {}
 
-  private async findTypeById(
-    attributesTypeId?: number
-  ): Promise<AttributeType | null> {
-    if (!attributesTypeId) return null;
-
-    const attributesType = await this.attributesTypeRepository.findOne({
-      where: { id: attributesTypeId },
-    });
-    if (!attributesType) {
-      throw new NotFoundException(`Type with ID ${attributesTypeId} not found`);
-    }
-
-    return attributesType;
-  }
+  private readonly logger = new Logger(AttributesTypeService.name);
 
   async create(
+    @Body()
     createAttributesTypeDto: CreateAttributesTypeDto
   ): Promise<AttributeType> {
-    const createAttributesType = this.attributesTypeRepository.create({
-      ...createAttributesTypeDto,
-    });
-
     try {
+      const createAttributesType = this.attributesTypeRepository.create({
+        ...createAttributesTypeDto,
+      });
+
       return await this.attributesTypeRepository.save(createAttributesType);
     } catch (error) {
-      console.error('CreateProductFamily error:', error);
+      const err = error as Error;
+      this.logger.error(
+        `CreateAttributesType error: ${err.message}`,
+        err.stack
+      );
       throw new BadRequestException('Failed to create attributes type');
     }
   }
 
   async findAll(): Promise<AttributeType[]> {
     try {
-      return await this.attributesTypeRepository.find();
+      return await this.attributesTypeRepository.find({
+        relations: ['values'],
+      });
     } catch (error) {
-      console.error('FindAllTypes error:', error);
+      const err = error as Error;
+      this.logger.error(
+        `FindAllAttributesTypes error: ${err.message}`,
+        err.stack
+      );
       throw new BadRequestException('Failed to retrieve attributes types');
     }
   }
 
-  async findOne(id: number): Promise<AttributeType> {
+  async findOne(@Param('id') id: number): Promise<AttributeType> {
     try {
-      const type = await this.attributesTypeRepository.findOneBy({ id });
-      if (!type) {
-        throw new BadRequestException('Attributes type not found');
+      const attributesType = await this.attributesTypeRepository.findOne({
+        where: {
+          id,
+        },
+        relations: ['values'],
+      });
+      if (!attributesType) {
+        throw new BadRequestException(
+          `Attributes type with ID ${id} not found`
+        );
       }
-      return type;
+      return attributesType;
     } catch (error) {
-      console.error('FindTypeById error:', error);
+      const err = error as Error;
+      this.logger.error(
+        `FindOneAttributesType error: ${err.message}`,
+        err.stack
+      );
       throw new BadRequestException('Failed to retrieve attributes type');
     }
   }
 
-  async updateType(
-    id: number,
+  async update(
+    @Param('id') id: number,
     @Body() updateAttributesTypeDto: CreateAttributesTypeDto
   ): Promise<AttributeType> {
-    const type = await this.findTypeById(id);
+    const type = await this.attributesTypeRepository.findOne({
+      where: { id },
+    });
+
     if (!type) {
-      throw new BadRequestException('Attributes type not found');
+      throw new NotFoundException(`Attributes type  with ID ${id} not found`);
     }
 
     const updateDto = {
@@ -93,21 +107,34 @@ export class AttributesTypeService {
     try {
       return await this.attributesTypeRepository.save(updated);
     } catch (error) {
-      console.error('UpdateAttributesType error:', error);
+      const err = error as Error;
+      this.logger.error(
+        `UpdateAttributesType error: ${err.message}`,
+        err.stack
+      );
       throw new BadRequestException('Failed to update attributes type');
     }
   }
 
-  async remove(id: number): Promise<void> {
-    const type = await this.findTypeById(id);
-    if (!type) {
-      throw new BadRequestException('Attributes type not found');
-    }
-
+  async remove(@Param('id') id: number): Promise<{ message: string }> {
     try {
-      await this.attributesTypeRepository.remove(type);
+      const attributesType = await this.attributesTypeRepository.findOne({
+        where: { id },
+      });
+
+      if (!attributesType) {
+        throw new NotFoundException(`Attributes type  with ID ${id} not found`);
+      }
+
+      await this.attributesTypeRepository.remove(attributesType);
+
+      return { message: 'Attributes value deleted successfully' };
     } catch (error) {
-      console.error('DeleteAttributesType error:', error);
+      const err = error as Error;
+      this.logger.error(
+        `RemoveAttributesType error: ${err.message}`,
+        err.stack
+      );
       throw new BadRequestException('Failed to delete attributes type');
     }
   }

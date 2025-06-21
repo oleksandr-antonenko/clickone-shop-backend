@@ -51,7 +51,9 @@ export class AttributesValueService {
     }
   }
 
-  async create(@Body() createAttributesValueDto: CreateAttributesValueDto) {
+  async create(
+    @Body() createAttributesValueDto: CreateAttributesValueDto
+  ): Promise<AttributeValue> {
     try {
       const type = await this.findTypeById(
         createAttributesValueDto.attributesTypeId
@@ -73,7 +75,7 @@ export class AttributesValueService {
     }
   }
 
-  async findAll() {
+  async findAll(): Promise<AttributeValue[]> {
     try {
       return await this.attributeValueRepository.find({
         relations: ['type', 'productOptionValues'],
@@ -88,7 +90,7 @@ export class AttributesValueService {
     }
   }
 
-  async findOne(@Param('id') id: number) {
+  async findOne(@Param('id') id: number): Promise<AttributeValue> {
     try {
       const attributesValue = await this.attributeValueRepository.findOne({
         where: {
@@ -115,13 +117,13 @@ export class AttributesValueService {
   async update(
     @Param('id') id: number,
     @Body() updateAttributesValueDto: UpdateAttributesValueDto
-  ) {
+  ): Promise<AttributeValue> {
     try {
-      const value = await this.attributeValueRepository.findOne({
+      const attributeValue = await this.attributeValueRepository.findOne({
         where: { id },
       });
 
-      if (!value)
+      if (!attributeValue)
         throw new NotFoundException(
           `Attributes value  with ID ${id} not found`
         );
@@ -131,8 +133,8 @@ export class AttributesValueService {
       );
 
       const updateDto: UpdateAttributesValue = {
-        value: updateAttributesValueDto.value ?? value.value,
-        hexCode: updateAttributesValueDto.hexCode ?? value.hex_code,
+        value: updateAttributesValueDto.value ?? attributeValue.value,
+        hexCode: updateAttributesValueDto.hexCode ?? attributeValue.hex_code,
       };
 
       const attributesValue = this.attributeValueRepository.create({
@@ -140,7 +142,7 @@ export class AttributesValueService {
         type: attributesType ?? undefined,
       });
 
-      const updated = this.attributeValueRepository.merge(value, {
+      const updated = this.attributeValueRepository.merge(attributeValue, {
         ...attributesValue,
       });
 
@@ -155,7 +157,7 @@ export class AttributesValueService {
     }
   }
 
-  async delete(@Param('id') id: number) {
+  async delete(@Param('id') id: number): Promise<{ message: string }> {
     try {
       const attributeValue = await this.attributeValueRepository.findOne({
         where: { id },
@@ -165,7 +167,8 @@ export class AttributesValueService {
         throw new NotFoundException(
           `Attributes value  with ID ${id} not found`
         );
-      await this.attributeValueRepository.delete(id);
+
+      await this.attributeValueRepository.remove(attributeValue);
 
       return { message: 'Attributes value deleted successfully' };
     } catch (error) {
