@@ -27,7 +27,7 @@ export class FamiliesService {
 
   private async findCategoryById(
     categoryId?: number
-  ): Promise<Category | null | undefined> {
+  ): Promise<Category | null> {
     if (!categoryId) return null;
 
     try {
@@ -49,7 +49,9 @@ export class FamiliesService {
     }
   }
 
-  async create(@Body() createProductFamilyDto: CreateFamilyDto) {
+  async create(
+    @Body() createProductFamilyDto: CreateFamilyDto
+  ): Promise<ProductFamily> {
     try {
       const category = await this.findCategoryById(
         createProductFamilyDto.categoryId
@@ -68,7 +70,7 @@ export class FamiliesService {
     }
   }
 
-  async findAll() {
+  async findAll(): Promise<ProductFamily[]> {
     try {
       return await this.productFamilyRepository.find({
         relations: ['category', 'products'],
@@ -83,7 +85,7 @@ export class FamiliesService {
     }
   }
 
-  async findOne(@Param('id') id: number) {
+  async findOne(@Param('id') id: number): Promise<ProductFamily> {
     try {
       const family = await this.productFamilyRepository.findOne({
         where: {
@@ -110,7 +112,7 @@ export class FamiliesService {
   async update(
     @Param('id') id: number,
     @Body() updateFamilyDto: UpdateFamilyDto
-  ) {
+  ): Promise<ProductFamily> {
     try {
       const family = await this.productFamilyRepository.findOne({
         where: { id },
@@ -143,7 +145,9 @@ export class FamiliesService {
     }
   }
 
-  async remove(@Param('id') id: number) {
+  async remove(@Param('id') id: number): Promise<{
+    message: string;
+  }> {
     try {
       const family = await this.productFamilyRepository.findOne({
         where: { id },
@@ -151,7 +155,8 @@ export class FamiliesService {
 
       if (!family)
         throw new NotFoundException(`Product family with ID ${id} not found`);
-      await this.productFamilyRepository.delete(id);
+
+      await this.productFamilyRepository.remove(family);
 
       return { message: 'Product family deleted successfully' };
     } catch (error) {
