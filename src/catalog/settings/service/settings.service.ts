@@ -24,9 +24,7 @@ export class SettingsService {
   ) {}
   private readonly logger = new Logger(SettingsService.name);
 
-  private async findProductById(
-    productId?: number
-  ): Promise<Product | null | undefined> {
+  private async findProductById(productId?: number): Promise<Product | null> {
     if (!productId) return null;
 
     try {
@@ -48,7 +46,9 @@ export class SettingsService {
     }
   }
 
-  async create(@Body() createSettingDto: CreateSettingDto) {
+  async create(
+    @Body() createSettingDto: CreateSettingDto
+  ): Promise<ProductSetting> {
     try {
       const product = await this.findProductById(createSettingDto.productId);
 
@@ -68,7 +68,7 @@ export class SettingsService {
     }
   }
 
-  async findAll() {
+  async findAll(): Promise<ProductSetting[]> {
     try {
       return await this.settingsServiceRepository.find({
         relations: ['product'],
@@ -83,7 +83,7 @@ export class SettingsService {
     }
   }
 
-  async findOne(@Param('id') id: number) {
+  async findOne(@Param('id') id: number): Promise<ProductSetting> {
     try {
       const setting = await this.settingsServiceRepository.findOne({
         where: {
@@ -110,7 +110,7 @@ export class SettingsService {
   async update(
     @Param('id') id: number,
     @Body() updateSettingDto: UpdateSettingDto
-  ) {
+  ): Promise<ProductSetting> {
     try {
       const setting = await this.settingsServiceRepository.findOne({
         where: { id },
@@ -146,7 +146,9 @@ export class SettingsService {
     }
   }
 
-  async remove(@Param('id') id: number) {
+  async remove(@Param('id') id: number): Promise<{
+    message: string;
+  }> {
     try {
       const setting = await this.settingsServiceRepository.findOne({
         where: { id },
@@ -154,12 +156,16 @@ export class SettingsService {
 
       if (!setting)
         throw new NotFoundException(`Product setting with ID ${id} not found`);
-      await this.settingsServiceRepository.delete(id);
+
+      await this.settingsServiceRepository.remove(setting);
 
       return { message: 'Product setting deleted successfully' };
     } catch (error) {
       const err = error as Error;
-      this.logger.error(`RemoveProductSettingerror: ${err.message}`, err.stack);
+      this.logger.error(
+        `RemoveProductSetting error: ${err.message}`,
+        err.stack
+      );
       throw new BadRequestException('Failed to delete product setting');
     }
   }
