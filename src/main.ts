@@ -1,74 +1,63 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-import fastifyMultipart from '@fastify/multipart';
-import fastifyStatic from '@fastify/static';
+import { join } from 'path';
 import { AppModule } from '~/app.module';
 
+import { CorsConfigService } from './config/cors.config';
+
 async function bootstrap() {
-  const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule,
-    new FastifyAdapter({ ignoreTrailingSlash: true })
-  );
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   const PORT = process.env.PORT ?? 3310;
 
+  const corsConfig = new CorsConfigService();
+
   app.enableCors({
-    origin: 'http://localhost:5173',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Requested-With',
-      'Accept',
-      'Origin',
-      'Content-Length',
-      'X-File-Name',
-    ],
-    exposedHeaders: ['Content-Length', 'X-File-Name'],
+    origin: corsConfig.getAllowedOrigins(),
+    allowedHeaders: corsConfig.getAllowedHeaders(),
+    methods: corsConfig.getAllowedMethods(),
     credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
-  await app.register(fastifyMultipart, {
-    limits: {
-      fileSize: 5 * 1024 * 1024,
-    },
-  });
-
-  await app.register(fastifyStatic, {
-    root: process.cwd(),
+  // Static files serving
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
-    constraints: { host: 'localhost' },
   });
 
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
       whitelist: true,
+      forbidNonWhitelisted: false,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     })
   );
 
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
-    .setTitle('Clickone shop backend API Documentation')
+    .setTitle('Clickone Shop Backend API')
     .setVersion('1.0')
+    .setDescription('API for Clickone Shop Backend')
     .addBearerAuth()
-    .setDescription('Description')
     .addServer(`http://localhost:${PORT}/api`, 'Development server')
-    .addServer('https://...', 'Production server')
     .build();
 
   const document = SwaggerModule.createDocument(app, config, {
     ignoreGlobalPrefix: true,
   });
 
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('docs', app, document, {
+    customSiteTitle: 'Clickone Shop API',
+    customCss: '.swagger-ui .topbar { display: none }',
+  });
 
   await app.listen(PORT);
 }
