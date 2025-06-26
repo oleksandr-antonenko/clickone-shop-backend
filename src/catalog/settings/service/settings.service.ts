@@ -24,9 +24,7 @@ export class SettingsService {
   ) {}
   private readonly logger = new Logger(SettingsService.name);
 
-  private async findProductById(productId?: number): Promise<Product | null> {
-    if (!productId) return null;
-
+  private async findProductById(productId?: number): Promise<Product> {
     try {
       const product = await this.productRepository.findOne({
         where: { id: productId },
