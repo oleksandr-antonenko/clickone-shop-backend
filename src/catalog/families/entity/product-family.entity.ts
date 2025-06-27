@@ -1,3 +1,5 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 import {
   Column,
   CreateDateColumn,
@@ -8,9 +10,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Product } from '../../product/entities/product.entity';
+
 import { Category } from '../../category/entities/category.entity';
-import { ApiProperty } from '@nestjs/swagger';
+import { Product } from '../../product/entities/product.entity';
 
 @Entity('product_families')
 export class ProductFamily {
@@ -27,7 +29,7 @@ export class ProductFamily {
     required: false,
   })
   @Column({ type: 'text', nullable: true })
-  description: string;
+  description?: string;
 
   @ApiProperty({ description: 'Creation date', readOnly: true })
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
@@ -40,6 +42,8 @@ export class ProductFamily {
   @ApiProperty({
     description: 'Category relationship',
     type: () => Category,
+    nullable: true,
+    required: false,
   })
   @ManyToOne(() => Category, (category) => category.families, {
     nullable: true,

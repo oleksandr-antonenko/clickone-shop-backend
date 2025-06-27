@@ -1,19 +1,18 @@
 import {
   BadRequestException,
-  Body,
+  HttpException,
   Injectable,
   Logger,
   NotFoundException,
-  Param,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Repository } from 'typeorm';
-import { ProductFamily } from '../entity/product-family.entity';
+import { Category } from '~/catalog/category/entities/category.entity';
+
 import { CreateFamilyDto } from '../dto/create-family.dto';
 import { UpdateFamilyDto } from '../dto/update-family.dto';
-import { UpdateFamily } from '../interface/updateFamily.interface';
-import { Category } from '~/catalog/category/entities/category.entity';
+import { ProductFamily } from '../entity/product-family.entity';
 
 @Injectable()
 export class FamiliesService {
@@ -23,23 +22,24 @@ export class FamiliesService {
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>
   ) {}
+
   private readonly logger = new Logger(FamiliesService.name);
 
-  private async findCategoryById(
-    categoryId?: number
-  ): Promise<Category | null> {
-    if (!categoryId) return null;
-
+  private async findCategoryById(categoryId: number): Promise<Category> {
     try {
       const category = await this.categoryRepository.findOne({
         where: { id: categoryId },
       });
       if (!category) {
+        this.logger.warn('Category not found');
         throw new NotFoundException(`Category with ID ${categoryId} not found`);
       }
 
       return category;
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       const err = error as Error;
       this.logger.error(
         `FindCategoryById error with ID ${categoryId}: ${err.message}`,
@@ -50,20 +50,29 @@ export class FamiliesService {
   }
 
   async create(
-    @Body() createProductFamilyDto: CreateFamilyDto
+    createProductFamilyDto: CreateFamilyDto
   ): Promise<ProductFamily> {
     try {
-      const category = await this.findCategoryById(
-        createProductFamilyDto.categoryId
-      );
+      let category: Category | undefined;
+
+      if (createProductFamilyDto.categoryId) {
+        category = await this.findCategoryById(
+          createProductFamilyDto.categoryId
+        );
+      } else {
+        this.logger.warn('Category ID not provided');
+      }
 
       const productFamily = this.productFamilyRepository.create({
         ...createProductFamilyDto,
-        category: category ?? undefined,
+        ...(category && { category }),
       });
 
       return await this.productFamilyRepository.save(productFamily);
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       const err = error as Error;
       this.logger.error(`CreateProductFamily error: ${err.message}`, err.stack);
       throw new BadRequestException('Failed to create product family');
@@ -76,6 +85,9 @@ export class FamiliesService {
         relations: ['category', 'products'],
       });
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       const err = error as Error;
       this.logger.error(
         `FindAllProductFamilies error: ${err.message}`,
@@ -85,7 +97,7 @@ export class FamiliesService {
     }
   }
 
-  async findOne(@Param('id') id: number): Promise<ProductFamily> {
+  async findOne(id: number): Promise<ProductFamily> {
     try {
       const family = await this.productFamilyRepository.findOne({
         where: {
@@ -100,6 +112,9 @@ export class FamiliesService {
 
       return family;
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       const err = error as Error;
       this.logger.error(
         `FindOneProductFamily error: ${err.message}`,
@@ -110,42 +125,42 @@ export class FamiliesService {
   }
 
   async update(
-    @Param('id') id: number,
-    @Body() updateFamilyDto: UpdateFamilyDto
+    id: number,
+    updateFamilyDto: UpdateFamilyDto
   ): Promise<ProductFamily> {
     try {
-      const family = await this.productFamilyRepository.findOne({
+      const existingFamily = await this.productFamilyRepository.findOne({
         where: { id },
       });
 
-      if (!family)
+      if (!existingFamily)
         throw new NotFoundException(`Product family with ID ${id} not found`);
 
-      const category = await this.findCategoryById(updateFamilyDto.categoryId);
+      let category: Category | undefined;
 
-      const updateDto: UpdateFamily = {
-        name: updateFamilyDto.name ?? family.name,
-        description: updateFamilyDto.description ?? family.description,
-      };
+      if (updateFamilyDto.categoryId) {
+        category = await this.findCategoryById(updateFamilyDto.categoryId);
+      } else {
+        this.logger.warn('Category ID not provided');
+      }
 
-      const productFamily = this.productFamilyRepository.create({
-        ...updateDto,
-        category: category ?? undefined,
-      });
-
-      const updated = this.productFamilyRepository.merge(family, {
-        ...productFamily,
+      const updated = this.productFamilyRepository.merge(existingFamily, {
+        ...updateFamilyDto,
+        ...(category && { category }),
       });
 
       return await this.productFamilyRepository.save(updated);
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       const err = error as Error;
       this.logger.error(`UpdateProductFamily error: ${err.message}`, err.stack);
       throw new BadRequestException('Failed to update product family');
     }
   }
 
-  async remove(@Param('id') id: number): Promise<{
+  async remove(id: number): Promise<{
     message: string;
   }> {
     try {
@@ -160,6 +175,9 @@ export class FamiliesService {
 
       return { message: 'Product family deleted successfully' };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       const err = error as Error;
       this.logger.error(`RemoveProductFamily error: ${err.message}`, err.stack);
       throw new BadRequestException('Failed to delete product family');
