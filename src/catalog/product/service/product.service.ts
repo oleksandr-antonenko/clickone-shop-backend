@@ -11,9 +11,10 @@ import * as path from 'path';
 import { Repository } from 'typeorm';
 
 import { FilterService } from '../../../filter/service/filter.service';
+import { FilterParserService } from '../../../filter/service/filter-parser.service';
 import { Product } from '../entities/product.entity';
 import { CreateProduct } from '../interface/create.interface';
-import { Pagination } from '../interface/pagination.interface';
+import { Pagination, ProcessedPagination } from '../interface/pagination.interface';
 import { UpdateProduct } from '../interface/updateProduct.interface';
 
 @Injectable()
@@ -21,7 +22,8 @@ export class ProductService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
-    private readonly filterService: FilterService
+    private readonly filterService: FilterService,
+    private readonly filterParserService: FilterParserService
   ) {
     this.ensureUploadsDir();
   }
@@ -92,7 +94,7 @@ export class ProductService {
   }
 
   async findAll(query: Pagination, rawQuery?: Record<string, any>) {
-    const processedQuery = this.processFilters(query, rawQuery);
+    const processedQuery = this.processQuery(query, rawQuery);
 
     const page = Math.max(Number(processedQuery.page) || 1, 1);
     const limit = Math.min(Number(processedQuery.limit) || 10, 100);
@@ -125,49 +127,23 @@ export class ProductService {
     };
   }
 
-  private processFilters(
+
+  private processQuery(
     query: Pagination,
     rawQuery?: Record<string, any>
-  ): Pagination {
-    let parsedFilters = query.filters;
-    if (!parsedFilters && rawQuery?.filters) {
-      const rawFilters = rawQuery.filters as string;
+  ): ProcessedPagination {
+    const parsedFilters = this.filterParserService.parseFilters(
+      query.filters,
+      rawQuery
+    );
 
-      try {
-        parsedFilters = JSON.parse(decodeURIComponent(rawFilters));
-      } catch (error) {}
-    }
-    if (!parsedFilters && rawQuery) {
-      const individualFilters: Record<string, Record<string, any>> = {};
-
-      Object.entries(rawQuery).forEach(([key, value]) => {
-        if (key.startsWith('filter_')) {
-          const parts = key.split('_');
-          if (parts.length === 3) {
-            const [, field, operator] = parts;
-            if (!individualFilters[field]) {
-              individualFilters[field] = {};
-            }
-            individualFilters[field][operator] = value;
-          }
-        }
-      });
-
-      if (Object.keys(individualFilters).length > 0) {
-        parsedFilters = individualFilters;
-      }
-    }
-    if (typeof query.filters === 'string') {
-      try {
-        parsedFilters = JSON.parse(decodeURIComponent(query.filters));
-      } catch (error) {
-        parsedFilters = undefined;
-      }
-    }
+    const sanitizedFilters = parsedFilters 
+      ? this.filterParserService.validateAndSanitizeFilters(parsedFilters)
+      : undefined;
 
     return {
       ...query,
-      filters: parsedFilters,
+      filters: sanitizedFilters,
       sortOrder: query.sortOrder?.toUpperCase() as 'ASC' | 'DESC' | undefined,
     };
   }

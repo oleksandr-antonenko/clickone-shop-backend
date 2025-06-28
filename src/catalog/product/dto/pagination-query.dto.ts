@@ -1,6 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class PaginationQueryDto {
@@ -41,30 +40,6 @@ export class PaginationQueryDto {
     description: 'Filters object as JSON string',
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (!value) return undefined;
-
-    try {
-      if (typeof value === 'object' && value !== null) {
-        return value;
-      }
-
-      if (typeof value === 'string') {
-        let decodedValue = value;
-
-        try {
-          decodedValue = decodeURIComponent(value);
-        } catch (e) {
-          return undefined;
-        }
-
-        return JSON.parse(decodedValue);
-      }
-
-      return value;
-    } catch (error) {
-      return undefined;
-    }
-  })
-  filters?: Record<string, Record<string, any>>;
+  @IsString()
+  filters?: string;
 }
