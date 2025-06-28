@@ -11,6 +11,7 @@ import { AppController } from '~/app.controller';
 import { AppService } from '~/app.service';
 
 import { AttributesModule } from './catalog/attributes/attributes.module';
+import { BrandModule } from './catalog/brand/brand.module';
 import { CategoryModule } from './catalog/category/category.module';
 import { FamiliesModule } from './catalog/families/families.module';
 import { ProductModule } from './catalog/product/product.module';
@@ -43,6 +44,7 @@ import { OrderModule } from './order/order.module';
     SettingsModule,
     FamiliesModule,
     CategoryModule,
+    BrandModule,
   ],
   controllers: [AppController],
   providers: [AppService],
