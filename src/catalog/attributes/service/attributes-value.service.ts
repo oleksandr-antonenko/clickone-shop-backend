@@ -1,68 +1,33 @@
 import {
   BadRequestException,
-  Body,
   Injectable,
   Logger,
   NotFoundException,
-  Param,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+
 import { Repository } from 'typeorm';
-import { AttributeValue } from '../entity/attributes-value.entity';
-import { AttributeType } from '../entity/attributes-type.entity';
+
 import { CreateAttributesValueDto } from '../dto/create-attributes-value.dto';
 import { UpdateAttributesValueDto } from '../dto/update-attributes-value.dto';
-import { UpdateAttributesValue } from '../interface/updateAttributesValue.interface';
+import { AttributeValue } from '../entity/attributes-value.entity';
 
 @Injectable()
 export class AttributesValueService {
   constructor(
     @InjectRepository(AttributeValue)
-    private attributeValueRepository: Repository<AttributeValue>,
-    @InjectRepository(AttributeType)
-    private attributeTypeRepository: Repository<AttributeType>
+    private attributeValueRepository: Repository<AttributeValue>
   ) {}
 
   private readonly logger = new Logger(AttributesValueService.name);
 
-  private async findTypeById(
-    attributesTypeId?: number
-  ): Promise<AttributeType | null> {
-    if (!attributesTypeId) return null;
-
-    try {
-      const attributesType = await this.attributeTypeRepository.findOne({
-        where: { id: attributesTypeId },
-      });
-      if (!attributesType) {
-        throw new NotFoundException(
-          `Type with ID ${attributesTypeId} not found`
-        );
-      }
-
-      return attributesType;
-    } catch (error) {
-      const err = error as Error;
-      this.logger.error(
-        `FindTypeById error with ID ${attributesTypeId}: ${err.message}`,
-        err.stack
-      );
-      throw new BadRequestException('Failed to find category');
-    }
-  }
-
   async create(
-    @Body() createAttributesValueDto: CreateAttributesValueDto
+    createAttributesValueDto: CreateAttributesValueDto
   ): Promise<AttributeValue> {
     try {
-      const type = await this.findTypeById(
-        createAttributesValueDto.attributesTypeId
+      const attributesValue = this.attributeValueRepository.create(
+        createAttributesValueDto
       );
-
-      const attributesValue = this.attributeValueRepository.create({
-        ...createAttributesValueDto,
-        type: type ?? undefined,
-      });
 
       return await this.attributeValueRepository.save(attributesValue);
     } catch (error) {
@@ -78,7 +43,7 @@ export class AttributesValueService {
   async findAll(): Promise<AttributeValue[]> {
     try {
       return await this.attributeValueRepository.find({
-        relations: ['type', 'productOptionValues'],
+        relations: ['productOptionValues'],
       });
     } catch (error) {
       const err = error as Error;
@@ -90,13 +55,13 @@ export class AttributesValueService {
     }
   }
 
-  async findOne(@Param('id') id: number): Promise<AttributeValue> {
+  async findOne(id: number): Promise<AttributeValue> {
     try {
       const attributesValue = await this.attributeValueRepository.findOne({
         where: {
           id,
         },
-        relations: ['type', 'productOptionValues'],
+        relations: ['productOptionValues'],
       });
 
       if (!attributesValue) {
@@ -115,36 +80,25 @@ export class AttributesValueService {
   }
 
   async update(
-    @Param('id') id: number,
-    @Body() updateAttributesValueDto: UpdateAttributesValueDto
+    id: number,
+    updateAttributesValueDto: UpdateAttributesValueDto
   ): Promise<AttributeValue> {
     try {
-      const attributeValue = await this.attributeValueRepository.findOne({
-        where: { id },
+      const attributeValue = await this.attributeValueRepository.findOneBy({
+        id,
       });
 
-      if (!attributeValue)
+      if (!attributeValue) {
+        this.logger.warn(`Category with id ${id} not found`);
         throw new NotFoundException(
           `Attributes value  with ID ${id} not found`
         );
+      }
 
-      const attributesType = await this.findTypeById(
-        updateAttributesValueDto.attributesTypeId
+      const updated = this.attributeValueRepository.merge(
+        attributeValue,
+        updateAttributesValueDto
       );
-
-      const updateDto: UpdateAttributesValue = {
-        value: updateAttributesValueDto.value ?? attributeValue.value,
-        hexCode: updateAttributesValueDto.hexCode ?? attributeValue.hex_code,
-      };
-
-      const attributesValue = this.attributeValueRepository.create({
-        ...updateDto,
-        type: attributesType ?? undefined,
-      });
-
-      const updated = this.attributeValueRepository.merge(attributeValue, {
-        ...attributesValue,
-      });
 
       return await this.attributeValueRepository.save(updated);
     } catch (error) {
@@ -157,7 +111,7 @@ export class AttributesValueService {
     }
   }
 
-  async delete(@Param('id') id: number): Promise<{ message: string }> {
+  async delete(id: number): Promise<{ message: string }> {
     try {
       const attributeValue = await this.attributeValueRepository.findOne({
         where: { id },

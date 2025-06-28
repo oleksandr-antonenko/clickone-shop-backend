@@ -1,8 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger';
+
 import { Transform } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateAttributesValueDto {
+  @IsString()
+  @ApiProperty({
+    description: 'Name of the attributes type',
+    example: 'Attributes type 1',
+    required: true,
+  })
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @ApiProperty({
+    description: 'Slug of the attributes type',
+    example: 'attributes-type-1',
+    required: true,
+  })
+  @IsNotEmpty()
+  slug: string;
+
   @IsString()
   @ApiProperty({
     description: 'Value of the attributes value',
