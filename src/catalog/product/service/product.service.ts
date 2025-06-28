@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  Query,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -15,7 +14,6 @@ import { FilterParserService } from '../../../filter/service/filter-parser.servi
 import { Product } from '../entities/product.entity';
 import { CreateProduct } from '../interface/create.interface';
 import { Pagination, ProcessedPagination } from '../interface/pagination.interface';
-import { UpdateProduct } from '../interface/updateProduct.interface';
 
 @Injectable()
 export class ProductService {
@@ -44,17 +42,38 @@ export class ProductService {
       stock: createProductDto.stock,
       description: createProductDto.description,
       image: imagePath,
+      sku: createProductDto.sku,
+      status: createProductDto.status,
+      attributes: createProductDto.attributes,
+      comparePrice: createProductDto.comparePrice,
+      translations: createProductDto.translations,
+      seoTitle: createProductDto.seoTitle,
+      seoDescription: createProductDto.seoDescription,
+      weight: createProductDto.weight,
+      dimensions: createProductDto.dimensions,
     };
 
     if (createProductDto.familyId) {
       productData.family = { id: createProductDto.familyId } as any;
     }
 
+    productData.category = { id: createProductDto.categoryId } as any;
+
     const product = this.productRepository.create(productData);
 
     try {
       const savedProduct = await this.productRepository.save(product);
-      return savedProduct;
+      
+      const productWithRelations = await this.productRepository.findOne({
+        where: { id: savedProduct.id },
+        relations: ['category', 'family'],
+      });
+      
+      if (!productWithRelations) {
+        throw new Error('Product not found after creation');
+      }
+      
+      return productWithRelations;
     } catch (error) {
       if (imagePath) {
         await this.deleteFile(imagePath);
@@ -100,7 +119,9 @@ export class ProductService {
     const limit = Math.min(Number(processedQuery.limit) || 10, 100);
     const skip = (page - 1) * limit;
 
-    const qb = this.productRepository.createQueryBuilder('product');
+    const qb = this.productRepository.createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.family', 'family');
 
     if (processedQuery.filters) {
       this.filterService.applyFilters(qb, 'product', processedQuery.filters);
@@ -156,6 +177,7 @@ export class ProductService {
       where: {
         id,
       },
+      relations: ['category', 'family'],
     });
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -172,7 +194,7 @@ export class ProductService {
 
     const product = await this.productRepository.findOne({
       where: { id },
-      relations: ['family'],
+      relations: ['family', 'category'],
     });
     if (!product)
       throw new NotFoundException(`Product with ID ${id} not found`);
@@ -197,7 +219,19 @@ export class ProductService {
       ...updateDto,
       image: imagePath,
     });
-    return await this.productRepository.save(updated);
+    
+    const savedProduct = await this.productRepository.save(updated);
+    
+    const updatedProduct = await this.productRepository.findOne({
+      where: { id: savedProduct.id },
+      relations: ['category', 'family'],
+    });
+    
+    if (!updatedProduct) {
+      throw new NotFoundException('Product not found after update');
+    }
+    
+    return updatedProduct;
   }
 
   async remove(id: number) {
