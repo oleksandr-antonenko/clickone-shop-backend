@@ -3,5 +3,5 @@ export interface UpdateProduct {
   price: number;
   stock: boolean;
   description: string;
-  familyId: number | undefined;
+  familyId?: number;
 }
