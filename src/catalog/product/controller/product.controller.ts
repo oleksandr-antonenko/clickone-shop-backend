@@ -30,7 +30,7 @@ export class ProductController {
   @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 201, description: 'Product created successfully' })
   @ApiBody({ type: CreateProductDto })
-  async create(@Req() req: FastifyRequest) {
+  create(@Req() req: FastifyRequest) {
     return this.productService.createProductFromRequest(req);
   }
 
