@@ -1,12 +1,18 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { FilterModule } from '../../filter/filter.module';
 import { ProductController } from './controller/product.controller';
 import { Product } from './entities/product.entity';
 import { ProductService } from './service/product.service';
+import { PaginationModule } from '../../pagination/pagination.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Product])],
+  imports: [
+    TypeOrmModule.forFeature([Product]),
+    FilterModule,
+    PaginationModule,
+  ],
   controllers: [ProductController],
   providers: [ProductService],
   exports: [ProductService],
