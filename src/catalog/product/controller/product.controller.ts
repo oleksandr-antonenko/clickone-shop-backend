@@ -48,8 +48,8 @@ export class ProductController {
   @ApiOperation({ summary: 'Get all products' })
   @ApiResponse({ status: 200, description: 'Products fetched successfully' })
   @ApiResponse({ status: 404, description: 'No products found' })
-  async findAll(@Query() query: PaginationQueryDto, @Req() req: Request) {
-    return this.productService.findAll(query, req.query);
+  async findAll(@Query() query: PaginationQueryDto) {
+    return this.productService.findAll(query);
   }
 
   @Get(':id')

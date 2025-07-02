@@ -5,11 +5,13 @@ import { FilterModule } from '../../filter/filter.module';
 import { ProductController } from './controller/product.controller';
 import { Product } from './entities/product.entity';
 import { ProductService } from './service/product.service';
+import { PaginationModule } from '../../pagination/pagination.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Product]),
     FilterModule,
+    PaginationModule,
   ],
   controllers: [ProductController],
   providers: [ProductService],

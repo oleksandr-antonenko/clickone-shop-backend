@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
+  Scope,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -14,14 +16,20 @@ import { FilterParserService } from '../../../filter/service/filter-parser.servi
 import { Product } from '../entities/product.entity';
 import { CreateProduct } from '../interface/create.interface';
 import { Pagination, ProcessedPagination } from '../interface/pagination.interface';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+import { PaginationQuery } from '../../../pagination/interface/pagination.interface';
+import { PaginationService } from '../../../pagination/service/pagination.service';
 
-@Injectable()
+@Injectable({scope: Scope.REQUEST})
 export class ProductService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
     private readonly filterService: FilterService,
-    private readonly filterParserService: FilterParserService
+    private readonly filterParserService: FilterParserService,
+    private readonly paginationService: PaginationService,
+    @Inject(REQUEST) private readonly request: Request
   ) {
     this.ensureUploadsDir();
   }
@@ -112,8 +120,8 @@ export class ProductService {
     }
   }
 
-  async findAll(query: Pagination, rawQuery?: Record<string, any>) {
-    const processedQuery = this.processQuery(query, rawQuery);
+  async findAll(query: Pagination) {
+    const processedQuery = this.processQuery(query, this.request.query);
 
     const page = Math.max(Number(processedQuery.page) || 1, 1);
     const limit = Math.min(Number(processedQuery.limit) || 10, 100);
@@ -123,29 +131,24 @@ export class ProductService {
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect('product.family', 'family');
 
-    if (processedQuery.filters) {
-      this.filterService.applyFilters(qb, 'product', processedQuery.filters);
-    }
+      const paginationQuery: PaginationQuery = {
+        page: processedQuery.page,
+        limit: processedQuery.limit,
+        sortBy: processedQuery.sortBy || 'id',
+        sortOrder: processedQuery.sortOrder?.toUpperCase() as 'ASC' | 'DESC' | undefined,
+        filters: processedQuery.filters,
+      };
+      const result = await this.paginationService.paginate(qb, 'product', paginationQuery);
 
-    const sortBy = processedQuery.sortBy || 'id';
-    const sortOrder = (processedQuery.sortOrder || 'ASC').toUpperCase() as
-      | 'ASC'
-      | 'DESC';
-    qb.orderBy(`product.${sortBy}`, sortOrder);
-
-    qb.skip(skip).take(limit);
-
-    const [products, total] = await qb.getManyAndCount();
-
-    return {
-      products,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
-      hasNextPage: page < Math.ceil(total / limit),
-      hasPreviousPage: page > 1,
-    };
+      return {
+        products: result.data,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+      }
   }
 
 
