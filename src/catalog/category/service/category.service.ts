@@ -106,7 +106,7 @@ export class CategoryService {
     try {
       const category = await this.categoryRepository.findOne({ where: { id } });
       if (!category) {
-        throw new NotFoundException('Category id not found');
+        throw new NotFoundException('Category not found');
       }
       if (
         updateCategory.updatedAt &&
