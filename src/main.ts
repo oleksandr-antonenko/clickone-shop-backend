@@ -24,7 +24,6 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
-  // Static files serving
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/uploads/',
   });

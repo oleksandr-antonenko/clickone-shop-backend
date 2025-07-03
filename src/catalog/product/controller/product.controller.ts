@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Delete,
   Get,
@@ -7,21 +8,26 @@ import {
   Post,
   Query,
   Req,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiConsumes,
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
 
-import { FastifyRequest } from 'fastify';
+import { Request } from 'express';
 
 import { CreateProductDto } from '../dto/create-product.dto';
 import { PaginationQueryDto } from '../dto/pagination-query.dto';
 import { ProductService } from '../service/product.service';
 
 @Controller('products')
+@ApiBearerAuth()
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
@@ -30,8 +36,12 @@ export class ProductController {
   @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 201, description: 'Product created successfully' })
   @ApiBody({ type: CreateProductDto })
-  async create(@Req() req: FastifyRequest) {
-    return this.productService.createProductFromRequest(req);
+  @UseInterceptors(FileInterceptor('image'))
+  async create(
+    @Body() createProductDto: CreateProductDto,
+    @UploadedFile() file?: Express.Multer.File
+  ) {
+    return this.productService.createProducts(createProductDto, file);
   }
 
   @Get()
@@ -55,8 +65,13 @@ export class ProductController {
   @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 200, description: 'Product updated successfully' })
   @ApiResponse({ status: 404, description: 'Product not found' })
-  async update(@Param('id') id: string, @Req() req: FastifyRequest) {
-    return this.productService.updateProduct(+id, req);
+  @UseInterceptors(FileInterceptor('image'))
+  async update(
+    @Param('id') id: string,
+    @Body() updateProductDto: Partial<CreateProductDto>,
+    @UploadedFile() file?: Express.Multer.File
+  ) {
+    return this.productService.updateProduct(+id, updateProductDto, file);
   }
 
   @Delete(':id')

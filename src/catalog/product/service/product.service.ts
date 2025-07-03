@@ -1,83 +1,87 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
-  Query,
+  Scope,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { FastifyRequest } from 'fastify';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { Repository } from 'typeorm';
 
+import { FilterService } from '../../../filter/service/filter.service';
+import { FilterParserService } from '../../../filter/service/filter-parser.service';
 import { Product } from '../entities/product.entity';
 import { CreateProduct } from '../interface/create.interface';
-import { Pagination } from '../interface/pagination.interface';
-import { UpdateProduct } from '../interface/updateProduct.interface';
+import { Pagination, ProcessedPagination } from '../interface/pagination.interface';
+import { REQUEST } from '@nestjs/core';
+import { Request } from 'express';
+import { PaginationQuery } from '../../../pagination/interface/pagination.interface';
+import { PaginationService } from '../../../pagination/service/pagination.service';
 
-@Injectable()
+@Injectable({scope: Scope.REQUEST})
 export class ProductService {
   constructor(
     @InjectRepository(Product)
-    private readonly productRepository: Repository<Product>
+    private readonly productRepository: Repository<Product>,
+    private readonly filterService: FilterService,
+    private readonly filterParserService: FilterParserService,
+    private readonly paginationService: PaginationService,
+    @Inject(REQUEST) private readonly request: Request
   ) {
     this.ensureUploadsDir();
   }
 
-  async createProductFromRequest(req: FastifyRequest): Promise<Product> {
-    const { formData, file } = await this.parseMultipartRequest(req);
-
-    const createInput = this.transformFormDataToDto(formData);
-
-    return this.createProducts(createInput, file);
-  }
-
-  private async parseMultipartRequest(req: FastifyRequest): Promise<{
-    formData: Record<string, any>;
-    file?: any;
-  }> {
-    const formData: Record<string, any> = {};
-    let file: any = null;
-
-    for await (const part of (req as any).parts()) {
-      if (part.type === 'field') {
-        formData[part.fieldname] = part.value;
-      } else if (part.type === 'file') {
-        file = part;
-      }
-    }
-
-    return { formData, file };
-  }
-
-  private transformFormDataToDto(formData: Record<string, any>): CreateProduct {
-    return {
-      name: formData.name,
-      price: parseFloat(formData.price),
-      stock: formData.stock === 'true',
-      description: formData.description,
-      familyId: formData.familyId ? parseInt(formData.familyId) : undefined,
-    };
-  }
-
-  async createProducts(createProductDto: CreateProduct, file?: any) {
+  async createProducts(
+    createProductDto: CreateProduct,
+    file?: Express.Multer.File
+  ): Promise<Product> {
     let imagePath: string | undefined = undefined;
 
     if (file) {
       imagePath = await this.saveFileToDisc(file);
     }
 
-    const productData = {
-      ...createProductDto,
+    const productData: Partial<Product> = {
+      name: createProductDto.name,
+      price: createProductDto.price,
+      stock: createProductDto.stock,
+      description: createProductDto.description,
       image: imagePath,
+      sku: createProductDto.sku,
+      status: createProductDto.status,
+      attributes: createProductDto.attributes,
+      comparePrice: createProductDto.comparePrice,
+      translations: createProductDto.translations,
+      seoTitle: createProductDto.seoTitle,
+      seoDescription: createProductDto.seoDescription,
+      weight: createProductDto.weight,
+      dimensions: createProductDto.dimensions,
     };
+
+    if (createProductDto.familyId) {
+      productData.family = { id: createProductDto.familyId } as any;
+    }
+
+    productData.category = { id: createProductDto.categoryId } as any;
 
     const product = this.productRepository.create(productData);
 
     try {
       const savedProduct = await this.productRepository.save(product);
-      return savedProduct;
+      
+      const productWithRelations = await this.productRepository.findOne({
+        where: { id: savedProduct.id },
+        relations: ['category', 'family'],
+      });
+      
+      if (!productWithRelations) {
+        throw new Error('Product not found after creation');
+      }
+      
+      return productWithRelations;
     } catch (error) {
       if (imagePath) {
         await this.deleteFile(imagePath);
@@ -87,14 +91,13 @@ export class ProductService {
     }
   }
 
-  private async saveFileToDisc(file: any): Promise<string> {
+  private async saveFileToDisc(file: Express.Multer.File): Promise<string> {
     const uploadsDir = path.join(process.cwd(), 'uploads', 'products');
-    const fileExtension = path.extname(file.filename);
+    const fileExtension = path.extname(file.originalname);
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}${fileExtension}`;
     const filePath = path.join(uploadsDir, fileName);
 
-    const buffer = await file.toBuffer();
-    await fs.writeFile(filePath, buffer);
+    await fs.writeFile(filePath, file.buffer);
 
     return path.join('uploads', 'products', fileName);
   }
@@ -118,23 +121,54 @@ export class ProductService {
   }
 
   async findAll(query: Pagination) {
-    const page = parseInt(String(query.page || '1')) || 1;
-    const limit = parseInt(String(query.limit || '10')) || 10;
+    const processedQuery = this.processQuery(query, this.request.query);
+
+    const page = Math.max(Number(processedQuery.page) || 1, 1);
+    const limit = Math.min(Number(processedQuery.limit) || 10, 100);
     const skip = (page - 1) * limit;
 
-    const [products, total] = await this.productRepository.findAndCount({
-      skip,
-      take: limit,
-      order: {
-        id: 'ASC',
-      },
-    });
+    const qb = this.productRepository.createQueryBuilder('product')
+      .leftJoinAndSelect('product.category', 'category')
+      .leftJoinAndSelect('product.family', 'family');
+
+      const paginationQuery: PaginationQuery = {
+        page: processedQuery.page,
+        limit: processedQuery.limit,
+        sortBy: processedQuery.sortBy || 'id',
+        sortOrder: processedQuery.sortOrder?.toUpperCase() as 'ASC' | 'DESC' | undefined,
+        filters: processedQuery.filters,
+      };
+      const result = await this.paginationService.paginate(qb, 'product', paginationQuery);
+
+      return {
+        products: result.data,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+      }
+  }
+
+
+  private processQuery(
+    query: Pagination,
+    rawQuery?: Record<string, any>
+  ): ProcessedPagination {
+    const parsedFilters = this.filterParserService.parseFilters(
+      query.filters,
+      rawQuery
+    );
+
+    const sanitizedFilters = parsedFilters 
+      ? this.filterParserService.validateAndSanitizeFilters(parsedFilters)
+      : undefined;
 
     return {
-      products,
-      total,
-      page,
-      limit,
+      ...query,
+      filters: sanitizedFilters,
+      sortOrder: query.sortOrder?.toUpperCase() as 'ASC' | 'DESC' | undefined,
     };
   }
 
@@ -146,6 +180,7 @@ export class ProductService {
       where: {
         id,
       },
+      relations: ['category', 'family'],
     });
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -153,21 +188,25 @@ export class ProductService {
     return product;
   }
 
-  async updateProduct(id: number, req: FastifyRequest) {
+  async updateProduct(
+    id: number,
+    updateDto: Partial<CreateProduct>,
+    file?: Express.Multer.File
+  ) {
     if (!id) throw new BadRequestException('ID is required');
 
-    const { formData, file } = await this.parseMultipartRequest(req);
-
-    const product = await this.productRepository.findOne({ where: { id } });
+    const product = await this.productRepository.findOne({
+      where: { id },
+      relations: ['family', 'category'],
+    });
     if (!product)
       throw new NotFoundException(`Product with ID ${id} not found`);
 
-    const updateDto: UpdateProduct = {
-      name: formData.name ?? product.name,
-      price: formData.price ? parseFloat(formData.price) : product.price,
-      stock: formData.stock ? formData.stock === 'true' : product.stock,
-      description: formData.description ?? product.description,
-      familyId: formData.familyId ? parseInt(formData.familyId) : undefined,
+    const updateData: Partial<Product> = {
+      name: updateDto.name ?? product.name,
+      price: updateDto.price ?? product.price,
+      stock: updateDto.stock ?? product.stock,
+      description: updateDto.description ?? product.description,
     };
 
     let imagePath = product.image;
@@ -183,7 +222,19 @@ export class ProductService {
       ...updateDto,
       image: imagePath,
     });
-    return await this.productRepository.save(updated);
+    
+    const savedProduct = await this.productRepository.save(updated);
+    
+    const updatedProduct = await this.productRepository.findOne({
+      where: { id: savedProduct.id },
+      relations: ['category', 'family'],
+    });
+    
+    if (!updatedProduct) {
+      throw new NotFoundException('Product not found after update');
+    }
+    
+    return updatedProduct;
   }
 
   async remove(id: number) {
