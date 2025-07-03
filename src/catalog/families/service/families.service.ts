@@ -29,10 +29,11 @@ export class FamiliesService {
     try {
       const category = await this.categoryRepository.findOne({
         where: { id: categoryId },
+        relations: ['families', 'products'],
       });
       if (!category) {
         this.logger.warn('Category not found');
-        throw new NotFoundException(`Category with ID ${categoryId} not found`);
+        throw new NotFoundException(`Category not found`);
       }
 
       return category;
@@ -41,10 +42,7 @@ export class FamiliesService {
         throw error;
       }
       const err = error as Error;
-      this.logger.error(
-        `FindCategoryById error with ID ${categoryId}: ${err.message}`,
-        err.stack
-      );
+      this.logger.error(`FindCategoryById error: ${err.message}`, err.stack);
       throw new BadRequestException('Failed to find category');
     }
   }
@@ -107,7 +105,7 @@ export class FamiliesService {
       });
 
       if (!family) {
-        throw new NotFoundException(`Product family with ID ${id} not found`);
+        throw new NotFoundException(`Product family not found`);
       }
 
       return family;
@@ -134,7 +132,7 @@ export class FamiliesService {
       });
 
       if (!existingFamily)
-        throw new NotFoundException(`Product family with ID ${id} not found`);
+        throw new NotFoundException(`Product family not found`);
 
       let category: Category | undefined;
 
@@ -168,8 +166,7 @@ export class FamiliesService {
         where: { id },
       });
 
-      if (!family)
-        throw new NotFoundException(`Product family with ID ${id} not found`);
+      if (!family) throw new NotFoundException(`Product family not found`);
 
       await this.productFamilyRepository.remove(family);
 
