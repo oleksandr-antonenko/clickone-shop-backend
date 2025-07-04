@@ -10,9 +10,8 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-import { PaginationQueryDto } from '~/pagination/dto/pagination-query.dto';
-
 import { CreateFamilyDto } from '../dto/create-family.dto';
+import { PaginationQueryFamilyDto } from '../dto/pagination-query-family.dto';
 import { UpdateFamilyDto } from '../dto/update-family.dto';
 import { FamiliesService } from '../service/families.service';
 
@@ -25,6 +24,7 @@ export class FamiliesController {
   @ApiResponse({
     status: 201,
     description: 'Product family created successfully',
+    type: CreateFamilyDto,
   })
   @ApiBody({ type: CreateFamilyDto })
   async create(@Body() createFamilyDto: CreateFamilyDto) {
@@ -38,7 +38,7 @@ export class FamiliesController {
     description: 'Product families fetched successfully',
   })
   @ApiResponse({ status: 404, description: 'No products families found' })
-  async findAll(@Query() query: PaginationQueryDto) {
+  async findAll(@Query() query: PaginationQueryFamilyDto) {
     return this.familiesService.findAll(query);
   }
 
@@ -47,6 +47,7 @@ export class FamiliesController {
   @ApiResponse({
     status: 200,
     description: 'Product family fetched successfully',
+    type: CreateFamilyDto,
   })
   @ApiResponse({ status: 404, description: 'Product family not found' })
   async findOne(@Param('id') id: string) {
@@ -58,6 +59,7 @@ export class FamiliesController {
   @ApiResponse({
     status: 200,
     description: 'Product family updated successfully',
+    type: UpdateFamilyDto,
   })
   @ApiResponse({ status: 404, description: 'Product family not found' })
   async update(

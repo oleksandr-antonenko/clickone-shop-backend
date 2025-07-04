@@ -17,7 +17,6 @@ import {
   ProcessedPagination,
 } from '~/catalog/product/interface/pagination.interface';
 import { FilterParserService } from '~/filter/service/filter-parser.service';
-import { FilterService } from '~/filter/service/filter.service';
 import { PaginationQuery } from '~/pagination/interface/pagination.interface';
 import { PaginationService } from '~/pagination/service/pagination.service';
 
@@ -32,7 +31,6 @@ export class FamiliesService {
     private productFamilyRepository: Repository<ProductFamily>,
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
-    private readonly filterService: FilterService,
     private readonly filterParserService: FilterParserService,
     private readonly paginationService: PaginationService,
     @Inject(REQUEST) private readonly request: Request
@@ -114,9 +112,9 @@ export class FamiliesService {
       const processedQuery = this.processQuery(query, this.request.query);
 
       const qb = this.productFamilyRepository
-        .createQueryBuilder('productFamily')
-        .leftJoinAndSelect('productFamily.category', 'category')
-        .leftJoinAndSelect('productFamily.products', 'products');
+        .createQueryBuilder('productFamilies')
+        .leftJoinAndSelect('productFamilies.category', 'category')
+        .leftJoinAndSelect('productFamilies.products', 'products');
 
       const paginationQuery: PaginationQuery = {
         page: processedQuery.page,
@@ -129,20 +127,15 @@ export class FamiliesService {
         filters: processedQuery.filters,
       };
 
-      this.filterService.applyFilters(
-        qb,
-        'productFamily',
-        processedQuery.filters ?? {}
-      );
-
       const result = await this.paginationService.paginate(
         qb,
-        'productFamily',
-        paginationQuery
+        'productFamilies',
+        paginationQuery,
+        processedQuery.filters
       );
 
       return {
-        productFamily: result.data,
+        families: result.data,
         total: result.total,
         page: result.page,
         limit: result.limit,
