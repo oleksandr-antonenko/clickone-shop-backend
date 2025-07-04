@@ -86,19 +86,16 @@ export class FamiliesService {
     createProductFamilyDto: CreateFamilyDto
   ): Promise<ProductFamily> {
     try {
-      let category: Category | undefined;
-
-      if (createProductFamilyDto.categoryId) {
-        category = await this.findCategoryById(
-          createProductFamilyDto.categoryId
-        );
-      } else {
-        this.logger.warn('Category ID not provided');
+      if (!createProductFamilyDto.categoryId) {
+        throw new BadRequestException('Category ID is required');
       }
+      const category = await this.findCategoryById(
+        createProductFamilyDto.categoryId
+      );
 
       const productFamily = this.productFamilyRepository.create({
         ...createProductFamilyDto,
-        ...(category && { category }),
+        category,
       });
 
       return await this.productFamilyRepository.save(productFamily);
@@ -237,7 +234,7 @@ export class FamiliesService {
         where: { id },
       });
 
-      if (!family) throw new NotFoundException(`Product family not found`);
+      if (!family) throw new NotFoundException('Product family not found');
 
       await this.productFamilyRepository.remove(family);
 
