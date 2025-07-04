@@ -138,7 +138,12 @@ export class ProductService {
         sortOrder: processedQuery.sortOrder?.toUpperCase() as 'ASC' | 'DESC' | undefined,
         filters: processedQuery.filters,
       };
-      const result = await this.paginationService.paginate(qb, 'product', paginationQuery);
+      const result = await this.paginationService.paginate(
+        qb,
+        'product',
+        paginationQuery,
+        processedQuery.filters
+      );
 
       return {
         products: result.data,
