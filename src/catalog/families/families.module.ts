@@ -1,13 +1,20 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { FilterModule } from '~/filter/filter.module';
+import { PaginationModule } from '~/pagination/pagination.module';
+
+import { Category } from '../category/entities/category.entity';
 import { FamiliesController } from './controller/families.controller';
 import { ProductFamily } from './entity/product-family.entity';
-import { Category } from '../category/entities/category.entity';
 import { FamiliesService } from './service/families.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ProductFamily, Category])],
+  imports: [
+    TypeOrmModule.forFeature([ProductFamily, Category]),
+    FilterModule,
+    PaginationModule,
+  ],
   controllers: [FamiliesController],
   providers: [FamiliesService],
   exports: [FamiliesService],

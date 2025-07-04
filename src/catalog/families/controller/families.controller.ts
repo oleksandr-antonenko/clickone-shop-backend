@@ -6,11 +6,15 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
-import { FamiliesService } from '../service/families.service';
-import { CreateFamilyDto } from '../dto/create-family.dto';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+
+import { PaginationQueryDto } from '~/pagination/dto/pagination-query.dto';
+
+import { CreateFamilyDto } from '../dto/create-family.dto';
 import { UpdateFamilyDto } from '../dto/update-family.dto';
+import { FamiliesService } from '../service/families.service';
 
 @Controller('families')
 export class FamiliesController {
@@ -34,8 +38,8 @@ export class FamiliesController {
     description: 'Product families fetched successfully',
   })
   @ApiResponse({ status: 404, description: 'No products families found' })
-  async findAll() {
-    return this.familiesService.findAll();
+  async findAll(@Query() query: PaginationQueryDto) {
+    return this.familiesService.findAll(query);
   }
 
   @Get(':id')

@@ -1,14 +1,25 @@
 import {
   BadRequestException,
   HttpException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 
+import { Request } from 'express';
 import { Repository } from 'typeorm';
 import { Category } from '~/catalog/category/entities/category.entity';
+import {
+  Pagination,
+  ProcessedPagination,
+} from '~/catalog/product/interface/pagination.interface';
+import { FilterParserService } from '~/filter/service/filter-parser.service';
+import { FilterService } from '~/filter/service/filter.service';
+import { PaginationQuery } from '~/pagination/interface/pagination.interface';
+import { PaginationService } from '~/pagination/service/pagination.service';
 
 import { CreateFamilyDto } from '../dto/create-family.dto';
 import { UpdateFamilyDto } from '../dto/update-family.dto';
@@ -20,7 +31,11 @@ export class FamiliesService {
     @InjectRepository(ProductFamily)
     private productFamilyRepository: Repository<ProductFamily>,
     @InjectRepository(Category)
-    private categoryRepository: Repository<Category>
+    private categoryRepository: Repository<Category>,
+    private readonly filterService: FilterService,
+    private readonly filterParserService: FilterParserService,
+    private readonly paginationService: PaginationService,
+    @Inject(REQUEST) private readonly request: Request
   ) {}
 
   private readonly logger = new Logger(FamiliesService.name);
@@ -45,6 +60,26 @@ export class FamiliesService {
       this.logger.error(`FindCategoryById error: ${err.message}`, err.stack);
       throw new BadRequestException('Failed to find category');
     }
+  }
+
+  private processQuery(
+    query: Pagination,
+    rawQuery?: Record<string, any>
+  ): ProcessedPagination {
+    const parsedFilters = this.filterParserService.parseFilters(
+      query.filters,
+      rawQuery
+    );
+
+    const sanitizedFilters = parsedFilters
+      ? this.filterParserService.validateAndSanitizeFilters(parsedFilters)
+      : undefined;
+
+    return {
+      ...query,
+      filters: sanitizedFilters,
+      sortOrder: query.sortOrder?.toUpperCase() as 'ASC' | 'DESC' | undefined,
+    };
   }
 
   async create(
@@ -77,11 +112,47 @@ export class FamiliesService {
     }
   }
 
-  async findAll(): Promise<ProductFamily[]> {
+  async findAll(query: Pagination) {
     try {
-      return await this.productFamilyRepository.find({
-        relations: ['category', 'products'],
-      });
+      const processedQuery = this.processQuery(query, this.request.query);
+
+      const qb = this.productFamilyRepository
+        .createQueryBuilder('productFamily')
+        .leftJoinAndSelect('productFamily.category', 'category')
+        .leftJoinAndSelect('productFamily.products', 'products');
+
+      const paginationQuery: PaginationQuery = {
+        page: processedQuery.page,
+        limit: processedQuery.limit,
+        sortBy: processedQuery.sortBy || 'id',
+        sortOrder: processedQuery.sortOrder?.toUpperCase() as
+          | 'ASC'
+          | 'DESC'
+          | undefined,
+        filters: processedQuery.filters,
+      };
+
+      this.filterService.applyFilters(
+        qb,
+        'productFamily',
+        processedQuery.filters ?? {}
+      );
+
+      const result = await this.paginationService.paginate(
+        qb,
+        'productFamily',
+        paginationQuery
+      );
+
+      return {
+        productFamily: result.data,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+      };
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
