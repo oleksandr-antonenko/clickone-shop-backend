@@ -133,7 +133,8 @@ export class ProductService {
     const qb = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
-      .leftJoinAndSelect('product.family', 'family');
+      .leftJoinAndSelect('product.family', 'family')
+      .leftJoinAndSelect('product.brand', 'brand');
 
     const paginationQuery: PaginationQuery = {
       page: processedQuery.page,

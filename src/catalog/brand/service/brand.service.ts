@@ -75,8 +75,8 @@ export class BrandService {
       const processedQuery = this.processQuery(query, this.request.query);
 
       const qb = this.brandRepository
-        .createQueryBuilder('brands')
-        .leftJoinAndSelect('brands.products', 'products');
+        .createQueryBuilder('brand')
+        .leftJoinAndSelect('brand.products', 'products');
 
       const paginationQuery: PaginationQuery = {
         page: processedQuery.page,
@@ -91,7 +91,7 @@ export class BrandService {
 
       const result = await this.paginationService.paginate(
         qb,
-        'brands',
+        'brand',
         paginationQuery,
         processedQuery.filters
       );
