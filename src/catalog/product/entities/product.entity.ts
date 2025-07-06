@@ -1,7 +1,3 @@
-// import { ProductOptionValue } from "./product-option-value.entity";
-// import { ProductSetting } from "./product-setting.entity";
-import { ApiProperty } from '@nestjs/swagger';
-
 import {
   Column,
   CreateDateColumn,
@@ -12,11 +8,12 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Brand } from '~/catalog/brand/entities/brand.entity';
+import { Category } from '~/catalog/category/entities/category.entity';
 
 import { ProductOptionValue } from '../../attributes/entity/attributes-option-value.entity';
 import { ProductFamily } from '../../families/entity/product-family.entity';
 import { ProductSetting } from '../../settings/entity/product-setting.entity';
-import { Category } from '~/catalog/category/entities/category.entity';
 
 @Entity('products')
 export class Product {
@@ -41,7 +38,11 @@ export class Product {
   @Column({ type: 'text', nullable: true })
   image?: string;
 
-  @Column({ type: 'enum', enum: ['active', 'draft', 'archived'], default: 'draft' })
+  @Column({
+    type: 'enum',
+    enum: ['active', 'draft', 'archived'],
+    default: 'draft',
+  })
   status: 'active' | 'draft' | 'archived';
 
   @Column({ type: 'varchar', nullable: true })
@@ -54,10 +55,13 @@ export class Product {
   comparePrice?: number;
 
   @Column({ type: 'jsonb', nullable: true })
-  translations?: Record<string, {
-    name: string;
-    description: string;
-  }>;
+  translations?: Record<
+    string,
+    {
+      name: string;
+      description: string;
+    }
+  >;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   seoTitle?: string;
@@ -89,4 +93,8 @@ export class Product {
   @ManyToOne(() => Category, (category) => category.products)
   @JoinColumn({ name: 'category_id' })
   category: Category;
+
+  @ManyToOne(() => Brand, (brand) => brand.products)
+  @JoinColumn({ name: 'brand_id' })
+  brand: Brand;
 }

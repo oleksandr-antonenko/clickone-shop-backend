@@ -6,14 +6,16 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 import { CreateBrandDto } from '../dto/create-brand.dto';
+import { PaginationQueryBrandDto } from '../dto/pagination-query-brand';
 import { UpdateBrandDto } from '../dto/update-brand.dto';
 import { BrandService } from '../service/brand.service';
 
-@Controller('brand')
+@Controller('brands')
 export class BrandController {
   constructor(private readonly brandService: BrandService) {}
 
@@ -34,8 +36,8 @@ export class BrandController {
     status: 200,
     description: 'Brands fetched successfully',
   })
-  findAll() {
-    return this.brandService.findAll();
+  findAll(@Query() query: PaginationQueryBrandDto) {
+    return this.brandService.findAll(query);
   }
 
   @Get(':id')
