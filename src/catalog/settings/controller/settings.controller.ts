@@ -6,11 +6,14 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
-import { SettingsService } from '../service/settings.service';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+
 import { CreateSettingDto } from '../dto/create-setting.dto';
+import { PaginationQuerySettingsDto } from '../dto/pagination-query-settings.dto';
 import { UpdateSettingDto } from '../dto/update-setting.dto';
+import { SettingsService } from '../service/settings.service';
 
 @Controller('settings')
 export class SettingsController {
@@ -34,8 +37,8 @@ export class SettingsController {
     description: 'Product settings fetched successfully',
   })
   @ApiResponse({ status: 404, description: 'No products settings found' })
-  async findAll() {
-    return this.settingsService.findAll();
+  async findAll(@Query() query: PaginationQuerySettingsDto) {
+    return this.settingsService.findAll(query);
   }
 
   @Get(':id')
