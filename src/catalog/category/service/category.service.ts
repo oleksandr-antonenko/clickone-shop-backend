@@ -81,9 +81,6 @@ export class CategoryService {
 
       const categories = await query.getMany();
 
-      if (!categories.length) {
-        throw new NotFoundException('No categories found');
-      }
       return categories;
     } catch (error: unknown) {
       this.handleError(error, 'Failed to fetch categories');
