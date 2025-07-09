@@ -1,11 +1,9 @@
 import {
-  MiddlewareConsumer,
   Module,
-  NestModule,
-  RequestMethod,
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { APP_GUARD } from '@nestjs/core';
 
 import { AppController } from '~/app.controller';
 import { AppService } from '~/app.service';
@@ -16,8 +14,9 @@ import { CategoryModule } from './catalog/category/category.module';
 import { FamiliesModule } from './catalog/families/families.module';
 import { ProductModule } from './catalog/product/product.module';
 import { SettingsModule } from './catalog/settings/settings.module';
-import { Auth0Middleware } from './middleware/auth0.middleware';
 import { OrderModule } from './order/order.module';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -43,20 +42,18 @@ import { OrderModule } from './order/order.module';
     AttributesModule,
     SettingsModule,
     FamiliesModule,
+
     CategoryModule,
     BrandModule,
+    AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(Auth0Middleware)
-      .exclude(
-        { path: 'api/docs', method: RequestMethod.GET },
-        { path: 'api/swagger', method: RequestMethod.GET }
-      )
-      .forRoutes('*');
-  }
-}
+export class AppModule {}

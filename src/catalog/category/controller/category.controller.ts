@@ -20,6 +20,7 @@ import { CreateCategoryDto } from '../dto/create-category.dto';
 import { FilterCategoryDto } from '../dto/filter-category.dto';
 import { UpdateCategoryDto } from '../dto/update-category.dto';
 import { CategoryService } from '../service/category.service';
+import { Public } from '../../../common/decorators/public.decorator';
 
 @Controller('category')
 export class CategoryController {
@@ -52,19 +53,21 @@ export class CategoryController {
     return this.categoryService.create(createCategoryDto);
   }
 
+  @Public()
   @Get()
-  @ApiOperation({ summary: 'Get a category by ID' })
+  @ApiOperation({ summary: 'Get all categories' })
   @ApiResponse({
     status: 200,
-    description: 'The category has been successfully retrieved.',
+    description: 'The categories have been successfully retrieved.',
   })
-  @ApiResponse({ status: 404, description: 'Category not found.' })
+  @ApiResponse({ status: 404, description: 'Categories not found.' })
   @ApiQuery({ name: 'isActive', type: Boolean, required: false })
   @ApiQuery({ name: 'parentId', type: Number, required: false })
   findAll(@Query() filterCategoryDto: FilterCategoryDto) {
     return this.categoryService.findAll(filterCategoryDto);
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get a category by ID' })
   @ApiResponse({
