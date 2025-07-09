@@ -5,23 +5,26 @@ import {
   NotFoundException,
   Scope,
 } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 
+import { Request } from 'express';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { Repository } from 'typeorm';
 
-import { FilterService } from '../../../filter/service/filter.service';
 import { FilterParserService } from '../../../filter/service/filter-parser.service';
-import { Product } from '../entities/product.entity';
-import { CreateProduct } from '../interface/create.interface';
-import { Pagination, ProcessedPagination } from '../interface/pagination.interface';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
+import { FilterService } from '../../../filter/service/filter.service';
 import { PaginationQuery } from '../../../pagination/interface/pagination.interface';
 import { PaginationService } from '../../../pagination/service/pagination.service';
+import { Product } from '../entities/product.entity';
+import { CreateProduct } from '../interface/create.interface';
+import {
+  Pagination,
+  ProcessedPagination,
+} from '../interface/pagination.interface';
 
-@Injectable({scope: Scope.REQUEST})
+@Injectable({ scope: Scope.REQUEST })
 export class ProductService {
   constructor(
     @InjectRepository(Product)
@@ -71,16 +74,16 @@ export class ProductService {
 
     try {
       const savedProduct = await this.productRepository.save(product);
-      
+
       const productWithRelations = await this.productRepository.findOne({
         where: { id: savedProduct.id },
-        relations: ['category', 'family'],
+        relations: ['category', 'family', 'brand'],
       });
-      
+
       if (!productWithRelations) {
         throw new Error('Product not found after creation');
       }
-      
+
       return productWithRelations;
     } catch (error) {
       if (imagePath) {
@@ -127,35 +130,39 @@ export class ProductService {
     const limit = Math.min(Number(processedQuery.limit) || 10, 100);
     const skip = (page - 1) * limit;
 
-    const qb = this.productRepository.createQueryBuilder('product')
+    const qb = this.productRepository
+      .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
-      .leftJoinAndSelect('product.family', 'family');
+      .leftJoinAndSelect('product.family', 'family')
+      .leftJoinAndSelect('product.brand', 'brand');
 
-      const paginationQuery: PaginationQuery = {
-        page: processedQuery.page,
-        limit: processedQuery.limit,
-        sortBy: processedQuery.sortBy || 'id',
-        sortOrder: processedQuery.sortOrder?.toUpperCase() as 'ASC' | 'DESC' | undefined,
-        filters: processedQuery.filters,
-      };
-      const result = await this.paginationService.paginate(
-        qb,
-        'product',
-        paginationQuery,
-        processedQuery.filters
-      );
+    const paginationQuery: PaginationQuery = {
+      page: processedQuery.page,
+      limit: processedQuery.limit,
+      sortBy: processedQuery.sortBy || 'id',
+      sortOrder: processedQuery.sortOrder?.toUpperCase() as
+        | 'ASC'
+        | 'DESC'
+        | undefined,
+      filters: processedQuery.filters,
+    };
+    const result = await this.paginationService.paginate(
+      qb,
+      'product',
+      paginationQuery,
+      processedQuery.filters
+    );
 
-      return {
-        products: result.data,
-        total: result.total,
-        page: result.page,
-        limit: result.limit,
-        totalPages: result.totalPages,
-        hasNextPage: result.hasNextPage,
-        hasPreviousPage: result.hasPreviousPage,
-      }
+    return {
+      products: result.data,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+      hasNextPage: result.hasNextPage,
+      hasPreviousPage: result.hasPreviousPage,
+    };
   }
-
 
   private processQuery(
     query: Pagination,
@@ -166,7 +173,7 @@ export class ProductService {
       rawQuery
     );
 
-    const sanitizedFilters = parsedFilters 
+    const sanitizedFilters = parsedFilters
       ? this.filterParserService.validateAndSanitizeFilters(parsedFilters)
       : undefined;
 
@@ -185,7 +192,7 @@ export class ProductService {
       where: {
         id,
       },
-      relations: ['category', 'family'],
+      relations: ['category', 'family', 'brand'],
     });
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -202,7 +209,7 @@ export class ProductService {
 
     const product = await this.productRepository.findOne({
       where: { id },
-      relations: ['family', 'category'],
+      relations: ['family', 'category', 'brand'],
     });
     if (!product)
       throw new NotFoundException(`Product with ID ${id} not found`);
@@ -227,18 +234,18 @@ export class ProductService {
       ...updateDto,
       image: imagePath,
     });
-    
+
     const savedProduct = await this.productRepository.save(updated);
-    
+
     const updatedProduct = await this.productRepository.findOne({
       where: { id: savedProduct.id },
-      relations: ['category', 'family'],
+      relations: ['category', 'family', 'brand'],
     });
-    
+
     if (!updatedProduct) {
       throw new NotFoundException('Product not found after update');
     }
-    
+
     return updatedProduct;
   }
 
