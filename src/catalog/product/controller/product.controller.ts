@@ -20,7 +20,6 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 
-import { Request } from 'express';
 
 import { CreateProductDto } from '../dto/create-product.dto';
 import { PaginationQueryDto } from '../dto/pagination-query.dto';

@@ -8,7 +8,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Brand } from '~/catalog/brand/entities/brand.entity';
+import { Brand } from '~/catalog/brands/entities/brand.entity';
 import { Category } from '~/catalog/category/entities/category.entity';
 
 import { ProductOptionValue } from '../../attributes/entity/attributes-option-value.entity';
