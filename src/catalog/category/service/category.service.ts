@@ -91,7 +91,7 @@ export class CategoryService {
     try {
       const category = await this.categoryRepository.findOne({ where: { id } });
       if (!category) {
-        throw new NotFoundException('Category id not found');
+        throw new NotFoundException('Category not found');
       }
       return category;
     } catch (error: unknown) {
@@ -135,7 +135,7 @@ export class CategoryService {
         where: { id },
       });
       if (!removedCategory) {
-        throw new NotFoundException('Category id not found');
+        throw new NotFoundException('Category not found');
       }
       await this.categoryRepository.delete(id);
       return { message: 'Category deleted successfully' };
