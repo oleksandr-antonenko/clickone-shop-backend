@@ -21,6 +21,7 @@ import { Public } from '~/common/decorators/public.decorator';
 
 import { CollectionsDto } from '../dto/collections.dto';
 import { PaginationQueryCollectionDto } from '../dto/pagination-query-collection.dto';
+import { CollectionProductsPaginationDto } from '../dto/collection-products-pagination.dto';
 import { 
   AddProductsToCollectionDto, 
   RemoveProductsFromCollectionDto, 
@@ -235,7 +236,7 @@ export class CollectionsController {
   }
 
   @Get(':id/products/list')
-  @ApiOperation({ summary: 'Get collection products list' })
+  @ApiOperation({ summary: 'Get all collection products (without pagination)' })
   @ApiResponse({
     status: 200,
     description: 'Collection products retrieved successfully',
@@ -243,5 +244,44 @@ export class CollectionsController {
   @ApiParam({ name: 'id', description: 'Collection ID' })
   async getCollectionProducts(@Param('id') id: string) {
     return this.collectionsService.getCollectionProducts(id);
+  }
+
+  @Public()
+  @Get(':id/products/paginated')
+  @ApiOperation({ summary: 'Get collection products with pagination and filtering' })
+  @ApiResponse({
+    status: 200,
+    description: 'Collection products retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        products: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'number' },
+              sortOrder: { type: 'number' },
+              createdAt: { type: 'string' },
+              product: { $ref: '#/components/schemas/Product' }
+            }
+          }
+        },
+        total: { type: 'number' },
+        page: { type: 'number' },
+        limit: { type: 'number' },
+        totalPages: { type: 'number' },
+        hasNextPage: { type: 'boolean' },
+        hasPreviousPage: { type: 'boolean' }
+      }
+    }
+  })
+  @ApiParam({ name: 'id', description: 'Collection ID' })
+  @ApiQuery({ type: CollectionProductsPaginationDto })
+  async getCollectionProductsPaginated(
+    @Param('id') id: string,
+    @Query() query: CollectionProductsPaginationDto,
+  ) {
+    return this.collectionsService.getCollectionProductsPaginated(id, query);
   }
 }

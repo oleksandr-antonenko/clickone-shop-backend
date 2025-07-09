@@ -16,6 +16,7 @@ import { Collection } from '../entity/collections.entity';
 import { CollectionProduct } from '../entity/collection-product.entity';
 import { CollectionsDto } from '../dto/collections.dto';
 import { PaginationQueryCollectionDto } from '../dto/pagination-query-collection.dto';
+import { CollectionProductsPaginationDto } from '../dto/collection-products-pagination.dto';
 import { CollectionStatus } from '../interface/collections.interface';
 
 @Injectable()
@@ -275,7 +276,6 @@ export class CollectionsService {
 
   async removeProducts(collectionId: string, productIds: number[]): Promise<void> {
     try {
-      const collection = await this.findOne(collectionId);
 
 
       await this.collectionProductRepository.delete({
@@ -336,5 +336,66 @@ export class CollectionsService {
       this.logger.error(`Failed to fetch collection products ${collectionId}: ${error.message}`);
       throw error;
     }
+  }
+
+  async getCollectionProductsPaginated(
+    collectionId: string,
+    query: CollectionProductsPaginationDto,
+  ) {
+    try {
+      // Verify collection exists
+      await this.findOne(collectionId);
+
+      const processedQuery = this.processCollectionProductsQuery(query);
+
+      const qb = this.collectionProductRepository
+        .createQueryBuilder('collectionProduct')
+        .leftJoinAndSelect('collectionProduct.product', 'product')
+        .leftJoinAndSelect('product.category', 'category')
+        .leftJoinAndSelect('product.brand', 'brand')
+        .where('collectionProduct.collectionId = :collectionId', { collectionId });
+
+      const paginationQuery: PaginationQuery = {
+        page: processedQuery.page,
+        limit: processedQuery.limit,
+        sortBy: processedQuery.sortBy || 'collectionProduct.sortOrder',
+        sortOrder: processedQuery.sortOrder?.toUpperCase() as 'ASC' | 'DESC' | undefined,
+        filters: processedQuery.filters,
+      };
+
+      const result = await this.paginationService.paginate(
+        qb,
+        'collectionProduct',
+        paginationQuery,
+        processedQuery.filters,
+      );
+
+      return {
+        products: result.data,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to fetch collection products: ${error.message}`);
+      throw error;
+    }
+  }
+
+  private processCollectionProductsQuery(query: CollectionProductsPaginationDto) {
+    const parsedFilters = this.filterParserService.parseFilters(query.filters);
+
+    const sanitizedFilters = parsedFilters
+      ? this.filterParserService.validateAndSanitizeFilters(parsedFilters)
+      : undefined;
+
+    return {
+      ...query,
+      filters: sanitizedFilters,
+      sortOrder: query.sortOrder?.toUpperCase() as 'ASC' | 'DESC' | undefined,
+    };
   }
 }
