@@ -75,9 +75,6 @@ export class CategoryService {
         relations: ['families'],
       });
 
-      if (!categories.length) {
-        throw new NotFoundException('No categories found');
-      }
       return categories;
     } catch (error: unknown) {
       this.handleError(error, 'Failed to fetch categories');

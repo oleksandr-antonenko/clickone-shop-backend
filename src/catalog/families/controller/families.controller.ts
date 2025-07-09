@@ -14,6 +14,7 @@ import { CreateFamilyDto } from '../dto/create-family.dto';
 import { PaginationQueryFamilyDto } from '../dto/pagination-query-family.dto';
 import { UpdateFamilyDto } from '../dto/update-family.dto';
 import { FamiliesService } from '../service/families.service';
+import { Public } from '../../../common/decorators/public.decorator';
 
 @Controller('families')
 export class FamiliesController {
@@ -31,6 +32,7 @@ export class FamiliesController {
     return this.familiesService.create(createFamilyDto);
   }
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'Get all product families' })
   @ApiResponse({
