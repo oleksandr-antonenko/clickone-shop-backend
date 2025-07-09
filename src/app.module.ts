@@ -11,6 +11,7 @@ import { AppService } from '~/app.service';
 import { AttributesModule } from './catalog/attributes/attributes.module';
 import { BrandModule } from './catalog/brands/brand.module';
 import { CategoryModule } from './catalog/category/category.module';
+import { CollectionsModule } from './catalog/collections/collections.module';
 import { FamiliesModule } from './catalog/families/families.module';
 import { ProductModule } from './catalog/product/product.module';
 import { SettingsModule } from './catalog/settings/settings.module';
@@ -42,7 +43,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     AttributesModule,
     SettingsModule,
     FamiliesModule,
-
+    CollectionsModule,
     CategoryModule,
     BrandModule,
     AuthModule,

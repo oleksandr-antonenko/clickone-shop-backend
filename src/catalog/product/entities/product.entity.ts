@@ -14,6 +14,7 @@ import { Category } from '~/catalog/category/entities/category.entity';
 import { ProductOptionValue } from '../../attributes/entity/attributes-option-value.entity';
 import { ProductFamily } from '../../families/entity/product-family.entity';
 import { ProductSetting } from '../../settings/entity/product-setting.entity';
+import { CollectionProduct } from '../../collections/entity/collection-product.entity';
 
 @Entity('products')
 export class Product {
@@ -97,4 +98,7 @@ export class Product {
   @ManyToOne(() => Brand, (brand) => brand.products)
   @JoinColumn({ name: 'brand_id' })
   brand: Brand;
+
+  @OneToMany(() => CollectionProduct, (collectionProduct) => collectionProduct.product)
+  collectionProducts: CollectionProduct[];
 }
