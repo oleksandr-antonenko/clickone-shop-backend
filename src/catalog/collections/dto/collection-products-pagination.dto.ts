@@ -2,9 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
 
-/**
- * Data Transfer Object for collection products pagination queries
- */
+
 export class CollectionProductsPaginationDto {
   @ApiPropertyOptional({ example: 1, description: 'Page number' })
   @IsOptional()

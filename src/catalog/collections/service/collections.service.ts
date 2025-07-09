@@ -8,7 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { FilterParserService } from '~/filter/service/filter-parser.service';
-import { FilterService } from '~/filter/service/filter.service';
 import { PaginationQuery } from '~/pagination/interface/pagination.interface';
 import { PaginationService } from '~/pagination/service/pagination.service';
 
@@ -29,7 +28,6 @@ export class CollectionsService {
     @InjectRepository(CollectionProduct)
     private collectionProductRepository: Repository<CollectionProduct>,
     private filterParserService: FilterParserService,
-    private filterService: FilterService,
     private paginationService: PaginationService,
   ) {}
 
@@ -343,7 +341,6 @@ export class CollectionsService {
     query: CollectionProductsPaginationDto,
   ) {
     try {
-      // Verify collection exists
       await this.findOne(collectionId);
 
       const processedQuery = this.processCollectionProductsQuery(query);
