@@ -24,10 +24,11 @@ import {
 import { CreateProductDto } from '../dto/create-product.dto';
 import { PaginationQueryDto } from '../dto/pagination-query.dto';
 import { ProductService } from '../service/product.service';
-import { Public } from '../../../common/decorators/public.decorator';
+import { PublicRead } from '../../../common/decorators/public.decorator';
 
 @Controller('products')
 @ApiBearerAuth()
+@PublicRead() 
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
@@ -44,7 +45,6 @@ export class ProductController {
     return this.productService.createProducts(createProductDto, file);
   }
 
-  @Public()
   @Get()
   @ApiOperation({ summary: 'Get all products' })
   @ApiResponse({ status: 200, description: 'Products fetched successfully' })
@@ -53,7 +53,6 @@ export class ProductController {
     return this.productService.findAll(query);
   }
 
-  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get a product by ID' })
   @ApiResponse({ status: 200, description: 'Product fetched successfully' })

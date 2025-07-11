@@ -18,6 +18,7 @@ import { SettingsModule } from './catalog/settings/settings.module';
 import { OrderModule } from './order/order.module';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { AuthConfigService } from './config/auth.config';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
   controllers: [AppController],
   providers: [
     AppService,
+    AuthConfigService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

@@ -10,8 +10,10 @@ import {
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AttributesValueService } from '../service/attributes-value.service';
 import { CreateAttributesValueDto } from '../dto/create-attributes-value.dto';
+import { PublicRead } from '../../../common/decorators/public.decorator';
 
 @Controller('attributes/values')
+@PublicRead()
 export class AttributesValueController {
   constructor(private readonly attributesService: AttributesValueService) {}
 

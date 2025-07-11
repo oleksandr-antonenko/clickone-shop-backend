@@ -17,7 +17,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { Public } from '~/common/decorators/public.decorator';
+import { PublicRead } from '~/common/decorators/public.decorator';
 
 import { CollectionsDto } from '../dto/collections.dto';
 import { PaginationQueryCollectionDto } from '../dto/pagination-query-collection.dto';
@@ -31,6 +31,7 @@ import { CollectionsService } from '../service/collections.service';
 
 @ApiTags('Collections')
 @Controller('collections')
+@PublicRead()
 export class CollectionsController {
   constructor(private readonly collectionsService: CollectionsService) {}
 
@@ -46,7 +47,6 @@ export class CollectionsController {
     return this.collectionsService.create(createCollectionDto);
   }
 
-  @Public()
   @Get()
   @ApiOperation({ summary: 'Get all collections with pagination and filtering' })
   @ApiResponse({
@@ -73,7 +73,6 @@ export class CollectionsController {
     return this.collectionsService.findAll(query);
   }
 
-  @Public()
   @Get('active')
   @ApiOperation({ summary: 'Get all active collections' })
   @ApiResponse({
@@ -85,7 +84,6 @@ export class CollectionsController {
     return this.collectionsService.findActive();
   }
 
-  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get collection by ID' })
   @ApiResponse({
@@ -98,7 +96,6 @@ export class CollectionsController {
     return this.collectionsService.findOne(id);
   }
 
-  @Public()
   @Get(':id/products')
   @ApiOperation({ summary: 'Get collection with products' })
   @ApiResponse({
@@ -110,7 +107,6 @@ export class CollectionsController {
     return this.collectionsService.findOneWithProducts(id);
   }
 
-  @Public()
   @Get('slug/:slug')
   @ApiOperation({ summary: 'Get collection by slug' })
   @ApiResponse({
@@ -246,7 +242,6 @@ export class CollectionsController {
     return this.collectionsService.getCollectionProducts(id);
   }
 
-  @Public()
   @Get(':id/products/paginated')
   @ApiOperation({ summary: 'Get collection products with pagination and filtering' })
   @ApiResponse({

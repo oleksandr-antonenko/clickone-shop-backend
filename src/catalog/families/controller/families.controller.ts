@@ -14,9 +14,10 @@ import { CreateFamilyDto } from '../dto/create-family.dto';
 import { PaginationQueryFamilyDto } from '../dto/pagination-query-family.dto';
 import { UpdateFamilyDto } from '../dto/update-family.dto';
 import { FamiliesService } from '../service/families.service';
-import { Public } from '../../../common/decorators/public.decorator';
+import { PublicRead } from '../../../common/decorators/public.decorator';
 
 @Controller('families')
+@PublicRead()
 export class FamiliesController {
   constructor(private readonly familiesService: FamiliesService) {}
 
@@ -32,7 +33,6 @@ export class FamiliesController {
     return this.familiesService.create(createFamilyDto);
   }
 
-  @Public()
   @Get()
   @ApiOperation({ summary: 'Get all product families' })
   @ApiResponse({

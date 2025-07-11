@@ -14,8 +14,10 @@ import { CreateSettingDto } from '../dto/create-setting.dto';
 import { PaginationQuerySettingsDto } from '../dto/pagination-query-settings.dto';
 import { UpdateSettingDto } from '../dto/update-setting.dto';
 import { SettingsService } from '../service/settings.service';
+import { PublicRead } from '../../../common/decorators/public.decorator';
 
 @Controller('settings')
+@PublicRead() 
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}
 
