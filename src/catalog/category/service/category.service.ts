@@ -72,7 +72,6 @@ export class CategoryService {
     try {
       const categories = await this.categoryRepository.find({
         where: filterCategoryDto,
-        relations: ['families'],
       });
 
       return categories;
@@ -85,7 +84,6 @@ export class CategoryService {
     try {
       const category = await this.categoryRepository.findOne({
         where: { id },
-        relations: ['families'],
       });
       if (!category) {
         throw new NotFoundException('Category id not found');

@@ -11,7 +11,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { Request } from 'express';
 import { Repository } from 'typeorm';
-import { Category } from '~/catalog/category/entities/category.entity';
 import {
   Pagination,
   ProcessedPagination,
@@ -29,36 +28,12 @@ export class FamiliesService {
   constructor(
     @InjectRepository(ProductFamily)
     private productFamilyRepository: Repository<ProductFamily>,
-    @InjectRepository(Category)
-    private categoryRepository: Repository<Category>,
     private readonly filterParserService: FilterParserService,
     private readonly paginationService: PaginationService,
     @Inject(REQUEST) private readonly request: Request
   ) {}
 
   private readonly logger = new Logger(FamiliesService.name);
-
-  private async findCategoryById(categoryId: number): Promise<Category> {
-    try {
-      const category = await this.categoryRepository.findOne({
-        where: { id: categoryId },
-        relations: ['families', 'products'],
-      });
-      if (!category) {
-        this.logger.warn('Category not found');
-        throw new NotFoundException(`Category not found`);
-      }
-
-      return category;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      const err = error as Error;
-      this.logger.error(`FindCategoryById error: ${err.message}`, err.stack);
-      throw new BadRequestException('Failed to find category');
-    }
-  }
 
   private processQuery(
     query: Pagination,
@@ -84,16 +59,8 @@ export class FamiliesService {
     createProductFamilyDto: CreateFamilyDto
   ): Promise<ProductFamily> {
     try {
-      if (!createProductFamilyDto.categoryId) {
-        throw new BadRequestException('Category ID is required');
-      }
-      const category = await this.findCategoryById(
-        createProductFamilyDto.categoryId
-      );
-
       const productFamily = this.productFamilyRepository.create({
         ...createProductFamilyDto,
-        category,
       });
 
       return await this.productFamilyRepository.save(productFamily);
@@ -113,7 +80,6 @@ export class FamiliesService {
 
       const qb = this.productFamilyRepository
         .createQueryBuilder('productFamilies')
-        .leftJoinAndSelect('productFamilies.category', 'category')
         .leftJoinAndSelect('productFamilies.products', 'products');
 
       const paginationQuery: PaginationQuery = {
@@ -162,7 +128,7 @@ export class FamiliesService {
         where: {
           id,
         },
-        relations: ['category', 'products'],
+        relations: ['products'],
       });
 
       if (!family) {
@@ -195,26 +161,18 @@ export class FamiliesService {
       if (!existingFamily)
         throw new NotFoundException(`Product family not found`);
 
-      let category: Category | undefined;
+      const updatedFamily = { ...existingFamily, ...updateFamilyDto };
 
-      if (updateFamilyDto.categoryId) {
-        category = await this.findCategoryById(updateFamilyDto.categoryId);
-      } else {
-        this.logger.warn('Category ID not provided');
-      }
-
-      const updated = this.productFamilyRepository.merge(existingFamily, {
-        ...updateFamilyDto,
-        ...(category && { category }),
-      });
-
-      return await this.productFamilyRepository.save(updated);
+      return await this.productFamilyRepository.save(updatedFamily);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
       const err = error as Error;
-      this.logger.error(`UpdateProductFamily error: ${err.message}`, err.stack);
+      this.logger.error(
+        `UpdateProductFamily error: ${err.message}`,
+        err.stack
+      );
       throw new BadRequestException('Failed to update product family');
     }
   }
@@ -225,20 +183,34 @@ export class FamiliesService {
     try {
       const family = await this.productFamilyRepository.findOne({
         where: { id },
+        relations: ['products'],
       });
 
-      if (!family) throw new NotFoundException('Product family not found');
+      if (!family) {
+        throw new NotFoundException(`Product family not found`);
+      }
+
+      if (family.products && family.products.length > 0) {
+        throw new BadRequestException(
+          'Cannot delete product family with existing products'
+        );
+      }
 
       await this.productFamilyRepository.remove(family);
 
-      return { message: 'Product family deleted successfully' };
+      return {
+        message: `Product family deleted successfully`,
+      };
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
       const err = error as Error;
-      this.logger.error(`RemoveProductFamily error: ${err.message}`, err.stack);
-      throw new BadRequestException('Failed to delete product family');
+      this.logger.error(
+        `RemoveProductFamily error: ${err.message}`,
+        err.stack
+      );
+      throw new BadRequestException('Failed to remove product family');
     }
   }
 }
