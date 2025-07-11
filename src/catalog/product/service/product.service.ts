@@ -13,6 +13,8 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 import { Repository } from 'typeorm';
 
+import { Category } from '~/catalog/category/entities/category.entity';
+import { Brand } from '~/catalog/brands/entities/brand.entity';
 import { FilterParserService } from '../../../filter/service/filter-parser.service';
 import { FilterService } from '../../../filter/service/filter.service';
 import { PaginationQuery } from '../../../pagination/interface/pagination.interface';
@@ -29,6 +31,10 @@ export class ProductService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(Brand)
+    private readonly brandRepository: Repository<Brand>,
     private readonly filterService: FilterService,
     private readonly filterParserService: FilterParserService,
     private readonly paginationService: PaginationService,
@@ -47,6 +53,20 @@ export class ProductService {
       imagePath = await this.saveFileToDisc(file);
     }
 
+    const category = await this.categoryRepository.findOne({ where: { id: createProductDto.categoryId } });
+    if (!category) {
+      throw new BadRequestException(`Category with id=${createProductDto.categoryId} does not exist. Please create the category first.`);
+    }
+
+    let brand: Brand | undefined = undefined;
+    if (createProductDto.brandId) {
+      const foundBrand = await this.brandRepository.findOne({ where: { id: createProductDto.brandId } });
+      if (!foundBrand) {
+        throw new BadRequestException(`Brand does not exist. Please create the brand first.`);
+      }
+      brand = foundBrand;
+    }
+
     const productData: Partial<Product> = {
       name: createProductDto.name,
       price: createProductDto.price,
@@ -62,13 +82,13 @@ export class ProductService {
       seoDescription: createProductDto.seoDescription,
       weight: createProductDto.weight,
       dimensions: createProductDto.dimensions,
+      category,
+      brand,
     };
 
     if (createProductDto.familyId) {
       productData.family = { id: createProductDto.familyId } as any;
     }
-
-    productData.category = { id: createProductDto.categoryId } as any;
 
     const product = this.productRepository.create(productData);
 

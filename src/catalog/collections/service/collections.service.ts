@@ -395,4 +395,36 @@ export class CollectionsService {
       sortOrder: query.sortOrder?.toUpperCase() as 'ASC' | 'DESC' | undefined,
     };
   }
+
+
+  async findByStatus(status: string, query: PaginationQueryCollectionDto) {
+    const processedQuery = this.processQuery(query);
+    const qb = this.collectionsRepository.createQueryBuilder('collection');
+    qb.where('collection.status = :status', { status });
+    
+    const paginationQuery: PaginationQuery = {
+      page: processedQuery.page,
+      limit: processedQuery.limit,
+      sortBy: processedQuery.sortBy || 'createdAt',
+      sortOrder: processedQuery.sortOrder?.toUpperCase() as 'ASC' | 'DESC' | undefined,
+      filters: processedQuery.filters,
+    };
+    
+    const result = await this.paginationService.paginate(
+      qb,
+      'collection',
+      paginationQuery,
+      processedQuery.filters
+    );
+    
+    return {
+      collections: result.data,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
+      hasNextPage: result.hasNextPage,
+      hasPreviousPage: result.hasPreviousPage,
+    };
+  }
 }

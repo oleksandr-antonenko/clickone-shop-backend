@@ -48,7 +48,7 @@ export class CollectionsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all collections with pagination and filtering' })
+  @ApiOperation({ summary: 'Get all collections with filtering' })
   @ApiResponse({
     status: 200,
     description: 'Collections retrieved successfully',
@@ -69,19 +69,16 @@ export class CollectionsController {
     }
   })
   @ApiQuery({ type: PaginationQueryCollectionDto })
-  async findAll(@Query() query: PaginationQueryCollectionDto) {
+  async findAll(
+    @Query() query: PaginationQueryCollectionDto & { status?: string; slug?: string }
+  ) {
+    if (query.slug) {
+      return this.collectionsService.findBySlug(query.slug);
+    }
+    if (query.status) {
+      return this.collectionsService.findByStatus(query.status, query);
+    }
     return this.collectionsService.findAll(query);
-  }
-
-  @Get('active')
-  @ApiOperation({ summary: 'Get all active collections' })
-  @ApiResponse({
-    status: 200,
-    description: 'Active collections retrieved successfully',
-    type: [CollectionsDto],
-  })
-  async findActive() {
-    return this.collectionsService.findActive();
   }
 
   @Get(':id')
@@ -105,18 +102,6 @@ export class CollectionsController {
   @ApiParam({ name: 'id', description: 'Collection ID' })
   async findOneWithProducts(@Param('id') id: string) {
     return this.collectionsService.findOneWithProducts(id);
-  }
-
-  @Get('slug/:slug')
-  @ApiOperation({ summary: 'Get collection by slug' })
-  @ApiResponse({
-    status: 200,
-    description: 'Collection retrieved successfully',
-    type: CollectionsDto,
-  })
-  @ApiParam({ name: 'slug', description: 'Collection slug' })
-  async findBySlug(@Param('slug') slug: string) {
-    return this.collectionsService.findBySlug(slug);
   }
 
   @Patch(':id')
