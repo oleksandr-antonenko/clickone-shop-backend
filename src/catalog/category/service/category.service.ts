@@ -118,7 +118,12 @@ export class CategoryService {
       };
 
       await this.categoryRepository.update(id, updateData);
-      return { message: 'Category updated successfully' };
+      
+      const updatedCategory = await this.categoryRepository.findOne({
+        where: { id },
+      });
+      
+      return updatedCategory;
     } catch (error: unknown) {
       this.handleError(error, 'Failed to update category');
     }
