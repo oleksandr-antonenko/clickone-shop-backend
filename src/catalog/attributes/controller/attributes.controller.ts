@@ -18,7 +18,6 @@ import { UpdateAttributeDto } from '../dto/update-attribute.dto';
 import { AttributesService } from '../service/attributes.service';
 
 @Controller('attributes')
-// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 @PublicRead()
 export class AttributesController {
   constructor(private readonly attributesService: AttributesService) {}
