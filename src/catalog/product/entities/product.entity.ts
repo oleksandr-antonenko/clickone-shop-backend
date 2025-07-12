@@ -8,7 +8,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Attribute } from '~/catalog/attributes/entity/attribute.entity';
 import { Brand } from '~/catalog/brands/entities/brand.entity';
 import { Category } from '~/catalog/category/entities/category.entity';
 
@@ -81,8 +80,8 @@ export class Product {
   @ManyToOne(() => ProductFamily, (family) => family.products)
   family: ProductFamily;
 
-  @OneToMany(() => Attribute, (attribute) => attribute.product)
-  attributes: Attribute[];
+  @Column('text', { array: true, nullable: true })
+  options?: string[];
 
   @OneToMany(() => ProductSetting, (setting) => setting.product)
   settings: ProductSetting[];
@@ -94,4 +93,7 @@ export class Product {
   @ManyToOne(() => Brand, (brand) => brand.products)
   @JoinColumn({ name: 'brand_id' })
   brand: Brand;
+
+  @Column({ type: 'jsonb', nullable: true })
+  attributes?: Record<string, string | number | boolean | string[]>;
 }

@@ -11,7 +11,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { Request } from 'express';
 import { Repository } from 'typeorm';
-import { Product } from '~/catalog/product/entities/product.entity';
 import {
   Pagination,
   ProcessedPagination,
@@ -29,8 +28,6 @@ export class AttributesService {
   constructor(
     @InjectRepository(Attribute)
     private attributesRepository: Repository<Attribute>,
-    @InjectRepository(Product)
-    private productRepository: Repository<Product>,
     private readonly filterParserService: FilterParserService,
     private readonly paginationService: PaginationService,
     @Inject(REQUEST) private readonly request: Request
@@ -62,14 +59,14 @@ export class AttributesService {
     createAttributesValueDto: CreateAttributeDto
   ): Promise<Attribute> {
     try {
-      const product = await this.productRepository.findOneBy({
-        id: createAttributesValueDto.productId,
-      });
-      if (!product) throw new NotFoundException('Product not found');
+      // const product = await this.productRepository.findOneBy({
+      //   id: createAttributesValueDto.productId,
+      // });
+      // if (!product) throw new NotFoundException('Product not found');
 
       const attributesValue = this.attributesRepository.create({
         ...createAttributesValueDto,
-        product,
+        // product,
       });
 
       return await this.attributesRepository.save(attributesValue);
@@ -87,9 +84,7 @@ export class AttributesService {
     try {
       const processedQuery = this.processQuery(query, this.request.query);
 
-      const qb = this.attributesRepository
-        .createQueryBuilder('attributes')
-        .leftJoinAndSelect('attributes.product', 'product');
+      const qb = this.attributesRepository.createQueryBuilder('attributes');
 
       const paginationQuery: PaginationQuery = {
         page: processedQuery.page,
@@ -164,18 +159,18 @@ export class AttributesService {
         throw new NotFoundException('Attribute not found');
       }
 
-      let product: Product | undefined | null;
+      // let product: Product | undefined | null;
 
-      if (updateAttributeDto.productId) {
-        product = await this.productRepository.findOne({
-          where: { id: updateAttributeDto.productId },
-        });
-      }
+      // if (updateAttributeDto.productId) {
+      //   product = await this.productRepository.findOne({
+      //     where: { id: updateAttributeDto.productId },
+      //   });
+
+      // }
 
       const updated = this.attributesRepository.merge(
         existingAttribute,
-        updateAttributeDto,
-        { ...(product && { product }) }
+        updateAttributeDto
       );
 
       return await this.attributesRepository.save(updated);

@@ -1,7 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateAttributeDto {
   @IsString()
@@ -15,21 +23,22 @@ export class CreateAttributeDto {
 
   @IsString()
   @ApiProperty({
-    description: 'Slug of the attribute',
-    example: 'attributes-type-1',
+    description: 'Key of the attribute',
+    example: 'attributes key 1',
     required: true,
   })
   @IsNotEmpty()
-  slug: string;
+  key: string;
 
-  @IsString()
-  @ApiProperty({
-    description: 'Value of the attribute',
-    example: 'Attributes value 1',
-    required: true,
-  })
-  @IsNotEmpty()
-  value: string;
+  @ApiProperty({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  options?: string[];
+
+  @ApiProperty()
+  @IsBoolean()
+  required: boolean;
 
   @IsString()
   @ApiProperty({
@@ -37,18 +46,18 @@ export class CreateAttributeDto {
     example: 'code-1',
     required: true,
   })
-  @IsNotEmpty()
-  hexCode: string;
+  @IsOptional()
+  description?: string;
 
-  @IsNumber()
-  @ApiProperty({
-    description: 'Product ID',
-    example: 1,
-    required: true,
-  })
-  @IsNotEmpty()
-  @Transform(({ value }: { value: string }) =>
-    value ? parseInt(value) : undefined
-  )
-  productId: number;
+  // @IsNumber()
+  // @ApiProperty({
+  //   description: 'Product ID',
+  //   example: 1,
+  //   required: true,
+  // })
+  // @IsNotEmpty()
+  // @Transform(({ value }: { value: string }) =>
+  //   value ? parseInt(value) : undefined
+  // )
+  // productId: number;
 }

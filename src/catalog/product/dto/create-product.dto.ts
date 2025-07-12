@@ -170,4 +170,9 @@ export class CreateProductDto {
     value ? parseInt(value) : undefined
   )
   brandId: number;
+
+  @ApiProperty({ type: 'object', additionalProperties: true })
+  @IsOptional()
+  @IsObject()
+  attributes?: Record<string, string | number | boolean | string[]>;
 }

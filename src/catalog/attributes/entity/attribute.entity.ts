@@ -1,11 +1,10 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
-  JoinColumn,
-  ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Product } from '~/catalog/product/entities/product.entity';
 
 @Entity('attribute')
 export class Attribute {
@@ -16,15 +15,20 @@ export class Attribute {
   name: string;
 
   @Column({ type: 'varchar', length: 255 })
-  slug: string;
+  key: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  value: string;
+  @Column('text', { array: true, nullable: true })
+  options?: string[];
 
-  @Column({ type: 'varchar', length: 255 })
-  hexCode: string;
+  @Column({ type: 'boolean' })
+  required: boolean;
 
-  @ManyToOne(() => Product, (product) => product.attributes)
-  @JoinColumn({ name: 'product_id' })
-  product: Product;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  description?: string;
+
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  updatedAt: Date;
 }
