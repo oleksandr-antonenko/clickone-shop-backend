@@ -59,14 +59,8 @@ export class AttributesService {
     createAttributesValueDto: CreateAttributeDto
   ): Promise<Attribute> {
     try {
-      // const product = await this.productRepository.findOneBy({
-      //   id: createAttributesValueDto.productId,
-      // });
-      // if (!product) throw new NotFoundException('Product not found');
-
       const attributesValue = this.attributesRepository.create({
         ...createAttributesValueDto,
-        // product,
       });
 
       return await this.attributesRepository.save(attributesValue);
@@ -126,7 +120,6 @@ export class AttributesService {
         where: {
           id,
         },
-        relations: ['product'],
       });
 
       if (!attributesValue) {
@@ -151,22 +144,12 @@ export class AttributesService {
     try {
       const existingAttribute = await this.attributesRepository.findOne({
         where: { id },
-        relations: ['product'],
       });
 
       if (!existingAttribute) {
         this.logger.warn('Attribute not found');
         throw new NotFoundException('Attribute not found');
       }
-
-      // let product: Product | undefined | null;
-
-      // if (updateAttributeDto.productId) {
-      //   product = await this.productRepository.findOne({
-      //     where: { id: updateAttributeDto.productId },
-      //   });
-
-      // }
 
       const updated = this.attributesRepository.merge(
         existingAttribute,

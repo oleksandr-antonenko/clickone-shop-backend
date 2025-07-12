@@ -1,12 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { Transform } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
-  IsEnum,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -48,16 +45,4 @@ export class CreateAttributeDto {
   })
   @IsOptional()
   description?: string;
-
-  // @IsNumber()
-  // @ApiProperty({
-  //   description: 'Product ID',
-  //   example: 1,
-  //   required: true,
-  // })
-  // @IsNotEmpty()
-  // @Transform(({ value }: { value: string }) =>
-  //   value ? parseInt(value) : undefined
-  // )
-  // productId: number;
 }
