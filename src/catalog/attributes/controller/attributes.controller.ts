@@ -6,10 +6,12 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 import { CreateAttributeDto } from '../dto/create-attribute.dto';
+import { PaginationQueryAttributesDto } from '../dto/pagination-query-attributes.dto';
 import { UpdateAttributeDto } from '../dto/update-attribute.dto';
 import { AttributesService } from '../service/attributes.service';
 
@@ -34,8 +36,8 @@ export class AttributesController {
     status: 200,
     description: 'List of attributes found',
   })
-  async findAll() {
-    return this.attributesService.findAll();
+  async findAll(@Query() query: PaginationQueryAttributesDto) {
+    return this.attributesService.findAll(query);
   }
 
   @Get(':id')

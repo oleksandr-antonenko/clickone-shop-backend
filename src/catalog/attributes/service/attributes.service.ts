@@ -1,14 +1,24 @@
 import {
   BadRequestException,
   HttpException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 
+import { Request } from 'express';
 import { Repository } from 'typeorm';
 import { Product } from '~/catalog/product/entities/product.entity';
+import {
+  Pagination,
+  ProcessedPagination,
+} from '~/catalog/product/interface/pagination.interface';
+import { FilterParserService } from '~/filter/service/filter-parser.service';
+import { PaginationQuery } from '~/pagination/interface/pagination.interface';
+import { PaginationService } from '~/pagination/service/pagination.service';
 
 import { CreateAttributeDto } from '../dto/create-attribute.dto';
 import { UpdateAttributeDto } from '../dto/update-attribute.dto';
@@ -20,10 +30,33 @@ export class AttributesService {
     @InjectRepository(Attribute)
     private attributesRepository: Repository<Attribute>,
     @InjectRepository(Product)
-    private productRepository: Repository<Product>
+    private productRepository: Repository<Product>,
+    private readonly filterParserService: FilterParserService,
+    private readonly paginationService: PaginationService,
+    @Inject(REQUEST) private readonly request: Request
   ) {}
 
   private readonly logger = new Logger(AttributesService.name);
+
+  private processQuery(
+    query: Pagination,
+    rawQuery?: Record<string, any>
+  ): ProcessedPagination {
+    const parsedFilters = this.filterParserService.parseFilters(
+      query.filters,
+      rawQuery
+    );
+
+    const sanitizedFilters = parsedFilters
+      ? this.filterParserService.validateAndSanitizeFilters(parsedFilters)
+      : undefined;
+
+    return {
+      ...query,
+      filters: sanitizedFilters,
+      sortOrder: query.sortOrder?.toUpperCase() as 'ASC' | 'DESC' | undefined,
+    };
+  }
 
   async create(
     createAttributesValueDto: CreateAttributeDto
@@ -50,11 +83,41 @@ export class AttributesService {
     }
   }
 
-  async findAll(): Promise<Attribute[]> {
+  async findAll(query: Pagination) {
     try {
-      return await this.attributesRepository.find({
-        relations: ['product'],
-      });
+      const processedQuery = this.processQuery(query, this.request.query);
+
+      const qb = this.attributesRepository
+        .createQueryBuilder('attributes')
+        .leftJoinAndSelect('attributes.product', 'product');
+
+      const paginationQuery: PaginationQuery = {
+        page: processedQuery.page,
+        limit: processedQuery.limit,
+        sortBy: processedQuery.sortBy || 'id',
+        sortOrder: processedQuery.sortOrder?.toUpperCase() as
+          | 'ASC'
+          | 'DESC'
+          | undefined,
+        filters: processedQuery.filters,
+      };
+
+      const result = await this.paginationService.paginate(
+        qb,
+        'attributes',
+        paginationQuery,
+        processedQuery.filters
+      );
+
+      return {
+        attributes: result.data,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+      };
     } catch (error) {
       const err = error as Error;
       this.logger.error(`FindAllAttributes error: ${err.message}`, err.stack);
