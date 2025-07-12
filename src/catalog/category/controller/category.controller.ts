@@ -20,9 +20,10 @@ import { CreateCategoryDto } from '../dto/create-category.dto';
 import { FilterCategoryDto } from '../dto/filter-category.dto';
 import { UpdateCategoryDto } from '../dto/update-category.dto';
 import { CategoryService } from '../service/category.service';
-import { Public } from '../../../common/decorators/public.decorator';
+import { PublicRead } from '../../../common/decorators/public.decorator';
 
 @Controller('category')
+@PublicRead()
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
@@ -53,7 +54,6 @@ export class CategoryController {
     return this.categoryService.create(createCategoryDto);
   }
 
-  @Public()
   @Get()
   @ApiOperation({ summary: 'Get all categories' })
   @ApiResponse({
@@ -67,7 +67,6 @@ export class CategoryController {
     return this.categoryService.findAll(filterCategoryDto);
   }
 
-  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get a category by ID' })
   @ApiResponse({

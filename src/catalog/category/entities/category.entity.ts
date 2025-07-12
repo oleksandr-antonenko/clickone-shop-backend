@@ -7,7 +7,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-import { ProductFamily } from '../../families/entity/product-family.entity';
 import { Product } from '~/catalog/product/entities/product.entity';
 
 @Entity('categories')
@@ -41,9 +40,6 @@ export class Category {
 
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
-
-  @OneToMany(() => ProductFamily, (family) => family.category)
-  families: ProductFamily[];
 
   @OneToMany(() => Product, (product) => product.category)
   products: Product[];

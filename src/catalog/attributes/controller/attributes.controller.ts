@@ -10,12 +10,16 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+import { PublicRead } from '~/common/decorators/public.decorator';
+
 import { CreateAttributeDto } from '../dto/create-attribute.dto';
 import { PaginationQueryAttributesDto } from '../dto/pagination-query-attributes.dto';
 import { UpdateAttributeDto } from '../dto/update-attribute.dto';
 import { AttributesService } from '../service/attributes.service';
 
 @Controller('attributes')
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+@PublicRead()
 export class AttributesController {
   constructor(private readonly attributesService: AttributesService) {}
 

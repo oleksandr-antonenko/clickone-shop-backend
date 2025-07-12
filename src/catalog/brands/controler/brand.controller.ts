@@ -14,9 +14,10 @@ import { CreateBrandDto } from '../dto/create-brand.dto';
 import { PaginationQueryBrandDto } from '../dto/pagination-query-brand';
 import { UpdateBrandDto } from '../dto/update-brand.dto';
 import { BrandService } from '../service/brand.service';
-import { Public } from '~/common/decorators/public.decorator';
+import { PublicRead } from '~/common/decorators/public.decorator';
 
 @Controller('brands')
+@PublicRead()
 export class BrandController {
   constructor(private readonly brandService: BrandService) {}
 
@@ -31,7 +32,6 @@ export class BrandController {
     return this.brandService.create(createBrandDto);
   }
 
-  @Public()
   @Get()
   @ApiOperation({ summary: 'Get all brands' })
   @ApiResponse({
@@ -42,7 +42,6 @@ export class BrandController {
     return this.brandService.findAll(query);
   }
 
-  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get a brand by ID' })
   @ApiResponse({

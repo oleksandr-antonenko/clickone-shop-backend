@@ -11,6 +11,7 @@ import {
 import { Brand } from '~/catalog/brands/entities/brand.entity';
 import { Category } from '~/catalog/category/entities/category.entity';
 
+import { CollectionProduct } from '../../collections/entity/collection-product.entity';
 import { ProductFamily } from '../../families/entity/product-family.entity';
 import { ProductSetting } from '../../settings/entity/product-setting.entity';
 
@@ -93,6 +94,12 @@ export class Product {
   @ManyToOne(() => Brand, (brand) => brand.products)
   @JoinColumn({ name: 'brand_id' })
   brand: Brand;
+
+  @OneToMany(
+    () => CollectionProduct,
+    (collectionProduct) => collectionProduct.product
+  )
+  collectionProducts: CollectionProduct[];
 
   @Column({ type: 'jsonb', nullable: true })
   attributes?: Record<string, string | number | boolean | string[]>;

@@ -72,7 +72,6 @@ export class CategoryService {
     try {
       const categories = await this.categoryRepository.find({
         where: filterCategoryDto,
-        relations: ['families'],
       });
 
       return categories;
@@ -85,7 +84,6 @@ export class CategoryService {
     try {
       const category = await this.categoryRepository.findOne({
         where: { id },
-        relations: ['families'],
       });
       if (!category) {
         throw new NotFoundException('Category id not found');
@@ -120,7 +118,12 @@ export class CategoryService {
       };
 
       await this.categoryRepository.update(id, updateData);
-      return { message: 'Category updated successfully' };
+      
+      const updatedCategory = await this.categoryRepository.findOne({
+        where: { id },
+      });
+      
+      return updatedCategory;
     } catch (error: unknown) {
       this.handleError(error, 'Failed to update category');
     }

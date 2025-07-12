@@ -4,14 +4,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { FilterModule } from '~/filter/filter.module';
 import { PaginationModule } from '~/pagination/pagination.module';
 
-import { Category } from '../category/entities/category.entity';
 import { FamiliesController } from './controller/families.controller';
 import { ProductFamily } from './entity/product-family.entity';
 import { FamiliesService } from './service/families.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([ProductFamily, Category]),
+    TypeOrmModule.forFeature([ProductFamily]),
     FilterModule,
     PaginationModule,
   ],
