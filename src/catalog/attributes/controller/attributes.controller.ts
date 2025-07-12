@@ -10,6 +10,7 @@ import {
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 import { CreateAttributeDto } from '../dto/create-attribute.dto';
+import { UpdateAttributeDto } from '../dto/update-attribute.dto';
 import { AttributesService } from '../service/attributes.service';
 
 @Controller('attributes')
@@ -43,8 +44,8 @@ export class AttributesController {
     status: 200,
     description: 'Attribute found',
   })
-  async findOne(@Body('id') id: number) {
-    return this.attributesService.findOne(id);
+  async findOne(@Param('id') id: string) {
+    return this.attributesService.findOne(+id);
   }
 
   @Patch(':id')
@@ -55,7 +56,7 @@ export class AttributesController {
   })
   async update(
     @Param('id') id: string,
-    @Body() updateAttributeDto: CreateAttributeDto
+    @Body() updateAttributeDto: UpdateAttributeDto
   ) {
     return this.attributesService.update(+id, updateAttributeDto);
   }

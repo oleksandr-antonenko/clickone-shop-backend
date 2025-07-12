@@ -22,9 +22,9 @@ export class Attribute {
   value: string;
 
   @Column({ type: 'varchar', length: 255 })
-  hex_code: string;
+  hexCode: string;
 
-  @ManyToOne(() => Product, (product) => product.options)
+  @ManyToOne(() => Product, (product) => product.attributes)
   @JoinColumn({ name: 'product_id' })
   product: Product;
 }

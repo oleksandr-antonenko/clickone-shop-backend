@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   Logger,
   NotFoundException,
@@ -7,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Repository } from 'typeorm';
+import { Product } from '~/catalog/product/entities/product.entity';
 
 import { CreateAttributeDto } from '../dto/create-attribute.dto';
 import { UpdateAttributeDto } from '../dto/update-attribute.dto';
@@ -16,7 +18,9 @@ import { Attribute } from '../entity/attribute.entity';
 export class AttributesService {
   constructor(
     @InjectRepository(Attribute)
-    private attributesRepository: Repository<Attribute>
+    private attributesRepository: Repository<Attribute>,
+    @InjectRepository(Product)
+    private productRepository: Repository<Product>
   ) {}
 
   private readonly logger = new Logger(AttributesService.name);
@@ -25,14 +29,23 @@ export class AttributesService {
     createAttributesValueDto: CreateAttributeDto
   ): Promise<Attribute> {
     try {
-      const attributesValue = this.attributesRepository.create(
-        createAttributesValueDto
-      );
+      const product = await this.productRepository.findOneBy({
+        id: createAttributesValueDto.productId,
+      });
+      if (!product) throw new NotFoundException('Product not found');
+
+      const attributesValue = this.attributesRepository.create({
+        ...createAttributesValueDto,
+        product,
+      });
 
       return await this.attributesRepository.save(attributesValue);
     } catch (error) {
       const err = error as Error;
       this.logger.error(`CreateAttribute error: ${err.message}`, err.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new BadRequestException('Failed to create attribute');
     }
   }
@@ -66,33 +79,49 @@ export class AttributesService {
     } catch (error) {
       const err = error as Error;
       this.logger.error(`FindOneAttribute error: ${err.message}`, err.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new BadRequestException('Failed to find attribute');
     }
   }
 
   async update(
     id: number,
-    updateAttributesValueDto: UpdateAttributeDto
+    updateAttributeDto: UpdateAttributeDto
   ): Promise<Attribute> {
     try {
-      const attributeValue = await this.attributesRepository.findOneBy({
-        id,
+      const existingAttribute = await this.attributesRepository.findOne({
+        where: { id },
+        relations: ['product'],
       });
 
-      if (!attributeValue) {
+      if (!existingAttribute) {
         this.logger.warn('Attribute not found');
         throw new NotFoundException('Attribute not found');
       }
 
+      let product: Product | undefined | null;
+
+      if (updateAttributeDto.productId) {
+        product = await this.productRepository.findOne({
+          where: { id: updateAttributeDto.productId },
+        });
+      }
+
       const updated = this.attributesRepository.merge(
-        attributeValue,
-        updateAttributesValueDto
+        existingAttribute,
+        updateAttributeDto,
+        { ...(product && { product }) }
       );
 
       return await this.attributesRepository.save(updated);
     } catch (error) {
       const err = error as Error;
       this.logger.error(`UpdateAttribute error: ${err.message}`, err.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new BadRequestException('Failed to update attribute');
     }
   }
@@ -111,6 +140,9 @@ export class AttributesService {
     } catch (error) {
       const err = error as Error;
       this.logger.error(`RemoveAttribute error: ${err.message}`, err.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new BadRequestException('Failed to delete attribute');
     }
   }

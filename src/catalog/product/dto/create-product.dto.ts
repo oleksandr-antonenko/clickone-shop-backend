@@ -89,15 +89,6 @@ export class CreateProductDto {
   familyId?: number;
 
   @ApiProperty({
-    description: 'Product attributes',
-    example: { color: 'blue', size: '256GB' },
-    required: false,
-  })
-  @IsOptional()
-  @IsObject()
-  attributes?: Record<string, string | number | boolean | string[]>;
-
-  @ApiProperty({
     description: 'Product image file',
     type: 'string',
     format: 'binary',
