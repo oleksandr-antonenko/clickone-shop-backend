@@ -7,7 +7,6 @@ import {
   Patch,
   Post,
   Query,
-  Req,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -20,11 +19,10 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 
-
+import { Public } from '../../../common/decorators/public.decorator';
 import { CreateProductDto } from '../dto/create-product.dto';
 import { PaginationQueryDto } from '../dto/pagination-query.dto';
 import { ProductService } from '../service/product.service';
-import { Public } from '../../../common/decorators/public.decorator';
 
 @Controller('products')
 @ApiBearerAuth()

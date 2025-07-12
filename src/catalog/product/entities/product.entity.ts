@@ -8,10 +8,10 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Attribute } from '~/catalog/attributes/entity/attribute.entity';
 import { Brand } from '~/catalog/brands/entities/brand.entity';
 import { Category } from '~/catalog/category/entities/category.entity';
 
-import { ProductOptionValue } from '../../attributes/entity/attributes-option-value.entity';
 import { ProductFamily } from '../../families/entity/product-family.entity';
 import { ProductSetting } from '../../settings/entity/product-setting.entity';
 
@@ -48,9 +48,6 @@ export class Product {
   @Column({ type: 'varchar', nullable: true })
   familyId?: number;
 
-  @Column({ type: 'jsonb', nullable: true })
-  attributes?: Record<string, string | number | boolean | string[]>;
-
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   comparePrice?: number;
 
@@ -84,8 +81,8 @@ export class Product {
   @ManyToOne(() => ProductFamily, (family) => family.products)
   family: ProductFamily;
 
-  @OneToMany(() => ProductOptionValue, (option) => option.product)
-  options: ProductOptionValue[];
+  @OneToMany(() => Attribute, (attribute) => attribute.product)
+  attributes: Attribute[];
 
   @OneToMany(() => ProductSetting, (setting) => setting.product)
   settings: ProductSetting[];

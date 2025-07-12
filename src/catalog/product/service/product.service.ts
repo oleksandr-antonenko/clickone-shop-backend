@@ -55,7 +55,7 @@ export class ProductService {
       image: imagePath,
       sku: createProductDto.sku,
       status: createProductDto.status,
-      attributes: createProductDto.attributes,
+      // attributes: createProductDto.attributes,
       comparePrice: createProductDto.comparePrice,
       translations: createProductDto.translations,
       seoTitle: createProductDto.seoTitle,
@@ -77,7 +77,7 @@ export class ProductService {
 
       const productWithRelations = await this.productRepository.findOne({
         where: { id: savedProduct.id },
-        relations: ['category', 'family', 'brand'],
+        relations: ['category', 'family', 'brand', 'attributes'],
       });
 
       if (!productWithRelations) {
@@ -134,7 +134,8 @@ export class ProductService {
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect('product.family', 'family')
-      .leftJoinAndSelect('product.brand', 'brand');
+      .leftJoinAndSelect('product.brand', 'brand')
+      .leftJoinAndSelect('product.attributes', 'attributes');
 
     const paginationQuery: PaginationQuery = {
       page: processedQuery.page,
@@ -192,7 +193,7 @@ export class ProductService {
       where: {
         id,
       },
-      relations: ['category', 'family', 'brand'],
+      relations: ['category', 'family', 'brand', 'attributes'],
     });
     if (!product) {
       throw new NotFoundException('Product not found');

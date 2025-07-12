@@ -1,16 +1,21 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AttributesValueController } from './controller/attributes-value.controller';
+import { FilterModule } from '~/filter/filter.module';
+import { PaginationModule } from '~/pagination/pagination.module';
+
+import { Product } from '../product/entities/product.entity';
 import { AttributesController } from './controller/attributes.controller';
-import { ProductOptionValue } from './entity/attributes-option-value.entity';
-import { AttributeValue } from './entity/attributes-value.entity';
-import { AttributesValueService } from './service/attributes-value.service';
+import { Attribute } from './entity/attribute.entity';
 import { AttributesService } from './service/attributes.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ProductOptionValue, AttributeValue])],
-  providers: [AttributesService, AttributesValueService],
-  controllers: [AttributesController, AttributesValueController],
+  imports: [
+    TypeOrmModule.forFeature([Attribute, Product]),
+    FilterModule,
+    PaginationModule,
+  ],
+  controllers: [AttributesController],
+  providers: [AttributesService],
 })
 export class AttributesModule {}
