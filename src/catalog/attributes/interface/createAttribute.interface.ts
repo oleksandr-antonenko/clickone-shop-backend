@@ -1,7 +1,7 @@
-export interface CreateAttributesValue {
+export interface CreateAttribute {
   name: string;
   slug: string;
   value: string;
   hexCode: string;
-  attributesTypeId?: number;
+  productId: number;
 }

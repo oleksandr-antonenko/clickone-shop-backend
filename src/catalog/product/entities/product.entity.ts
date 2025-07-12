@@ -11,10 +11,9 @@ import {
 import { Brand } from '~/catalog/brands/entities/brand.entity';
 import { Category } from '~/catalog/category/entities/category.entity';
 
-import { ProductOptionValue } from '../../attributes/entity/attributes-option-value.entity';
+import { CollectionProduct } from '../../collections/entity/collection-product.entity';
 import { ProductFamily } from '../../families/entity/product-family.entity';
 import { ProductSetting } from '../../settings/entity/product-setting.entity';
-import { CollectionProduct } from '../../collections/entity/collection-product.entity';
 
 @Entity('products')
 export class Product {
@@ -49,9 +48,6 @@ export class Product {
   @Column({ type: 'varchar', nullable: true })
   familyId?: number;
 
-  @Column({ type: 'jsonb', nullable: true })
-  attributes?: Record<string, string | number | boolean | string[]>;
-
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   comparePrice?: number;
 
@@ -85,8 +81,8 @@ export class Product {
   @ManyToOne(() => ProductFamily, (family) => family.products)
   family: ProductFamily;
 
-  @OneToMany(() => ProductOptionValue, (option) => option.product)
-  options: ProductOptionValue[];
+  @Column('text', { array: true, nullable: true })
+  options?: string[];
 
   @OneToMany(() => ProductSetting, (setting) => setting.product)
   settings: ProductSetting[];
@@ -99,6 +95,12 @@ export class Product {
   @JoinColumn({ name: 'brand_id' })
   brand: Brand;
 
-  @OneToMany(() => CollectionProduct, (collectionProduct) => collectionProduct.product)
+  @OneToMany(
+    () => CollectionProduct,
+    (collectionProduct) => collectionProduct.product
+  )
   collectionProducts: CollectionProduct[];
+
+  @Column({ type: 'jsonb', nullable: true })
+  attributes?: Record<string, string | number | boolean | string[]>;
 }
