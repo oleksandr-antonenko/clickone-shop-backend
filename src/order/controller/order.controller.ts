@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Patch,
@@ -54,12 +53,13 @@ export class OrderController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Update an order by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'The order has been successfully updated.',
+  })
+  @ApiResponse({ status: 404, description: 'Order not found.' })
   update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
     return this.orderService.update(+id, updateOrderDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.orderService.remove(+id);
   }
 }

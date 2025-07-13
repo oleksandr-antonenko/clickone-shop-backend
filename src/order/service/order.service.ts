@@ -181,11 +181,27 @@ export class OrderService {
     }
   }
 
-  update(id: number, updateOrderDto: UpdateOrderDto) {
-    return `This action updates a #${id} order`;
-  }
+  async update(id: number, updateOrderDto: UpdateOrderDto) {
+    try {
+      const existingOrder = await this.orderRepository.findOne({
+        where: { id },
+      });
 
-  remove(id: number) {
-    return `This action removes a #${id} order`;
+      if (!existingOrder) {
+        this.logger.warn('Order not found');
+        throw new NotFoundException('Order not found');
+      }
+
+      const updated = this.orderRepository.merge(existingOrder, updateOrderDto);
+
+      return await this.orderRepository.save(updated);
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`UpdateOrder error: ${err.message}`, err.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to update order');
+    }
   }
 }
