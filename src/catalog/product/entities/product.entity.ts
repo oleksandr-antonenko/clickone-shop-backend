@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Brand } from '~/catalog/brands/entities/brand.entity';
 import { Category } from '~/catalog/category/entities/category.entity';
+import { OrderItem } from '~/order/entities/orderItem.entity';
 
 import { CollectionProduct } from '../../collections/entity/collection-product.entity';
 import { ProductFamily } from '../../families/entity/product-family.entity';
@@ -100,6 +101,9 @@ export class Product {
     (collectionProduct) => collectionProduct.product
   )
   collectionProducts: CollectionProduct[];
+
+  @OneToMany(() => OrderItem, (item) => item.product)
+  orderItems: OrderItem[];
 
   @Column({ type: 'jsonb', nullable: true })
   attributes?: Record<string, string | number | boolean | string[]>;
