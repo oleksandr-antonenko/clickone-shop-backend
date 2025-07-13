@@ -42,7 +42,6 @@ export class Order {
   shippingMethod: ShippingMethod;
 
   @OneToMany(() => OrderItem, (item) => item.order, {
-    cascade: true,
     eager: true,
   })
   items: OrderItem[];
@@ -65,18 +64,18 @@ export class Order {
   @Column()
   currency: string;
 
-  @ManyToOne(() => Address, { cascade: true, eager: true })
+  @ManyToOne(() => Address, { eager: true })
   @JoinColumn({ name: 'shipping_address_id' })
   shippingAddress: Address;
 
-  @ManyToOne(() => Address, { cascade: true, eager: true, nullable: true })
+  @ManyToOne(() => Address, { eager: true, nullable: true })
   @JoinColumn({ name: 'billing_address_id' })
   billingAddress?: Address;
 
-  @Column()
+  @Column({ nullable: true })
   notes?: string;
 
-  @Column()
+  @Column({ nullable: true })
   trackingNumber?: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
@@ -85,12 +84,12 @@ export class Order {
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 
-  @Column()
+  @Column({ nullable: true })
   deliveredAt?: string;
 
-  @Column()
+  @Column({ nullable: true })
   customerNotes?: string;
 
-  @Column()
+  @Column({ nullable: true })
   adminNotes?: string;
 }

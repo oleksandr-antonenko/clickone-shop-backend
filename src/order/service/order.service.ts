@@ -110,11 +110,11 @@ export class OrderService {
       });
     } catch (error) {
       const err = error as Error;
-      this.logger.error(`CreateAttribute error: ${err.message}`, err.stack);
+      this.logger.error(`CreateOrder error: ${err.message}`, err.stack);
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new BadRequestException('Failed to create attribute');
+      throw new BadRequestException('Failed to create order');
     }
   }
 
@@ -153,13 +153,32 @@ export class OrderService {
       };
     } catch (error) {
       const err = error as Error;
-      this.logger.error(`FindAllAttributes error: ${err.message}`, err.stack);
-      throw new BadRequestException('Failed to find attributes');
+      this.logger.error(`FindAllOrders error: ${err.message}`, err.stack);
+      throw new BadRequestException('Failed to find orders');
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} order`;
+  async findOne(id: number) {
+    try {
+      const order = await this.orderRepository.findOne({
+        where: {
+          id,
+        },
+      });
+
+      if (!order) {
+        throw new NotFoundException('Order not found');
+      }
+
+      return order;
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`FindOneOrder error: ${err.message}`, err.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to find order');
+    }
   }
 
   update(id: number, updateOrderDto: UpdateOrderDto) {

@@ -42,6 +42,13 @@ export class OrderController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get an order by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Order fetched successfully',
+    type: CreateOrderDto,
+  })
+  @ApiResponse({ status: 404, description: 'Order not found' })
   findOne(@Param('id') id: string) {
     return this.orderService.findOne(+id);
   }
