@@ -172,7 +172,8 @@ export class ProductService {
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect('product.family', 'family')
-      .leftJoinAndSelect('product.brand', 'brand');
+      .leftJoinAndSelect('product.brand', 'brand')
+      .leftJoinAndSelect('product.attributes', 'attributes');
 
     const paginationQuery: PaginationQuery = {
       page: processedQuery.page,
