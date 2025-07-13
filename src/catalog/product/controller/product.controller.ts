@@ -19,10 +19,10 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 
-import { Public } from '../../../common/decorators/public.decorator';
 import { PublicRead } from '../../../common/decorators/public.decorator';
 import { CreateProductDto } from '../dto/create-product.dto';
 import { PaginationQueryDto } from '../dto/pagination-query.dto';
+import { UpdateProductDto } from '../dto/update-product.dto';
 import { ProductService } from '../service/product.service';
 
 @Controller('products')
@@ -68,7 +68,7 @@ export class ProductController {
   @UseInterceptors(FileInterceptor('image'))
   async update(
     @Param('id') id: string,
-    @Body() updateProductDto: Partial<CreateProductDto>,
+    @Body() updateProductDto: UpdateProductDto,
     @UploadedFile() file?: Express.Multer.File
   ) {
     return this.productService.updateProduct(+id, updateProductDto, file);

@@ -2,9 +2,11 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Product } from '~/catalog/product/entities/product.entity';
 
 @Entity('attribute')
 export class Attribute {
@@ -31,4 +33,7 @@ export class Attribute {
 
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
+
+  @ManyToMany(() => Product, (product) => product.attributes)
+  products: Product[];
 }

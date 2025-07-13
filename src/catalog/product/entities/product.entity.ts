@@ -3,11 +3,14 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Attribute } from '~/catalog/attributes/entity/attribute.entity';
 import { Brand } from '~/catalog/brands/entities/brand.entity';
 import { Category } from '~/catalog/category/entities/category.entity';
 import { OrderItem } from '~/order/entities/orderItem.entity';
@@ -105,6 +108,11 @@ export class Product {
   @OneToMany(() => OrderItem, (item) => item.product)
   orderItems: OrderItem[];
 
-  @Column({ type: 'jsonb', nullable: true })
-  attributes?: Record<string, string | number | boolean | string[]>;
+  @ManyToMany(() => Attribute, { eager: true })
+  @JoinTable({
+    name: 'product_attributes',
+    joinColumn: { name: 'product_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'attribute_id', referencedColumnName: 'id' },
+  })
+  attributes: Attribute[];
 }

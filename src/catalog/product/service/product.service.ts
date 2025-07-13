@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  HttpException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
   Scope,
 } from '@nestjs/common';
@@ -11,16 +13,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Request } from 'express';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { Repository } from 'typeorm';
-
-import { Category } from '~/catalog/category/entities/category.entity';
+import { In, Repository } from 'typeorm';
+import { Attribute } from '~/catalog/attributes/entity/attribute.entity';
 import { Brand } from '~/catalog/brands/entities/brand.entity';
+import { Category } from '~/catalog/category/entities/category.entity';
+
 import { FilterParserService } from '../../../filter/service/filter-parser.service';
 import { FilterService } from '../../../filter/service/filter.service';
 import { PaginationQuery } from '../../../pagination/interface/pagination.interface';
 import { PaginationService } from '../../../pagination/service/pagination.service';
+import { CreateProductDto } from '../dto/create-product.dto';
+import { UpdateProductDto } from '../dto/update-product.dto';
 import { Product } from '../entities/product.entity';
-import { CreateProduct } from '../interface/create.interface';
 import {
   Pagination,
   ProcessedPagination,
@@ -33,6 +37,8 @@ export class ProductService {
     private readonly productRepository: Repository<Product>,
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(Attribute)
+    private readonly attributeRepository: Repository<Attribute>,
     @InjectRepository(Brand)
     private readonly brandRepository: Repository<Brand>,
     private readonly filterService: FilterService,
@@ -43,68 +49,80 @@ export class ProductService {
     this.ensureUploadsDir();
   }
 
+  private readonly logger = new Logger(ProductService.name);
+
   async createProducts(
-    createProductDto: CreateProduct,
+    createProductDto: CreateProductDto,
     file?: Express.Multer.File
   ): Promise<Product> {
     let imagePath: string | undefined = undefined;
-
-    if (file) {
-      imagePath = await this.saveFileToDisc(file);
-    }
-
-    const category = await this.categoryRepository.findOne({ where: { id: createProductDto.categoryId } });
-    if (!category) {
-      throw new BadRequestException(`Category with id=${createProductDto.categoryId} does not exist. Please create the category first.`);
-    }
-
-    let brand: Brand | undefined = undefined;
-    if (createProductDto.brandId) {
-      const foundBrand = await this.brandRepository.findOne({ where: { id: createProductDto.brandId } });
-      if (!foundBrand) {
-        throw new BadRequestException(`Brand does not exist. Please create the brand first.`);
-      }
-      brand = foundBrand;
-    }
-
-    const productData: Partial<Product> = {
-      name: createProductDto.name,
-      price: createProductDto.price,
-      stock: createProductDto.stock,
-      description: createProductDto.description,
-      image: imagePath,
-      sku: createProductDto.sku,
-      status: createProductDto.status,
-      attributes: createProductDto.attributes,
-      comparePrice: createProductDto.comparePrice,
-      translations: createProductDto.translations,
-      seoTitle: createProductDto.seoTitle,
-      seoDescription: createProductDto.seoDescription,
-      weight: createProductDto.weight,
-      dimensions: createProductDto.dimensions,
-      category,
-      brand,
-    };
-
-    if (createProductDto.familyId) {
-      productData.family = { id: createProductDto.familyId } as any;
-    }
-
-    const product = this.productRepository.create(productData);
-
     try {
+      if (file) {
+        imagePath = await this.saveFileToDisc(file);
+      }
+
+      const category = await this.categoryRepository.findOne({
+        where: { id: createProductDto.categoryId },
+      });
+      if (!category) {
+        throw new BadRequestException(
+          `Category with id=${createProductDto.categoryId} does not exist. Please create the category first.`
+        );
+      }
+
+      let brand: Brand | undefined = undefined;
+      if (createProductDto.brandId) {
+        const foundBrand = await this.brandRepository.findOne({
+          where: { id: createProductDto.brandId },
+        });
+        if (!foundBrand) {
+          throw new BadRequestException(
+            `Brand does not exist. Please create the brand first.`
+          );
+        }
+        brand = foundBrand;
+      }
+
+      const productData: Partial<Product> = {
+        name: createProductDto.name,
+        price: createProductDto.price,
+        stock: createProductDto.stock,
+        description: createProductDto.description,
+        image: imagePath,
+        sku: createProductDto.sku,
+        status: createProductDto.status,
+        comparePrice: createProductDto.comparePrice,
+        translations: createProductDto.translations,
+        seoTitle: createProductDto.seoTitle,
+        seoDescription: createProductDto.seoDescription,
+        weight: createProductDto.weight,
+        dimensions: createProductDto.dimensions,
+        category,
+        brand,
+      };
+
+      if (createProductDto.familyId) {
+        productData.family = { id: createProductDto.familyId } as any;
+      }
+
+      const product = this.productRepository.create(productData);
       const savedProduct = await this.productRepository.save(product);
+
+      if (createProductDto.attributes && createProductDto.attributes.length) {
+        const attributes = await this.attributeRepository.find({
+          where: { id: In(createProductDto.attributes) },
+        });
+
+        savedProduct.attributes = attributes;
+        await this.productRepository.save(savedProduct);
+      }
 
       const productWithRelations = await this.productRepository.findOne({
         where: { id: savedProduct.id },
-        relations: ['category', 'family', 'brand'],
+        relations: ['category', 'family', 'brand', 'attributes'],
       });
 
-      if (!productWithRelations) {
-        throw new Error('Product not found after creation');
-      }
-
-      return productWithRelations;
+      return productWithRelations!;
     } catch (error) {
       if (imagePath) {
         await this.deleteFile(imagePath);
@@ -212,7 +230,7 @@ export class ProductService {
       where: {
         id,
       },
-      relations: ['category', 'family', 'brand'],
+      relations: ['category', 'family', 'brand', 'attributes'],
     });
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -222,58 +240,79 @@ export class ProductService {
 
   async updateProduct(
     id: number,
-    updateDto: Partial<CreateProduct>,
+    updateDto: UpdateProductDto,
     file?: Express.Multer.File
   ) {
     if (!id) throw new BadRequestException('ID is required');
 
-    const product = await this.productRepository.findOne({
-      where: { id },
-      relations: ['family', 'category', 'brand'],
-    });
-    if (!product)
-      throw new NotFoundException(`Product with ID ${id} not found`);
+    const { attributes, ...restDto } = updateDto;
 
-    const updateData: Partial<Product> = {
-      name: updateDto.name ?? product.name,
-      price: updateDto.price ?? product.price,
-      stock: updateDto.stock ?? product.stock,
-      description: updateDto.description ?? product.description,
-    };
+    try {
+      const product = await this.productRepository.findOne({
+        where: { id },
+        relations: ['family', 'category', 'brand', 'attributes'],
+      });
+      if (!product) throw new NotFoundException('Product not found');
 
-    let imagePath = product.image;
-    if (file) {
-      if (product.image) {
-        await this.deleteFile(product.image);
+      let imagePath = product.image;
+      if (file) {
+        if (product.image) {
+          await this.deleteFile(product.image);
+        }
+
+        imagePath = await this.saveFileToDisc(file);
       }
 
-      imagePath = await this.saveFileToDisc(file);
+      const updated = this.productRepository.merge(product, {
+        ...restDto,
+        image: imagePath,
+      });
+
+      const savedProduct = await this.productRepository.save(updated);
+
+      if (attributes && attributes.length) {
+        const attributesArray = await this.attributeRepository.find({
+          where: { id: In(attributes) },
+        });
+
+        savedProduct.attributes = attributesArray;
+        await this.productRepository.save(savedProduct);
+      }
+
+      const updatedProduct = await this.productRepository.findOne({
+        where: { id: savedProduct.id },
+        relations: ['category', 'family', 'brand'],
+      });
+
+      if (!updatedProduct) {
+        throw new NotFoundException('Product not found after update');
+      }
+
+      return updatedProduct;
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`UpdateProduct error: ${err.message}`, err.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to update product');
     }
-
-    const updated = this.productRepository.merge(product, {
-      ...updateDto,
-      image: imagePath,
-    });
-
-    const savedProduct = await this.productRepository.save(updated);
-
-    const updatedProduct = await this.productRepository.findOne({
-      where: { id: savedProduct.id },
-      relations: ['category', 'family', 'brand'],
-    });
-
-    if (!updatedProduct) {
-      throw new NotFoundException('Product not found after update');
-    }
-
-    return updatedProduct;
   }
 
   async remove(id: number) {
-    const product = await this.productRepository.findOne({ where: { id } });
-    if (!product)
-      throw new NotFoundException(`Product with ID ${id} not found`);
-    await this.productRepository.delete(id);
-    return { message: 'Product deleted successfully' };
+    try {
+      const product = await this.productRepository.findOne({ where: { id } });
+      if (!product) throw new NotFoundException('Product not found');
+      await this.productRepository.delete(id);
+
+      return { message: 'Product deleted successfully' };
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`RemoveProduct error: ${err.message}`, err.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to delete product');
+    }
   }
 }

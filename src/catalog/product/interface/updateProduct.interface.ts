@@ -4,12 +4,15 @@ export interface UpdateProduct {
   stock: boolean;
   description: string;
   familyId?: number;
-  attributes?: Record<string, string | number | boolean | string[]>;
+  attributes?: number[];
   comparePrice?: number;
-  translations?: Record<string, {
-    name: string;
-    description: string;
-  }>;
+  translations?: Record<
+    string,
+    {
+      name: string;
+      description: string;
+    }
+  >;
   seoTitle?: string;
   seoDescription?: string;
   weight?: number;
