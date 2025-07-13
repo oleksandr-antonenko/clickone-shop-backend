@@ -54,16 +54,6 @@ class OrderItemDto {
   @IsString()
   productId: string;
 
-  @IsString()
-  productName: string;
-
-  @IsString()
-  productSku: string;
-
-  @IsOptional()
-  @IsString()
-  productImage?: string;
-
   @IsNumber()
   quantity: number;
 
@@ -102,7 +92,7 @@ export class CreateOrderDto {
   items: OrderItemDto[];
 
   @IsNumber()
-  subtotal: number;
+  subTotal: number;
 
   @IsNumber()
   shippingCost: number;

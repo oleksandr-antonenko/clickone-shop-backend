@@ -13,13 +13,13 @@ export class Address {
   @Column()
   lastName: string;
 
-  @Column()
+  @Column({ nullable: true })
   company?: string;
 
   @Column()
   address1: string;
 
-  @Column()
+  @Column({ nullable: true })
   address2?: string;
 
   @Column()
@@ -34,7 +34,7 @@ export class Address {
   @Column()
   country: string;
 
-  @Column()
+  @Column({ nullable: true })
   phone?: string;
 
   @OneToMany(() => Order, (order) => order.shippingAddress)

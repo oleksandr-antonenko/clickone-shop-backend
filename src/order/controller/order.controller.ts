@@ -6,24 +6,39 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+import { Public } from '~/common/decorators/public.decorator';
 import { CreateOrderDto } from '~/order/dto/create-order.dto';
 import { UpdateOrderDto } from '~/order/dto/update-order.dto';
 import { OrderService } from '~/order/service/order.service';
 
-@Controller('order')
+import { PaginationQueryOrderDto } from '../dto/pagination-query-order.dto';
+
+@Public()
+@Controller('orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create a new order' })
+  @ApiResponse({ status: 201, description: 'Order created successfully' })
+  @ApiBody({ type: CreateOrderDto })
   create(@Body() createOrderDto: CreateOrderDto) {
     return this.orderService.create(createOrderDto);
   }
 
   @Get()
-  findAll() {
-    return this.orderService.findAll();
+  @ApiOperation({ summary: 'Get all orders' })
+  @ApiResponse({
+    status: 200,
+    description: 'Orders fetched successfully',
+  })
+  @ApiResponse({ status: 404, description: 'No orders found' })
+  findAll(@Query() query: PaginationQueryOrderDto) {
+    return this.orderService.findAll(query);
   }
 
   @Get(':id')
