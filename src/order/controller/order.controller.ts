@@ -9,14 +9,12 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-import { Public } from '~/common/decorators/public.decorator';
 import { CreateOrderDto } from '~/order/dto/create-order.dto';
 import { UpdateOrderDto } from '~/order/dto/update-order.dto';
 import { OrderService } from '~/order/service/order.service';
 
 import { PaginationQueryOrderDto } from '../dto/pagination-query-order.dto';
 
-@Public()
 @Controller('orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
