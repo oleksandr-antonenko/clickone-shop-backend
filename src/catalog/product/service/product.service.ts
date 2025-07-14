@@ -17,9 +17,9 @@ import { In, Repository } from 'typeorm';
 import { Attribute } from '~/catalog/attributes/entity/attribute.entity';
 import { Brand } from '~/catalog/brands/entities/brand.entity';
 import { Category } from '~/catalog/category/entities/category.entity';
+import { ProductFamily } from '~/catalog/families/entity/product-family.entity';
 
 import { FilterParserService } from '../../../filter/service/filter-parser.service';
-import { FilterService } from '../../../filter/service/filter.service';
 import { PaginationQuery } from '../../../pagination/interface/pagination.interface';
 import { PaginationService } from '../../../pagination/service/pagination.service';
 import { CreateProductDto } from '../dto/create-product.dto';
@@ -32,6 +32,8 @@ import {
 
 @Injectable({ scope: Scope.REQUEST })
 export class ProductService {
+  private readonly logger = new Logger(ProductService.name);
+
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
@@ -41,15 +43,14 @@ export class ProductService {
     private readonly attributeRepository: Repository<Attribute>,
     @InjectRepository(Brand)
     private readonly brandRepository: Repository<Brand>,
-    private readonly filterService: FilterService,
+    @InjectRepository(ProductFamily)
+    private readonly familyRepository: Repository<ProductFamily>,
     private readonly filterParserService: FilterParserService,
     private readonly paginationService: PaginationService,
     @Inject(REQUEST) private readonly request: Request
   ) {
-    this.ensureUploadsDir();
+    void this.ensureUploadsDir();
   }
-
-  private readonly logger = new Logger(ProductService.name);
 
   async createProducts(
     createProductDto: CreateProductDto,
@@ -102,7 +103,13 @@ export class ProductService {
       };
 
       if (createProductDto.familyId) {
-        productData.family = { id: createProductDto.familyId } as any;
+        const family = await this.familyRepository.findOne({
+          where: { id: createProductDto.familyId },
+        });
+        if (!family) {
+          throw new BadRequestException('Family not found');
+        }
+        productData.family = family;
       }
 
       const product = this.productRepository.create(productData);
@@ -157,50 +164,60 @@ export class ProductService {
       const fullPath = path.join(process.cwd(), filePath);
       await fs.unlink(fullPath);
     } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `FindAllProductFamilies error: ${err.message}`,
+        err.stack
+      );
       console.warn('Failed to delete file:', filePath);
     }
   }
 
   async findAll(query: Pagination) {
-    const processedQuery = this.processQuery(query, this.request.query);
+    try {
+      const processedQuery = this.processQuery(query, this.request.query);
 
-    const page = Math.max(Number(processedQuery.page) || 1, 1);
-    const limit = Math.min(Number(processedQuery.limit) || 10, 100);
-    const skip = (page - 1) * limit;
+      const qb = this.productRepository
+        .createQueryBuilder('product')
+        .leftJoinAndSelect('product.category', 'category')
+        .leftJoinAndSelect('product.family', 'family')
+        .leftJoinAndSelect('product.brand', 'brand')
+        .leftJoinAndSelect('product.attributes', 'attributes');
 
-    const qb = this.productRepository
-      .createQueryBuilder('product')
-      .leftJoinAndSelect('product.category', 'category')
-      .leftJoinAndSelect('product.family', 'family')
-      .leftJoinAndSelect('product.brand', 'brand')
-      .leftJoinAndSelect('product.attributes', 'attributes');
+      const paginationQuery: PaginationQuery = {
+        page: processedQuery.page,
+        limit: processedQuery.limit,
+        sortBy: processedQuery.sortBy || 'id',
+        sortOrder: processedQuery.sortOrder?.toUpperCase() as
+          | 'ASC'
+          | 'DESC'
+          | undefined,
+        filters: processedQuery.filters,
+      };
+      const result = await this.paginationService.paginate(
+        qb,
+        'product',
+        paginationQuery,
+        processedQuery.filters
+      );
 
-    const paginationQuery: PaginationQuery = {
-      page: processedQuery.page,
-      limit: processedQuery.limit,
-      sortBy: processedQuery.sortBy || 'id',
-      sortOrder: processedQuery.sortOrder?.toUpperCase() as
-        | 'ASC'
-        | 'DESC'
-        | undefined,
-      filters: processedQuery.filters,
-    };
-    const result = await this.paginationService.paginate(
-      qb,
-      'product',
-      paginationQuery,
-      processedQuery.filters
-    );
-
-    return {
-      products: result.data,
-      total: result.total,
-      page: result.page,
-      limit: result.limit,
-      totalPages: result.totalPages,
-      hasNextPage: result.hasNextPage,
-      hasPreviousPage: result.hasPreviousPage,
-    };
+      return {
+        products: result.data,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const err = error as Error;
+      this.logger.error(`FindAllProducts error: ${err.message}`, err.stack);
+      throw new BadRequestException('Failed to find products');
+    }
   }
 
   private processQuery(
