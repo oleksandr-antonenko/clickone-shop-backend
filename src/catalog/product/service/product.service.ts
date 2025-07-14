@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  HttpException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
   Scope,
 } from '@nestjs/common';
@@ -11,16 +13,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Request } from 'express';
 import { promises as fs } from 'fs';
 import * as path from 'path';
-import { Repository } from 'typeorm';
-
-import { Category } from '~/catalog/category/entities/category.entity';
+import { In, Repository } from 'typeorm';
+import { Attribute } from '~/catalog/attributes/entity/attribute.entity';
 import { Brand } from '~/catalog/brands/entities/brand.entity';
+import { Category } from '~/catalog/category/entities/category.entity';
+import { ProductFamily } from '~/catalog/families/entity/product-family.entity';
+
 import { FilterParserService } from '../../../filter/service/filter-parser.service';
-import { FilterService } from '../../../filter/service/filter.service';
 import { PaginationQuery } from '../../../pagination/interface/pagination.interface';
 import { PaginationService } from '../../../pagination/service/pagination.service';
+import { CreateProductDto } from '../dto/create-product.dto';
+import { UpdateProductDto } from '../dto/update-product.dto';
 import { Product } from '../entities/product.entity';
-import { CreateProduct } from '../interface/create.interface';
 import {
   Pagination,
   ProcessedPagination,
@@ -28,83 +32,104 @@ import {
 
 @Injectable({ scope: Scope.REQUEST })
 export class ProductService {
+  private readonly logger = new Logger(ProductService.name);
+
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(Attribute)
+    private readonly attributeRepository: Repository<Attribute>,
     @InjectRepository(Brand)
     private readonly brandRepository: Repository<Brand>,
-    private readonly filterService: FilterService,
+    @InjectRepository(ProductFamily)
+    private readonly familyRepository: Repository<ProductFamily>,
     private readonly filterParserService: FilterParserService,
     private readonly paginationService: PaginationService,
     @Inject(REQUEST) private readonly request: Request
   ) {
-    this.ensureUploadsDir();
+    void this.ensureUploadsDir();
   }
 
   async createProducts(
-    createProductDto: CreateProduct,
+    createProductDto: CreateProductDto,
     file?: Express.Multer.File
   ): Promise<Product> {
     let imagePath: string | undefined = undefined;
-
-    if (file) {
-      imagePath = await this.saveFileToDisc(file);
-    }
-
-    const category = await this.categoryRepository.findOne({ where: { id: createProductDto.categoryId } });
-    if (!category) {
-      throw new BadRequestException(`Category with id=${createProductDto.categoryId} does not exist. Please create the category first.`);
-    }
-
-    let brand: Brand | undefined = undefined;
-    if (createProductDto.brandId) {
-      const foundBrand = await this.brandRepository.findOne({ where: { id: createProductDto.brandId } });
-      if (!foundBrand) {
-        throw new BadRequestException(`Brand does not exist. Please create the brand first.`);
-      }
-      brand = foundBrand;
-    }
-
-    const productData: Partial<Product> = {
-      name: createProductDto.name,
-      price: createProductDto.price,
-      stock: createProductDto.stock,
-      description: createProductDto.description,
-      image: imagePath,
-      sku: createProductDto.sku,
-      status: createProductDto.status,
-      attributes: createProductDto.attributes,
-      comparePrice: createProductDto.comparePrice,
-      translations: createProductDto.translations,
-      seoTitle: createProductDto.seoTitle,
-      seoDescription: createProductDto.seoDescription,
-      weight: createProductDto.weight,
-      dimensions: createProductDto.dimensions,
-      category,
-      brand,
-    };
-
-    if (createProductDto.familyId) {
-      productData.family = { id: createProductDto.familyId } as any;
-    }
-
-    const product = this.productRepository.create(productData);
-
     try {
+      if (file) {
+        imagePath = await this.saveFileToDisc(file);
+      }
+
+      const category = await this.categoryRepository.findOne({
+        where: { id: createProductDto.categoryId },
+      });
+      if (!category) {
+        throw new BadRequestException(
+          `Category with id=${createProductDto.categoryId} does not exist. Please create the category first.`
+        );
+      }
+
+      let brand: Brand | undefined = undefined;
+      if (createProductDto.brandId) {
+        const foundBrand = await this.brandRepository.findOne({
+          where: { id: createProductDto.brandId },
+        });
+        if (!foundBrand) {
+          throw new BadRequestException(
+            `Brand does not exist. Please create the brand first.`
+          );
+        }
+        brand = foundBrand;
+      }
+
+      const productData: Partial<Product> = {
+        name: createProductDto.name,
+        price: createProductDto.price,
+        stock: createProductDto.stock,
+        description: createProductDto.description,
+        image: imagePath,
+        sku: createProductDto.sku,
+        status: createProductDto.status,
+        comparePrice: createProductDto.comparePrice,
+        translations: createProductDto.translations,
+        seoTitle: createProductDto.seoTitle,
+        seoDescription: createProductDto.seoDescription,
+        weight: createProductDto.weight,
+        dimensions: createProductDto.dimensions,
+        category,
+        brand,
+      };
+
+      if (createProductDto.familyId) {
+        const family = await this.familyRepository.findOne({
+          where: { id: createProductDto.familyId },
+        });
+        if (!family) {
+          throw new BadRequestException('Family not found');
+        }
+        productData.family = family;
+      }
+
+      const product = this.productRepository.create(productData);
       const savedProduct = await this.productRepository.save(product);
+
+      if (createProductDto.attributes && createProductDto.attributes.length) {
+        const attributes = await this.attributeRepository.find({
+          where: { id: In(createProductDto.attributes) },
+        });
+
+        savedProduct.attributes = attributes;
+        await this.productRepository.save(savedProduct);
+      }
 
       const productWithRelations = await this.productRepository.findOne({
         where: { id: savedProduct.id },
-        relations: ['category', 'family', 'brand'],
+        relations: ['category', 'family', 'brand', 'attributes'],
       });
 
-      if (!productWithRelations) {
-        throw new Error('Product not found after creation');
-      }
-
-      return productWithRelations;
+      return productWithRelations!;
     } catch (error) {
       if (imagePath) {
         await this.deleteFile(imagePath);
@@ -139,49 +164,60 @@ export class ProductService {
       const fullPath = path.join(process.cwd(), filePath);
       await fs.unlink(fullPath);
     } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `FindAllProductFamilies error: ${err.message}`,
+        err.stack
+      );
       console.warn('Failed to delete file:', filePath);
     }
   }
 
   async findAll(query: Pagination) {
-    const processedQuery = this.processQuery(query, this.request.query);
+    try {
+      const processedQuery = this.processQuery(query, this.request.query);
 
-    const page = Math.max(Number(processedQuery.page) || 1, 1);
-    const limit = Math.min(Number(processedQuery.limit) || 10, 100);
-    const skip = (page - 1) * limit;
+      const qb = this.productRepository
+        .createQueryBuilder('product')
+        .leftJoinAndSelect('product.category', 'category')
+        .leftJoinAndSelect('product.family', 'family')
+        .leftJoinAndSelect('product.brand', 'brand')
+        .leftJoinAndSelect('product.attributes', 'attributes');
 
-    const qb = this.productRepository
-      .createQueryBuilder('product')
-      .leftJoinAndSelect('product.category', 'category')
-      .leftJoinAndSelect('product.family', 'family')
-      .leftJoinAndSelect('product.brand', 'brand');
+      const paginationQuery: PaginationQuery = {
+        page: processedQuery.page,
+        limit: processedQuery.limit,
+        sortBy: processedQuery.sortBy || 'id',
+        sortOrder: processedQuery.sortOrder?.toUpperCase() as
+          | 'ASC'
+          | 'DESC'
+          | undefined,
+        filters: processedQuery.filters,
+      };
+      const result = await this.paginationService.paginate(
+        qb,
+        'product',
+        paginationQuery,
+        processedQuery.filters
+      );
 
-    const paginationQuery: PaginationQuery = {
-      page: processedQuery.page,
-      limit: processedQuery.limit,
-      sortBy: processedQuery.sortBy || 'id',
-      sortOrder: processedQuery.sortOrder?.toUpperCase() as
-        | 'ASC'
-        | 'DESC'
-        | undefined,
-      filters: processedQuery.filters,
-    };
-    const result = await this.paginationService.paginate(
-      qb,
-      'product',
-      paginationQuery,
-      processedQuery.filters
-    );
-
-    return {
-      products: result.data,
-      total: result.total,
-      page: result.page,
-      limit: result.limit,
-      totalPages: result.totalPages,
-      hasNextPage: result.hasNextPage,
-      hasPreviousPage: result.hasPreviousPage,
-    };
+      return {
+        products: result.data,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+      };
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const err = error as Error;
+      this.logger.error(`FindAllProducts error: ${err.message}`, err.stack);
+      throw new BadRequestException('Failed to find products');
+    }
   }
 
   private processQuery(
@@ -212,7 +248,7 @@ export class ProductService {
       where: {
         id,
       },
-      relations: ['category', 'family', 'brand'],
+      relations: ['category', 'family', 'brand', 'attributes'],
     });
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -222,58 +258,79 @@ export class ProductService {
 
   async updateProduct(
     id: number,
-    updateDto: Partial<CreateProduct>,
+    updateDto: UpdateProductDto,
     file?: Express.Multer.File
   ) {
     if (!id) throw new BadRequestException('ID is required');
 
-    const product = await this.productRepository.findOne({
-      where: { id },
-      relations: ['family', 'category', 'brand'],
-    });
-    if (!product)
-      throw new NotFoundException(`Product with ID ${id} not found`);
+    const { attributes, ...restDto } = updateDto;
 
-    const updateData: Partial<Product> = {
-      name: updateDto.name ?? product.name,
-      price: updateDto.price ?? product.price,
-      stock: updateDto.stock ?? product.stock,
-      description: updateDto.description ?? product.description,
-    };
+    try {
+      const product = await this.productRepository.findOne({
+        where: { id },
+        relations: ['family', 'category', 'brand', 'attributes'],
+      });
+      if (!product) throw new NotFoundException('Product not found');
 
-    let imagePath = product.image;
-    if (file) {
-      if (product.image) {
-        await this.deleteFile(product.image);
+      let imagePath = product.image;
+      if (file) {
+        if (product.image) {
+          await this.deleteFile(product.image);
+        }
+
+        imagePath = await this.saveFileToDisc(file);
       }
 
-      imagePath = await this.saveFileToDisc(file);
+      const updated = this.productRepository.merge(product, {
+        ...restDto,
+        image: imagePath,
+      });
+
+      const savedProduct = await this.productRepository.save(updated);
+
+      if (attributes && attributes.length) {
+        const attributesArray = await this.attributeRepository.find({
+          where: { id: In(attributes) },
+        });
+
+        savedProduct.attributes = attributesArray;
+        await this.productRepository.save(savedProduct);
+      }
+
+      const updatedProduct = await this.productRepository.findOne({
+        where: { id: savedProduct.id },
+        relations: ['category', 'family', 'brand'],
+      });
+
+      if (!updatedProduct) {
+        throw new NotFoundException('Product not found after update');
+      }
+
+      return updatedProduct;
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`UpdateProduct error: ${err.message}`, err.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to update product');
     }
-
-    const updated = this.productRepository.merge(product, {
-      ...updateDto,
-      image: imagePath,
-    });
-
-    const savedProduct = await this.productRepository.save(updated);
-
-    const updatedProduct = await this.productRepository.findOne({
-      where: { id: savedProduct.id },
-      relations: ['category', 'family', 'brand'],
-    });
-
-    if (!updatedProduct) {
-      throw new NotFoundException('Product not found after update');
-    }
-
-    return updatedProduct;
   }
 
   async remove(id: number) {
-    const product = await this.productRepository.findOne({ where: { id } });
-    if (!product)
-      throw new NotFoundException(`Product with ID ${id} not found`);
-    await this.productRepository.delete(id);
-    return { message: 'Product deleted successfully' };
+    try {
+      const product = await this.productRepository.findOne({ where: { id } });
+      if (!product) throw new NotFoundException('Product not found');
+      await this.productRepository.delete(id);
+
+      return { message: 'Product deleted successfully' };
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`RemoveProduct error: ${err.message}`, err.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to delete product');
+    }
   }
 }

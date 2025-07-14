@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { Transform } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
@@ -163,16 +164,25 @@ export class CreateProductDto {
   @IsObject()
   dimensions?: { length: number; width: number; height: number };
 
-  @ApiProperty({ description: 'Brand ID', example: 1, required: true })
+  @ApiProperty({ description: 'Brand ID', example: 1, required: false })
   @IsNumber()
-  @IsNotEmpty()
+  // @IsNotEmpty()
   @Transform(({ value }: { value: string }) =>
     value ? parseInt(value) : undefined
   )
   brandId: number;
 
-  @ApiProperty({ type: 'object', additionalProperties: true })
+  @ApiProperty({
+    description: 'IDs of attributes linked to the product',
+    type: [Number],
+    required: false,
+    example: [1, 3, 7],
+  })
   @IsOptional()
-  @IsObject()
-  attributes?: Record<string, string | number | boolean | string[]>;
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.split(',').map(Number) : value
+  )
+  attributes?: number[];
 }

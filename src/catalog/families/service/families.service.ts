@@ -169,10 +169,7 @@ export class FamiliesService {
         throw error;
       }
       const err = error as Error;
-      this.logger.error(
-        `UpdateProductFamily error: ${err.message}`,
-        err.stack
-      );
+      this.logger.error(`UpdateProductFamily error: ${err.message}`, err.stack);
       throw new BadRequestException('Failed to update product family');
     }
   }
@@ -206,10 +203,7 @@ export class FamiliesService {
         throw error;
       }
       const err = error as Error;
-      this.logger.error(
-        `RemoveProductFamily error: ${err.message}`,
-        err.stack
-      );
+      this.logger.error(`RemoveProductFamily error: ${err.message}`, err.stack);
       throw new BadRequestException('Failed to remove product family');
     }
   }

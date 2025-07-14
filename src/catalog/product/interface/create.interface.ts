@@ -7,7 +7,7 @@ export interface CreateProduct {
   categoryId: number;
   brandId?: number;
   familyId?: number;
-  attributes?: Record<string, string | number | boolean | string[]>;
+  attributes?: number[];
   comparePrice?: number;
   translations?: Record<
     string,
