@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+import { Public } from '~/common/decorators/public.decorator';
 import { CreateOrderDto } from '~/order/dto/create-order.dto';
 import { UpdateOrderDto } from '~/order/dto/update-order.dto';
 import { OrderService } from '~/order/service/order.service';
@@ -20,6 +21,7 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
+  @Public()
   @ApiOperation({ summary: 'Create a new order' })
   @ApiResponse({ status: 201, description: 'Order created successfully' })
   @ApiBody({ type: CreateOrderDto })
