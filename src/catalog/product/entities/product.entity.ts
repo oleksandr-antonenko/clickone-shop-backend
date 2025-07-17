@@ -10,6 +10,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { AttributeOption } from '~/catalog/attributes/entity/attribute-options.entity';
 import { Attribute } from '~/catalog/attributes/entity/attribute.entity';
 import { Brand } from '~/catalog/brands/entities/brand.entity';
 import { Category } from '~/catalog/category/entities/category.entity';
@@ -85,9 +86,6 @@ export class Product {
   @ManyToOne(() => ProductFamily, (family) => family.products)
   family: ProductFamily;
 
-  @Column('text', { array: true, nullable: true })
-  options?: string[];
-
   @OneToMany(() => ProductSetting, (setting) => setting.product)
   settings: ProductSetting[];
 
@@ -108,11 +106,22 @@ export class Product {
   @OneToMany(() => OrderItem, (item) => item.product)
   orderItems: OrderItem[];
 
-  @ManyToMany(() => Attribute, { eager: true })
+  @ManyToMany(() => Attribute)
   @JoinTable({
     name: 'product_attributes',
     joinColumn: { name: 'product_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'attribute_id', referencedColumnName: 'id' },
   })
   attributes: Attribute[];
+
+  @ManyToMany(() => AttributeOption, (option) => option.products)
+  @JoinTable({
+    name: 'product_options',
+    joinColumn: { name: 'product_id', referencedColumnName: 'id' },
+    inverseJoinColumn: {
+      name: 'attribute_option_id',
+      referencedColumnName: 'id',
+    },
+  })
+  selectedOptions: AttributeOption[];
 }

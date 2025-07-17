@@ -21,6 +21,7 @@ import { PaginationService } from '~/pagination/service/pagination.service';
 
 import { CreateAttributeDto } from '../dto/create-attribute.dto';
 import { UpdateAttributeDto } from '../dto/update-attribute.dto';
+import { AttributeOption } from '../entity/attribute-options.entity';
 import { Attribute } from '../entity/attribute.entity';
 
 @Injectable()
@@ -28,6 +29,8 @@ export class AttributesService {
   constructor(
     @InjectRepository(Attribute)
     private attributesRepository: Repository<Attribute>,
+    @InjectRepository(AttributeOption)
+    private attributeOptionsRepository: Repository<AttributeOption>,
     private readonly filterParserService: FilterParserService,
     private readonly paginationService: PaginationService,
     @Inject(REQUEST) private readonly request: Request
@@ -59,8 +62,13 @@ export class AttributesService {
     createAttributesValueDto: CreateAttributeDto
   ): Promise<Attribute> {
     try {
+      const { options, ...rest } = createAttributesValueDto;
+
       const attributesValue = this.attributesRepository.create({
-        ...createAttributesValueDto,
+        ...rest,
+        options: options?.map((option) =>
+          this.attributeOptionsRepository.create({ value: option })
+        ),
       });
 
       return await this.attributesRepository.save(attributesValue);
@@ -78,7 +86,9 @@ export class AttributesService {
     try {
       const processedQuery = this.processQuery(query, this.request.query);
 
-      const qb = this.attributesRepository.createQueryBuilder('attributes');
+      const qb = this.attributesRepository
+        .createQueryBuilder('attributes')
+        .leftJoinAndSelect('attributes.options', 'options');
 
       const paginationQuery: PaginationQuery = {
         page: processedQuery.page,
@@ -120,6 +130,7 @@ export class AttributesService {
         where: {
           id,
         },
+        relations: ['options'],
       });
 
       if (!attributesValue) {
@@ -142,21 +153,29 @@ export class AttributesService {
     updateAttributeDto: UpdateAttributeDto
   ): Promise<Attribute> {
     try {
-      const existingAttribute = await this.attributesRepository.findOne({
+      const { options, ...rest } = updateAttributeDto;
+
+      const attribute = await this.attributesRepository.findOne({
         where: { id },
+        relations: ['options'],
       });
 
-      if (!existingAttribute) {
+      if (!attribute) {
         this.logger.warn('Attribute not found');
         throw new NotFoundException('Attribute not found');
       }
 
-      const updated = this.attributesRepository.merge(
-        existingAttribute,
-        updateAttributeDto
-      );
+      this.attributesRepository.merge(attribute, rest);
 
-      return await this.attributesRepository.save(updated);
+      if (options) {
+        await this.attributeOptionsRepository.delete({ attribute: { id } });
+
+        attribute.options = options.map((value) =>
+          this.attributeOptionsRepository.create({ value, attribute })
+        );
+      }
+
+      return await this.attributesRepository.save(attribute);
     } catch (error) {
       const err = error as Error;
       this.logger.error(`UpdateAttribute error: ${err.message}`, err.stack);
