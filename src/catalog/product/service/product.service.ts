@@ -14,6 +14,7 @@ import { Request } from 'express';
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import { In, Repository } from 'typeorm';
+import { AttributeOption } from '~/catalog/attributes/entity/attribute-options.entity';
 import { Attribute } from '~/catalog/attributes/entity/attribute.entity';
 import { Brand } from '~/catalog/brands/entities/brand.entity';
 import { Category } from '~/catalog/category/entities/category.entity';
@@ -41,6 +42,8 @@ export class ProductService {
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(Attribute)
     private readonly attributeRepository: Repository<Attribute>,
+    @InjectRepository(AttributeOption)
+    private attributeOptionsRepository: Repository<AttributeOption>,
     @InjectRepository(Brand)
     private readonly brandRepository: Repository<Brand>,
     @InjectRepository(ProductFamily)
@@ -56,6 +59,8 @@ export class ProductService {
     createProductDto: CreateProductDto,
     file?: Express.Multer.File
   ): Promise<Product> {
+    console.log(createProductDto);
+
     let imagePath: string | undefined = undefined;
     try {
       if (file) {
@@ -121,12 +126,25 @@ export class ProductService {
         });
 
         savedProduct.attributes = attributes;
+
+        const options = await this.attributeOptionsRepository.findBy({
+          id: In(createProductDto.selectedOptions || []),
+        });
+
+        savedProduct.selectedOptions = options;
         await this.productRepository.save(savedProduct);
       }
 
       const productWithRelations = await this.productRepository.findOne({
         where: { id: savedProduct.id },
-        relations: ['category', 'family', 'brand', 'attributes'],
+        relations: [
+          'category',
+          'family',
+          'brand',
+          'attributes',
+          'selectedOptions',
+          'selectedOptions.attribute',
+        ],
       });
 
       return productWithRelations!;
@@ -182,7 +200,8 @@ export class ProductService {
         .leftJoinAndSelect('product.category', 'category')
         .leftJoinAndSelect('product.family', 'family')
         .leftJoinAndSelect('product.brand', 'brand')
-        .leftJoinAndSelect('product.attributes', 'attributes');
+        .leftJoinAndSelect('product.attributes', 'attributes')
+        .leftJoinAndSelect('product.selectedOptions', 'selectedOptions');
 
       const paginationQuery: PaginationQuery = {
         page: processedQuery.page,
@@ -248,7 +267,13 @@ export class ProductService {
       where: {
         id,
       },
-      relations: ['category', 'family', 'brand', 'attributes'],
+      relations: [
+        'category',
+        'family',
+        'brand',
+        'selectedOptions',
+        'selectedOptions.attribute',
+      ],
     });
     if (!product) {
       throw new NotFoundException('Product not found');
@@ -263,7 +288,7 @@ export class ProductService {
   ) {
     if (!id) throw new BadRequestException('ID is required');
 
-    const { attributes, ...restDto } = updateDto;
+    const { attributes, selectedOptions, ...restDto } = updateDto;
 
     try {
       const product = await this.productRepository.findOne({
@@ -294,12 +319,24 @@ export class ProductService {
         });
 
         savedProduct.attributes = attributesArray;
+
+        const options = await this.attributeOptionsRepository.findBy({
+          id: In(selectedOptions || []),
+        });
+
+        savedProduct.selectedOptions = options;
         await this.productRepository.save(savedProduct);
       }
 
       const updatedProduct = await this.productRepository.findOne({
         where: { id: savedProduct.id },
-        relations: ['category', 'family', 'brand'],
+        relations: [
+          'category',
+          'family',
+          'brand',
+          'selectedOptions',
+          'selectedOptions.attribute',
+        ],
       });
 
       if (!updatedProduct) {

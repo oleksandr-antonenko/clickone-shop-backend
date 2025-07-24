@@ -166,7 +166,7 @@ export class CreateProductDto {
 
   @ApiProperty({ description: 'Brand ID', example: 1, required: false })
   @IsNumber()
-  // @IsNotEmpty()
+  @IsNotEmpty()
   @Transform(({ value }: { value: string }) =>
     value ? parseInt(value) : undefined
   )
@@ -185,4 +185,13 @@ export class CreateProductDto {
     typeof value === 'string' ? value.split(',').map(Number) : value
   )
   attributes?: number[];
+
+  @ApiProperty({ type: [Number], description: 'Selected attribute option IDs' })
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.split(',').map(Number) : value
+  )
+  @IsOptional()
+  selectedOptions?: number[];
 }
