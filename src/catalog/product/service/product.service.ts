@@ -59,8 +59,6 @@ export class ProductService {
     createProductDto: CreateProductDto,
     file?: Express.Multer.File
   ): Promise<Product> {
-    console.log(createProductDto);
-
     let imagePath: string | undefined = undefined;
     try {
       if (file) {
@@ -310,6 +308,30 @@ export class ProductService {
         ...restDto,
         image: imagePath,
       });
+
+      if (updateDto.familyId) {
+        const family = await this.familyRepository.findOneBy({
+          id: updateDto.familyId,
+        });
+        if (!family) throw new NotFoundException('Family not found');
+        updated.family = family;
+      }
+
+      if (updateDto.categoryId) {
+        const category = await this.categoryRepository.findOneBy({
+          id: updateDto.categoryId,
+        });
+        if (!category) throw new NotFoundException('Category not found');
+        updated.category = category;
+      }
+
+      if (updateDto.brandId) {
+        const brand = await this.brandRepository.findOneBy({
+          id: updateDto.brandId,
+        });
+        if (!brand) throw new NotFoundException('Brand not found');
+        updated.brand = brand;
+      }
 
       const savedProduct = await this.productRepository.save(updated);
 
