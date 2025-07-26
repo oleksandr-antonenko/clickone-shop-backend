@@ -196,7 +196,7 @@ export class CollectionsController {
     @Param('id') id: string,
     @Param('productId') productId: string
   ) {
-    await this.collectionsService.removeProducts(id, [parseInt(productId)]);
+    await this.collectionsService.removeProducts(id, [productId]);
     return { message: 'Product removed from collection successfully' };
   }
 

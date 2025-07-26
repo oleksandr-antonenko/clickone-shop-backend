@@ -292,7 +292,7 @@ export class CollectionsService {
 
   async removeProducts(
     collectionId: string,
-    productIds: number[]
+    productIds: string[]
   ): Promise<void> {
     try {
       await this.collectionProductRepository.delete({

@@ -16,11 +16,10 @@ export class RemoveProductsFromCollectionDto {
   @ApiProperty({
     description: 'Array of product IDs to remove from the collection',
     example: [1, 2, 3],
-    type: [Number],
+    type: [String],
   })
   @IsArray()
-  @IsNumber({}, { each: true })
-  productIds: number[];
+  productIds: string[];
 }
 
 export class UpdateProductOrderDto {
