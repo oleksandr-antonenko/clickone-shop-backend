@@ -18,7 +18,7 @@ export class CollectionProduct {
   @Column({ type: 'uuid' })
   collectionId: string;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'uuid' })
   productId: string;
 
   @Column({ type: 'int', default: 0 })
