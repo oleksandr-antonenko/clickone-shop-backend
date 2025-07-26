@@ -11,8 +11,8 @@ import { Attribute } from './attribute.entity';
 
 @Entity('attribute_options')
 export class AttributeOption {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   value: string;

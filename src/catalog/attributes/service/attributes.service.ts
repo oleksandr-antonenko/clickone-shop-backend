@@ -124,7 +124,7 @@ export class AttributesService {
     }
   }
 
-  async findOne(id: number): Promise<Attribute> {
+  async findOne(id: string): Promise<Attribute> {
     try {
       const attributesValue = await this.attributesRepository.findOne({
         where: {
@@ -149,7 +149,7 @@ export class AttributesService {
   }
 
   async update(
-    id: number,
+    id: string,
     updateAttributeDto: UpdateAttributeDto
   ): Promise<Attribute> {
     try {
@@ -186,7 +186,7 @@ export class AttributesService {
     }
   }
 
-  async delete(id: number): Promise<{ message: string }> {
+  async delete(id: string): Promise<{ message: string }> {
     try {
       const attributeValue = await this.attributesRepository.findOne({
         where: { id },
