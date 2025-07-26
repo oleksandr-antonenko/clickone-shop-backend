@@ -19,14 +19,14 @@ import {
 
 import { PublicRead } from '~/common/decorators/public.decorator';
 
+import {
+  AddProductsToCollectionDto,
+  RemoveProductsFromCollectionDto,
+  UpdateProductOrderDto,
+} from '../dto/collection-product.dto';
+import { CollectionProductsPaginationDto } from '../dto/collection-products-pagination.dto';
 import { CollectionsDto } from '../dto/collections.dto';
 import { PaginationQueryCollectionDto } from '../dto/pagination-query-collection.dto';
-import { CollectionProductsPaginationDto } from '../dto/collection-products-pagination.dto';
-import { 
-  AddProductsToCollectionDto, 
-  RemoveProductsFromCollectionDto, 
-  UpdateProductOrderDto 
-} from '../dto/collection-product.dto';
 import { CollectionsService } from '../service/collections.service';
 
 @ApiTags('Collections')
@@ -57,20 +57,21 @@ export class CollectionsController {
       properties: {
         collections: {
           type: 'array',
-          items: { $ref: '#/components/schemas/CollectionsDto' }
+          items: { $ref: '#/components/schemas/CollectionsDto' },
         },
         total: { type: 'number' },
         page: { type: 'number' },
         limit: { type: 'number' },
         totalPages: { type: 'number' },
         hasNextPage: { type: 'boolean' },
-        hasPreviousPage: { type: 'boolean' }
-      }
-    }
+        hasPreviousPage: { type: 'boolean' },
+      },
+    },
   })
   @ApiQuery({ type: PaginationQueryCollectionDto })
   async findAll(
-    @Query() query: PaginationQueryCollectionDto & { status?: string; slug?: string }
+    @Query()
+    query: PaginationQueryCollectionDto & { status?: string; slug?: string }
   ) {
     if (query.slug) {
       return this.collectionsService.findBySlug(query.slug);
@@ -115,7 +116,7 @@ export class CollectionsController {
   @ApiBody({ type: CollectionsDto })
   async update(
     @Param('id') id: string,
-    @Body() updateCollectionDto: CollectionsDto,
+    @Body() updateCollectionDto: CollectionsDto
   ) {
     return this.collectionsService.update(id, updateCollectionDto);
   }
@@ -142,7 +143,7 @@ export class CollectionsController {
   @ApiBody({ type: AddProductsToCollectionDto })
   async addProducts(
     @Param('id') id: string,
-    @Body() addProductsDto: AddProductsToCollectionDto,
+    @Body() addProductsDto: AddProductsToCollectionDto
   ) {
     await this.collectionsService.addProducts(id, addProductsDto.productIds);
     return { message: 'Products added to collection successfully' };
@@ -158,7 +159,7 @@ export class CollectionsController {
   @ApiParam({ name: 'productId', description: 'Product ID' })
   async addSingleProduct(
     @Param('id') id: string,
-    @Param('productId') productId: string,
+    @Param('productId') productId: string
   ) {
     await this.collectionsService.addProducts(id, [parseInt(productId)]);
     return { message: 'Product added to collection successfully' };
@@ -174,9 +175,12 @@ export class CollectionsController {
   @ApiBody({ type: RemoveProductsFromCollectionDto })
   async removeProducts(
     @Param('id') id: string,
-    @Body() removeProductsDto: RemoveProductsFromCollectionDto,
+    @Body() removeProductsDto: RemoveProductsFromCollectionDto
   ) {
-    await this.collectionsService.removeProducts(id, removeProductsDto.productIds);
+    await this.collectionsService.removeProducts(
+      id,
+      removeProductsDto.productIds
+    );
     return { message: 'Products removed from collection successfully' };
   }
 
@@ -190,7 +194,7 @@ export class CollectionsController {
   @ApiParam({ name: 'productId', description: 'Product ID' })
   async removeSingleProduct(
     @Param('id') id: string,
-    @Param('productId') productId: string,
+    @Param('productId') productId: string
   ) {
     await this.collectionsService.removeProducts(id, [parseInt(productId)]);
     return { message: 'Product removed from collection successfully' };
@@ -206,12 +210,12 @@ export class CollectionsController {
   @ApiBody({ type: UpdateProductOrderDto })
   async updateProductOrder(
     @Param('id') id: string,
-    @Body() updateOrderDto: UpdateProductOrderDto,
+    @Body() updateOrderDto: UpdateProductOrderDto
   ) {
     await this.collectionsService.updateProductOrder(
       id,
       updateOrderDto.productId,
-      updateOrderDto.sortOrder,
+      updateOrderDto.sortOrder
     );
     return { message: 'Product order updated successfully' };
   }
@@ -228,7 +232,9 @@ export class CollectionsController {
   }
 
   @Get(':id/products/paginated')
-  @ApiOperation({ summary: 'Get collection products with pagination and filtering' })
+  @ApiOperation({
+    summary: 'Get collection products with pagination and filtering',
+  })
   @ApiResponse({
     status: 200,
     description: 'Collection products retrieved successfully',
@@ -243,24 +249,24 @@ export class CollectionsController {
               id: { type: 'number' },
               sortOrder: { type: 'number' },
               createdAt: { type: 'string' },
-              product: { $ref: '#/components/schemas/Product' }
-            }
-          }
+              product: { $ref: '#/components/schemas/Product' },
+            },
+          },
         },
         total: { type: 'number' },
         page: { type: 'number' },
         limit: { type: 'number' },
         totalPages: { type: 'number' },
         hasNextPage: { type: 'boolean' },
-        hasPreviousPage: { type: 'boolean' }
-      }
-    }
+        hasPreviousPage: { type: 'boolean' },
+      },
+    },
   })
   @ApiParam({ name: 'id', description: 'Collection ID' })
   @ApiQuery({ type: CollectionProductsPaginationDto })
   async getCollectionProductsPaginated(
     @Param('id') id: string,
-    @Query() query: CollectionProductsPaginationDto,
+    @Query() query: CollectionProductsPaginationDto
   ) {
     return this.collectionsService.getCollectionProductsPaginated(id, query);
   }

@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
 import { Type } from 'class-transformer';
 import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
-
 
 export class CollectionProductsPaginationDto {
   @ApiPropertyOptional({ example: 1, description: 'Page number' })
@@ -19,11 +19,23 @@ export class CollectionProductsPaginationDto {
   @ApiPropertyOptional({
     example: 'sortOrder',
     description: 'Field to sort by',
-    enum: ['sortOrder', 'createdAt', 'product.name', 'product.price', 'product.createdAt'],
+    enum: [
+      'sortOrder',
+      'createdAt',
+      'product.name',
+      'product.price',
+      'product.createdAt',
+    ],
   })
   @IsOptional()
   @IsString()
-  @IsIn(['sortOrder', 'createdAt', 'product.name', 'product.price', 'product.createdAt'])
+  @IsIn([
+    'sortOrder',
+    'createdAt',
+    'product.name',
+    'product.price',
+    'product.createdAt',
+  ])
   sortBy?: string;
 
   @ApiPropertyOptional({
@@ -38,9 +50,10 @@ export class CollectionProductsPaginationDto {
 
   @ApiPropertyOptional({
     example: '{"product.name":{"like":"iPhone"},"product.price":{"gte":100}}',
-    description: 'Filters object as JSON string (supports nested product fields)',
+    description:
+      'Filters object as JSON string (supports nested product fields)',
   })
   @IsOptional()
   @IsString()
   filters?: string;
-} 
+}

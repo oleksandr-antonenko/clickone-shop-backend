@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+
+import { IsArray, IsNumber } from 'class-validator';
 
 export class AddProductsToCollectionDto {
   @ApiProperty({
@@ -74,4 +75,4 @@ export class CollectionProductResponseDto {
     description: 'Product details',
   })
   product?: any;
-} 
+}

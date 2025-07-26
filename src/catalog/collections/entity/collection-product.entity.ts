@@ -6,9 +6,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Product } from '~/catalog/product/entities/product.entity';
 
 import { Collection } from './collections.entity';
-import { Product } from '~/catalog/product/entities/product.entity';
 
 @Entity('collection_products')
 export class CollectionProduct {
@@ -38,4 +38,4 @@ export class CollectionProduct {
   })
   @JoinColumn({ name: 'product_id' })
   product: Product;
-} 
+}
