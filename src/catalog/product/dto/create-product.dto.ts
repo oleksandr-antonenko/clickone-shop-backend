@@ -32,7 +32,7 @@ export class CreateProductDto {
   })
   @IsNumber()
   @Min(0)
-  @Transform(({ value }) => parseFloat(value))
+  @Transform(({ value }) => parseFloat(value as string))
   price: number;
 
   @ApiProperty({
@@ -102,7 +102,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  @Transform(({ value }) => (value ? parseFloat(value) : undefined))
+  @Transform(({ value }) => (value ? parseFloat(value as string) : undefined))
   comparePrice?: number;
 
   @ApiProperty({
@@ -148,7 +148,7 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  @Transform(({ value }) => (value ? parseFloat(value) : undefined))
+  @Transform(({ value }) => (value ? parseFloat(value as string) : undefined))
   weight?: number;
 
   @ApiProperty({
@@ -173,10 +173,16 @@ export class CreateProductDto {
   })
   @IsOptional()
   @IsArray()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.split(',') : (value as string)
+  )
   attributes?: string[];
 
   @ApiProperty({ type: [Number], description: 'Selected attribute option IDs' })
   @IsArray()
   @IsOptional()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.split(',') : (value as string[])
+  )
   selectedOptions?: string[];
 }

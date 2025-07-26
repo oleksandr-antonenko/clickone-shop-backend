@@ -70,7 +70,7 @@ export class CollectionsDto {
   })
   @IsNumber()
   @Min(0)
-  @Transform(({ value }) => parseInt(value))
+  @Transform(({ value }) => parseInt(value as string))
   productsCount: number;
 
   @ApiPropertyOptional({
