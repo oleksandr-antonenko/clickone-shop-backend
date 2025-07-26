@@ -12,8 +12,8 @@ import { BrandStatus } from '../interface/createBrand.interface';
 
 @Entity('brand')
 export class Brand {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'varchar', length: 255, unique: true })
   name: string;

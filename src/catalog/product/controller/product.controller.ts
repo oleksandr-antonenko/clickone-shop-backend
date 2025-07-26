@@ -57,7 +57,7 @@ export class ProductController {
   @ApiResponse({ status: 200, description: 'Product fetched successfully' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   async findOne(@Param('id') id: string) {
-    return this.productService.findOne(+id);
+    return this.productService.findOne(id);
   }
 
   @Patch(':id')
@@ -71,7 +71,7 @@ export class ProductController {
     @Body() updateProductDto: UpdateProductDto,
     @UploadedFile() file?: Express.Multer.File
   ) {
-    return this.productService.updateProduct(+id, updateProductDto, file);
+    return this.productService.updateProduct(id, updateProductDto, file);
   }
 
   @Delete(':id')
@@ -79,6 +79,6 @@ export class ProductController {
   @ApiResponse({ status: 200, description: 'Product deleted successfully' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   async remove(@Param('id') id: string) {
-    return this.productService.remove(+id);
+    return this.productService.remove(id);
   }
 }

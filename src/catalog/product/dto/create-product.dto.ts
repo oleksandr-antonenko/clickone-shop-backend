@@ -53,12 +53,10 @@ export class CreateProductDto {
 
   @ApiProperty({
     description: 'Category ID',
-    example: 1,
+    example: '1',
     required: true,
   })
-  @IsNumber()
-  @Transform(({ value }) => parseInt(value))
-  categoryId: number;
+  categoryId: string;
 
   @ApiProperty({
     description: 'Product availability in stock',
@@ -85,9 +83,7 @@ export class CreateProductDto {
     required: false,
   })
   @IsOptional()
-  @IsNumber()
-  @Transform(({ value }) => (value ? parseInt(value) : undefined))
-  familyId?: number;
+  familyId?: string;
 
   @ApiProperty({
     description: 'Product image file',
@@ -164,34 +160,23 @@ export class CreateProductDto {
   @IsObject()
   dimensions?: { length: number; width: number; height: number };
 
-  @ApiProperty({ description: 'Brand ID', example: 1, required: false })
-  @IsNumber()
+  @ApiProperty({ description: 'Brand ID', example: '1', required: false })
+  @IsString()
   @IsNotEmpty()
-  @Transform(({ value }: { value: string }) =>
-    value ? parseInt(value) : undefined
-  )
-  brandId: number;
+  brandId: string;
 
   @ApiProperty({
     description: 'IDs of attributes linked to the product',
     type: [Number],
     required: false,
-    example: [1, 3, 7],
+    example: ['1', '3', '7'],
   })
   @IsOptional()
   @IsArray()
-  @IsNumber({}, { each: true })
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.split(',').map(Number) : value
-  )
-  attributes?: number[];
+  attributes?: string[];
 
   @ApiProperty({ type: [Number], description: 'Selected attribute option IDs' })
   @IsArray()
-  @IsNumber({}, { each: true })
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.split(',').map(Number) : value
-  )
   @IsOptional()
-  selectedOptions?: number[];
+  selectedOptions?: string[];
 }

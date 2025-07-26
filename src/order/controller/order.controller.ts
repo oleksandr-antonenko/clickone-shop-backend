@@ -49,7 +49,7 @@ export class OrderController {
   })
   @ApiResponse({ status: 404, description: 'Order not found' })
   findOne(@Param('id') id: string) {
-    return this.orderService.findOne(+id);
+    return this.orderService.findOne(id);
   }
 
   @Patch(':id')
@@ -60,6 +60,6 @@ export class OrderController {
   })
   @ApiResponse({ status: 404, description: 'Order not found.' })
   update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-    return this.orderService.update(+id, updateOrderDto);
+    return this.orderService.update(id, updateOrderDto);
   }
 }

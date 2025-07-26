@@ -19,7 +19,7 @@ export class CollectionProduct {
   collectionId: string;
 
   @Column({ type: 'int' })
-  productId: number;
+  productId: string;
 
   @Column({ type: 'int', default: 0 })
   sortOrder: number;

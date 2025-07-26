@@ -16,11 +16,11 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 
+import { PublicRead } from '../../../common/decorators/public.decorator';
 import { CreateCategoryDto } from '../dto/create-category.dto';
 import { FilterCategoryDto } from '../dto/filter-category.dto';
 import { UpdateCategoryDto } from '../dto/update-category.dto';
 import { CategoryService } from '../service/category.service';
-import { PublicRead } from '../../../common/decorators/public.decorator';
 
 @Controller('category')
 @PublicRead()
@@ -76,7 +76,7 @@ export class CategoryController {
   @ApiResponse({ status: 404, description: 'Category not found.' })
   @ApiParam({ name: 'id', description: 'Category ID', example: 1 })
   async findOne(@Param('id') id: string) {
-    return this.categoryService.findOne(+id);
+    return this.categoryService.findOne(id);
   }
 
   @Patch(':id')
@@ -89,7 +89,7 @@ export class CategoryController {
   @ApiParam({ name: 'id', description: 'Category ID', example: 1 })
   @ApiBody({ type: UpdateCategoryDto })
   update(@Param('id') id: string, @Body() updateCategory: UpdateCategoryDto) {
-    return this.categoryService.update(+id, updateCategory);
+    return this.categoryService.update(id, updateCategory);
   }
 
   @Delete(':id')
@@ -101,6 +101,6 @@ export class CategoryController {
   @ApiResponse({ status: 404, description: 'Category not found.' })
   @ApiParam({ name: 'id', description: 'Category ID', example: 1 })
   remove(@Param('id') id: string) {
-    return this.categoryService.remove(+id);
+    return this.categoryService.remove(id);
   }
 }

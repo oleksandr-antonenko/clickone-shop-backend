@@ -9,8 +9,7 @@ export class AddProductsToCollectionDto {
     type: [Number],
   })
   @IsArray()
-  @IsNumber({}, { each: true })
-  productIds: number[];
+  productIds: string[];
 }
 
 export class RemoveProductsFromCollectionDto {
@@ -29,8 +28,7 @@ export class UpdateProductOrderDto {
     description: 'Product ID',
     example: 1,
   })
-  @IsNumber()
-  productId: number;
+  productId: string;
 
   @ApiProperty({
     description: 'New sort order for the product',
@@ -57,7 +55,7 @@ export class CollectionProductResponseDto {
     description: 'Product ID',
     example: 1,
   })
-  productId: number;
+  productId: string;
 
   @ApiProperty({
     description: 'Sort order in collection',

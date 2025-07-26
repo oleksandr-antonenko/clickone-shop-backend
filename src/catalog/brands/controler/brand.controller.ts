@@ -10,11 +10,12 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+import { PublicRead } from '~/common/decorators/public.decorator';
+
 import { CreateBrandDto } from '../dto/create-brand.dto';
 import { PaginationQueryBrandDto } from '../dto/pagination-query-brand';
 import { UpdateBrandDto } from '../dto/update-brand.dto';
 import { BrandService } from '../service/brand.service';
-import { PublicRead } from '~/common/decorators/public.decorator';
 
 @Controller('brands')
 @PublicRead()
@@ -49,7 +50,7 @@ export class BrandController {
     description: 'Brand fetched successfully',
   })
   findOne(@Param('id') id: string) {
-    return this.brandService.findOne(+id);
+    return this.brandService.findOne(id);
   }
 
   @Patch(':id')
@@ -59,7 +60,7 @@ export class BrandController {
     description: 'Brand updated successfully',
   })
   update(@Param('id') id: string, @Body() updateBrandDto: UpdateBrandDto) {
-    return this.brandService.update(+id, updateBrandDto);
+    return this.brandService.update(id, updateBrandDto);
   }
 
   @Delete(':id')
@@ -69,6 +70,6 @@ export class BrandController {
     description: 'Brand deleted successfully',
   })
   remove(@Param('id') id: string) {
-    return this.brandService.remove(+id);
+    return this.brandService.remove(id);
   }
 }

@@ -12,8 +12,8 @@ import { Product } from '../../product/entities/product.entity';
 
 @Entity('product_settings')
 export class ProductSetting {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'varchar', length: 255 })
   key: string;

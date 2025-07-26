@@ -86,7 +86,7 @@ export class OrderService {
       const orderItems = [] as OrderItem[];
       for (const itemDto of items) {
         const product = await this.productRepository.findOneBy({
-          id: +itemDto.productId,
+          id: itemDto.productId,
         });
         if (!product) throw new NotFoundException('Product not found');
 
@@ -158,7 +158,7 @@ export class OrderService {
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     try {
       const order = await this.orderRepository.findOne({
         where: {
@@ -181,7 +181,7 @@ export class OrderService {
     }
   }
 
-  async update(id: number, updateOrderDto: UpdateOrderDto) {
+  async update(id: string, updateOrderDto: UpdateOrderDto) {
     try {
       const existingOrder = await this.orderRepository.findOne({
         where: { id },

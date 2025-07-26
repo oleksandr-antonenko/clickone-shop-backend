@@ -257,7 +257,7 @@ export class ProductService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     if (!id) {
       throw new BadRequestException('ID is required');
     }
@@ -280,7 +280,7 @@ export class ProductService {
   }
 
   async updateProduct(
-    id: number,
+    id: string,
     updateDto: UpdateProductDto,
     file?: Express.Multer.File
   ) {
@@ -376,7 +376,7 @@ export class ProductService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     try {
       const product = await this.productRepository.findOne({ where: { id } });
       if (!product) throw new NotFoundException('Product not found');

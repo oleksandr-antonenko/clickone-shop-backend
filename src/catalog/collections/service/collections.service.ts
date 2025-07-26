@@ -229,7 +229,7 @@ export class CollectionsService {
     }
   }
 
-  async addProducts(collectionId: string, productIds: number[]): Promise<void> {
+  async addProducts(collectionId: string, productIds: string[]): Promise<void> {
     try {
       const collection = await this.findOne(collectionId);
 
@@ -321,7 +321,7 @@ export class CollectionsService {
 
   async updateProductOrder(
     collectionId: string,
-    productId: number,
+    productId: string,
     sortOrder: number
   ): Promise<void> {
     try {

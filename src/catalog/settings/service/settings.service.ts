@@ -39,7 +39,7 @@ export class SettingsService {
   ) {}
   private readonly logger = new Logger(SettingsService.name);
 
-  private async findProductById(productId?: number): Promise<Product> {
+  private async findProductById(productId?: string): Promise<Product> {
     try {
       const product = await this.productRepository.findOne({
         where: { id: productId },
@@ -144,7 +144,7 @@ export class SettingsService {
     }
   }
 
-  async findOne(@Param('id') id: number): Promise<ProductSetting> {
+  async findOne(@Param('id') id: string): Promise<ProductSetting> {
     try {
       const setting = await this.settingsRepository.findOne({
         where: {
@@ -169,7 +169,7 @@ export class SettingsService {
   }
 
   async update(
-    @Param('id') id: number,
+    @Param('id') id: string,
     @Body() updateSettingDto: UpdateSettingDto
   ): Promise<ProductSetting> {
     try {
@@ -206,7 +206,7 @@ export class SettingsService {
     }
   }
 
-  async remove(@Param('id') id: number): Promise<{
+  async remove(@Param('id') id: string): Promise<{
     message: string;
   }> {
     try {

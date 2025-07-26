@@ -161,7 +161,7 @@ export class CollectionsController {
     @Param('id') id: string,
     @Param('productId') productId: string
   ) {
-    await this.collectionsService.addProducts(id, [parseInt(productId)]);
+    await this.collectionsService.addProducts(id, [productId]);
     return { message: 'Product added to collection successfully' };
   }
 
