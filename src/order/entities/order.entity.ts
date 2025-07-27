@@ -20,8 +20,8 @@ import { OrderItem } from './orderItem.entity';
 
 @Entity('order')
 export class Order {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   orderNumber: string;

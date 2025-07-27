@@ -11,8 +11,8 @@ import { Order } from './order.entity';
 
 @Entity('order_item')
 export class OrderItem {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   quantity: number;

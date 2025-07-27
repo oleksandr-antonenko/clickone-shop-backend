@@ -10,11 +10,11 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+import { PublicRead } from '../../../common/decorators/public.decorator';
 import { CreateFamilyDto } from '../dto/create-family.dto';
 import { PaginationQueryFamilyDto } from '../dto/pagination-query-family.dto';
 import { UpdateFamilyDto } from '../dto/update-family.dto';
 import { FamiliesService } from '../service/families.service';
-import { PublicRead } from '../../../common/decorators/public.decorator';
 
 @Controller('families')
 @PublicRead()
@@ -53,7 +53,7 @@ export class FamiliesController {
   })
   @ApiResponse({ status: 404, description: 'Product family not found' })
   async findOne(@Param('id') id: string) {
-    return this.familiesService.findOne(+id);
+    return this.familiesService.findOne(id);
   }
 
   @Patch(':id')
@@ -68,7 +68,7 @@ export class FamiliesController {
     @Param('id') id: string,
     @Body() updateFamilyDto: UpdateFamilyDto
   ) {
-    return this.familiesService.update(+id, updateFamilyDto);
+    return this.familiesService.update(id, updateFamilyDto);
   }
 
   @Delete(':id')
@@ -79,6 +79,6 @@ export class FamiliesController {
   })
   @ApiResponse({ status: 404, description: 'Product family not found' })
   async remove(@Param('id') id: string) {
-    return this.familiesService.remove(+id);
+    return this.familiesService.remove(id);
   }
 }

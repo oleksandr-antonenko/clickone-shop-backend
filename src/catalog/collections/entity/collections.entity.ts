@@ -6,7 +6,11 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { CollectionType, CollectionStatus } from '../interface/collections.interface';
+
+import {
+  CollectionStatus,
+  CollectionType,
+} from '../interface/collections.interface';
 import { CollectionProduct } from './collection-product.entity';
 
 @Entity('collections')
@@ -58,6 +62,9 @@ export class Collection {
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 
-  @OneToMany(() => CollectionProduct, (collectionProduct) => collectionProduct.collection)
+  @OneToMany(
+    () => CollectionProduct,
+    (collectionProduct) => collectionProduct.collection
+  )
   collectionProducts: CollectionProduct[];
 }

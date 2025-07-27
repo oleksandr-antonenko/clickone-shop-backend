@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+
+import { IsArray, IsNumber } from 'class-validator';
 
 export class AddProductsToCollectionDto {
   @ApiProperty({
@@ -8,19 +9,17 @@ export class AddProductsToCollectionDto {
     type: [Number],
   })
   @IsArray()
-  @IsNumber({}, { each: true })
-  productIds: number[];
+  productIds: string[];
 }
 
 export class RemoveProductsFromCollectionDto {
   @ApiProperty({
     description: 'Array of product IDs to remove from the collection',
     example: [1, 2, 3],
-    type: [Number],
+    type: [String],
   })
   @IsArray()
-  @IsNumber({}, { each: true })
-  productIds: number[];
+  productIds: string[];
 }
 
 export class UpdateProductOrderDto {
@@ -28,8 +27,7 @@ export class UpdateProductOrderDto {
     description: 'Product ID',
     example: 1,
   })
-  @IsNumber()
-  productId: number;
+  productId: string;
 
   @ApiProperty({
     description: 'New sort order for the product',
@@ -56,7 +54,7 @@ export class CollectionProductResponseDto {
     description: 'Product ID',
     example: 1,
   })
-  productId: number;
+  productId: string;
 
   @ApiProperty({
     description: 'Sort order in collection',
@@ -74,4 +72,4 @@ export class CollectionProductResponseDto {
     description: 'Product details',
   })
   product?: any;
-} 
+}

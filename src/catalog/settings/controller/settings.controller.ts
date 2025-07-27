@@ -10,14 +10,14 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
+import { PublicRead } from '../../../common/decorators/public.decorator';
 import { CreateSettingDto } from '../dto/create-setting.dto';
 import { PaginationQuerySettingsDto } from '../dto/pagination-query-settings.dto';
 import { UpdateSettingDto } from '../dto/update-setting.dto';
 import { SettingsService } from '../service/settings.service';
-import { PublicRead } from '../../../common/decorators/public.decorator';
 
 @Controller('settings')
-@PublicRead() 
+@PublicRead()
 export class SettingsController {
   constructor(private readonly settingsService: SettingsService) {}
 
@@ -51,7 +51,7 @@ export class SettingsController {
   })
   @ApiResponse({ status: 404, description: 'Product setting not found' })
   async findOne(@Param('id') id: string) {
-    return this.settingsService.findOne(+id);
+    return this.settingsService.findOne(id);
   }
 
   @Patch(':id')
@@ -65,7 +65,7 @@ export class SettingsController {
     @Param('id') id: string,
     @Body() updateSettingDto: UpdateSettingDto
   ) {
-    return this.settingsService.update(+id, updateSettingDto);
+    return this.settingsService.update(id, updateSettingDto);
   }
 
   @Delete(':id')
@@ -76,6 +76,6 @@ export class SettingsController {
   })
   @ApiResponse({ status: 404, description: 'Product setting not found' })
   async remove(@Param('id') id: string) {
-    return this.settingsService.remove(+id);
+    return this.settingsService.remove(id);
   }
 }

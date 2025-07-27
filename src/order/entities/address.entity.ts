@@ -4,8 +4,8 @@ import { Order } from './order.entity';
 
 @Entity('address')
 export class Address {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   firstName: string;

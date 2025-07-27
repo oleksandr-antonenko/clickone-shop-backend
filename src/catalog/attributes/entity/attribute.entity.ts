@@ -13,8 +13,8 @@ import { AttributeOption } from './attribute-options.entity';
 
 @Entity('attribute')
 export class Attribute {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'varchar', length: 255 })
   name: string;

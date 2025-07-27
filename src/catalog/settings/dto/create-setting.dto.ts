@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { Transform } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateSettingDto {
   @IsString()
@@ -22,11 +21,8 @@ export class CreateSettingDto {
   @IsNotEmpty()
   value: string;
 
-  @IsNumber()
+  @IsString()
   @ApiProperty({ description: 'Product ID', example: 1, required: true })
   @IsNotEmpty()
-  @Transform(({ value }: { value: string }) =>
-    value ? parseInt(value) : undefined
-  )
-  productId: number;
+  productId: string;
 }

@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
 import { Transform } from 'class-transformer';
 import {
   IsArray,
@@ -10,7 +11,11 @@ import {
   IsString,
   Min,
 } from 'class-validator';
-import { CollectionType, CollectionStatus } from '../interface/collections.interface';
+
+import {
+  CollectionStatus,
+  CollectionType,
+} from '../interface/collections.interface';
 
 export class CollectionsDto {
   @ApiProperty({
@@ -65,7 +70,7 @@ export class CollectionsDto {
   })
   @IsNumber()
   @Min(0)
-  @Transform(({ value }) => parseInt(value))
+  @Transform(({ value }) => parseInt(value as string))
   productsCount: number;
 
   @ApiPropertyOptional({

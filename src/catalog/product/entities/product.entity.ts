@@ -22,8 +22,8 @@ import { ProductSetting } from '../../settings/entity/product-setting.entity';
 
 @Entity('products')
 export class Product {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'varchar', length: 255 })
   name: string;
@@ -51,7 +51,7 @@ export class Product {
   status: 'active' | 'draft' | 'archived';
 
   @Column({ type: 'varchar', nullable: true })
-  familyId?: number;
+  familyId?: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   comparePrice?: number;

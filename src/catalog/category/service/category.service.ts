@@ -80,7 +80,7 @@ export class CategoryService {
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     try {
       const category = await this.categoryRepository.findOne({
         where: { id },
@@ -94,7 +94,7 @@ export class CategoryService {
     }
   }
 
-  async update(id: number, updateCategory: UpdateCategoryDto) {
+  async update(id: string, updateCategory: UpdateCategoryDto) {
     try {
       const category = await this.categoryRepository.findOne({ where: { id } });
       if (!category) {
@@ -118,18 +118,18 @@ export class CategoryService {
       };
 
       await this.categoryRepository.update(id, updateData);
-      
+
       const updatedCategory = await this.categoryRepository.findOne({
         where: { id },
       });
-      
+
       return updatedCategory;
     } catch (error: unknown) {
       this.handleError(error, 'Failed to update category');
     }
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     try {
       const removedCategory = await this.categoryRepository.findOne({
         where: { id },

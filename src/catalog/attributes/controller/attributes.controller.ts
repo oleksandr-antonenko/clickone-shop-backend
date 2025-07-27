@@ -50,7 +50,7 @@ export class AttributesController {
     description: 'Attribute found',
   })
   async findOne(@Param('id') id: string) {
-    return this.attributesService.findOne(+id);
+    return this.attributesService.findOne(id);
   }
 
   @Patch(':id')
@@ -63,7 +63,7 @@ export class AttributesController {
     @Param('id') id: string,
     @Body() updateAttributeDto: UpdateAttributeDto
   ) {
-    return this.attributesService.update(+id, updateAttributeDto);
+    return this.attributesService.update(id, updateAttributeDto);
   }
 
   @Delete(':id')
@@ -73,6 +73,6 @@ export class AttributesController {
     description: 'Attribute deleted successfully',
   })
   async remove(@Param('id') id: string) {
-    return this.attributesService.delete(+id);
+    return this.attributesService.delete(id);
   }
 }

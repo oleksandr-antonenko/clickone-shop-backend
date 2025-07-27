@@ -5,8 +5,8 @@ import { FilterModule } from '~/filter/filter.module';
 import { PaginationModule } from '~/pagination/pagination.module';
 
 import { CollectionsController } from './controller/collections.controller';
-import { Collection } from './entity/collections.entity';
 import { CollectionProduct } from './entity/collection-product.entity';
+import { Collection } from './entity/collections.entity';
 import { CollectionsService } from './service/collections.service';
 
 @Module({

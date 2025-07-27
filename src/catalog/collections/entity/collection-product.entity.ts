@@ -6,9 +6,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Product } from '~/catalog/product/entities/product.entity';
 
 import { Collection } from './collections.entity';
-import { Product } from '~/catalog/product/entities/product.entity';
 
 @Entity('collection_products')
 export class CollectionProduct {
@@ -18,8 +18,8 @@ export class CollectionProduct {
   @Column({ type: 'uuid' })
   collectionId: string;
 
-  @Column({ type: 'int' })
-  productId: number;
+  @Column({ type: 'uuid' })
+  productId: string;
 
   @Column({ type: 'int', default: 0 })
   sortOrder: number;
@@ -38,4 +38,4 @@ export class CollectionProduct {
   })
   @JoinColumn({ name: 'product_id' })
   product: Product;
-} 
+}

@@ -112,7 +112,7 @@ export class BrandService {
     }
   }
 
-  async findOne(id: number): Promise<Brand> {
+  async findOne(id: string): Promise<Brand> {
     try {
       const brand = await this.brandRepository.findOne({
         where: {
@@ -136,7 +136,7 @@ export class BrandService {
     }
   }
 
-  async update(id: number, updateBrandDto: UpdateBrandDto): Promise<Brand> {
+  async update(id: string, updateBrandDto: UpdateBrandDto): Promise<Brand> {
     try {
       const existingBrand = await this.brandRepository.findOne({
         where: { id },
@@ -158,7 +158,7 @@ export class BrandService {
     }
   }
 
-  async remove(id: number): Promise<{
+  async remove(id: string): Promise<{
     message: string;
   }> {
     try {

@@ -11,8 +11,8 @@ import { Product } from '../../product/entities/product.entity';
 
 @Entity('product_families')
 export class ProductFamily {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'varchar', length: 255 })
   name: string;

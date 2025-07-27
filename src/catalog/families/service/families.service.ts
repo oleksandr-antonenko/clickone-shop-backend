@@ -122,7 +122,7 @@ export class FamiliesService {
     }
   }
 
-  async findOne(id: number): Promise<ProductFamily> {
+  async findOne(id: string): Promise<ProductFamily> {
     try {
       const family = await this.productFamilyRepository.findOne({
         where: {
@@ -150,7 +150,7 @@ export class FamiliesService {
   }
 
   async update(
-    id: number,
+    id: string,
     updateFamilyDto: UpdateFamilyDto
   ): Promise<ProductFamily> {
     try {
@@ -174,7 +174,7 @@ export class FamiliesService {
     }
   }
 
-  async remove(id: number): Promise<{
+  async remove(id: string): Promise<{
     message: string;
   }> {
     try {
