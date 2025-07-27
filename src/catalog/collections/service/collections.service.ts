@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   Logger,
   NotFoundException,
@@ -49,8 +50,12 @@ export class CollectionsService {
       this.logger.log(`Collection created: ${savedCollection.id}`);
       return savedCollection;
     } catch (error) {
-      this.logger.error(`Failed to create collection: ${error.message}`);
-      throw error;
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const err = error as Error;
+      this.logger.error(`CreateCollection error: ${err.message}`, err.stack);
+      throw new BadRequestException('Failed to create collection');
     }
   }
 
@@ -88,8 +93,12 @@ export class CollectionsService {
         hasPreviousPage: result.hasPreviousPage,
       };
     } catch (error) {
-      this.logger.error(`Failed to fetch collections: ${error.message}`);
-      throw error;
+      const err = error as Error;
+      this.logger.error(
+        `Failed to fetch collections: ${err.message}`,
+        err.stack
+      );
+      throw new BadRequestException('Failed to find collections');
     }
   }
 
@@ -119,8 +128,12 @@ export class CollectionsService {
 
       return collection;
     } catch (error) {
-      this.logger.error(`Failed to fetch collection ${id}: ${error.message}`);
-      throw error;
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const err = error as Error;
+      this.logger.error(`FindOneCollection error: ${err.message}`, err.stack);
+      throw new BadRequestException('Failed to find collection');
     }
   }
 
@@ -152,20 +165,31 @@ export class CollectionsService {
       this.logger.log(`Collection updated: ${id}`);
       return updatedCollection;
     } catch (error) {
-      this.logger.error(`Failed to update collection ${id}: ${error.message}`);
-      throw error;
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const err = error as Error;
+      this.logger.error(`UpdateCollection error: ${err.message}`, err.stack);
+      throw new BadRequestException('Failed to update collection');
     }
   }
 
   async remove(id: string): Promise<void> {
     try {
       const collection = await this.findOne(id);
+
+      if (!collection) throw new NotFoundException('Brand not found');
+
       await this.collectionsRepository.remove(collection);
 
       this.logger.log(`Collection deleted: ${id}`);
     } catch (error) {
-      this.logger.error(`Failed to delete collection ${id}: ${error.message}`);
-      throw error;
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const err = error as Error;
+      this.logger.error(`RemoveCollection error: ${err.message}`, err.stack);
+      throw new BadRequestException('Failed to delete collection');
     }
   }
 
@@ -181,10 +205,15 @@ export class CollectionsService {
 
       return collection;
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const err = error as Error;
       this.logger.error(
-        `Failed to fetch collection by slug ${slug}: ${error.message}`
+        `FindCollectionBySlug error: ${err.message}`,
+        err.stack
       );
-      throw error;
+      throw new BadRequestException('Failed to fetch collection by slug');
     }
   }
 
@@ -195,7 +224,11 @@ export class CollectionsService {
         order: { createdAt: 'DESC' },
       });
     } catch (error) {
-      this.logger.error(`Failed to fetch active collections: ${error.message}`);
+      const err = error as Error;
+      this.logger.error(
+        `Failed to fetch active collections: ${err.message}`,
+        err.stack
+      );
       throw error;
     }
   }
@@ -222,10 +255,12 @@ export class CollectionsService {
 
       return collection;
     } catch (error) {
-      this.logger.error(
-        `Failed to fetch collection with products ${id}: ${error.message}`
-      );
-      throw error;
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const err = error as Error;
+      this.logger.error(`FindOneWithProducts error: ${err.message}`, err.stack);
+      throw new BadRequestException('Failed to fetch collection with products');
     }
   }
 
@@ -255,7 +290,7 @@ export class CollectionsService {
         .createQueryBuilder('cp')
         .select('MAX(cp.sortOrder)', 'maxSortOrder')
         .where('cp.collectionId = :collectionId', { collectionId })
-        .getRawOne();
+        .getRawOne<{ maxSortOrder: number | null }>();
 
       const startSortOrder = (maxSortOrder?.maxSortOrder || 0) + 1;
 
@@ -283,10 +318,15 @@ export class CollectionsService {
         `Added ${newProductIds.length} products to collection ${collectionId}`
       );
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const err = error as Error;
       this.logger.error(
-        `Failed to add products to collection ${collectionId}: ${error.message}`
+        `AddProductsToCollection error: ${err.message}`,
+        err.stack
       );
-      throw error;
+      throw new BadRequestException('Failed to add products to collection');
     }
   }
 
@@ -312,8 +352,9 @@ export class CollectionsService {
         `Removed ${productIds.length} products from collection ${collectionId}`
       );
     } catch (error) {
+      const err = error as Error;
       this.logger.error(
-        `Failed to remove products from collection ${collectionId}: ${error.message}`
+        `Failed to remove products from collection ${collectionId}: ${err.message}`
       );
       throw error;
     }
@@ -344,10 +385,14 @@ export class CollectionsService {
         `Updated product ${productId} order in collection ${collectionId}`
       );
     } catch (error) {
-      this.logger.error(
-        `Failed to update product order in collection ${collectionId}: ${error.message}`
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const err = error as Error;
+      this.logger.error(`UpdateProductOrder error: ${err.message}`, err.stack);
+      throw new BadRequestException(
+        'Failed to update product order in collection'
       );
-      throw error;
     }
   }
 
@@ -361,8 +406,9 @@ export class CollectionsService {
 
       return collectionProducts;
     } catch (error) {
+      const err = error as Error;
       this.logger.error(
-        `Failed to fetch collection products ${collectionId}: ${error.message}`
+        `Failed to fetch collection products ${collectionId}: ${err.message}`
       );
       throw error;
     }
@@ -414,9 +460,8 @@ export class CollectionsService {
         hasPreviousPage: result.hasPreviousPage,
       };
     } catch (error) {
-      this.logger.error(
-        `Failed to fetch collection products: ${error.message}`
-      );
+      const err = error as Error;
+      this.logger.error(`Failed to fetch collection products: ${err.message}`);
       throw error;
     }
   }
