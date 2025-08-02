@@ -19,6 +19,7 @@ import { Attribute } from '~/catalog/attributes/entity/attribute.entity';
 import { Brand } from '~/catalog/brands/entities/brand.entity';
 import { Category } from '~/catalog/category/entities/category.entity';
 import { ProductFamily } from '~/catalog/families/entity/product-family.entity';
+import { WarehouseService } from '~/catalog/warehouse/service/warehouse.service';
 
 import { FilterParserService } from '../../../filter/service/filter-parser.service';
 import { PaginationQuery } from '../../../pagination/interface/pagination.interface';
@@ -50,6 +51,7 @@ export class ProductService {
     private readonly familyRepository: Repository<ProductFamily>,
     private readonly filterParserService: FilterParserService,
     private readonly paginationService: PaginationService,
+    private readonly warehouseService: WarehouseService,
     @Inject(REQUEST) private readonly request: Request
   ) {
     void this.ensureUploadsDir();
@@ -142,10 +144,17 @@ export class ProductService {
           'attributes',
           'selectedOptions',
           'selectedOptions.attribute',
+          'attributes.options',
         ],
       });
 
-      return productWithRelations!;
+      if (!productWithRelations) {
+        throw new BadRequestException('ProductWithRelations not found');
+      }
+
+      await this.warehouseService.create(productWithRelations);
+
+      return productWithRelations;
     } catch (error) {
       if (imagePath) {
         await this.deleteFile(imagePath);

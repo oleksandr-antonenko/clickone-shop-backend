@@ -6,24 +6,35 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+
+import { PaginationQueryBrandDto } from '~/catalog/brands/dto/pagination-query-brand';
+import { PublicRead } from '~/common/decorators/public.decorator';
 
 import { CreateWarehouseDto } from '../dto/create-warehouse.dto';
 import { UpdateWarehouseDto } from '../dto/update-warehouse.dto';
 import { WarehouseService } from '../service/warehouse.service';
 
-@Controller('warehouse')
+@Controller('warehouses')
+@PublicRead()
 export class WarehouseController {
   constructor(private readonly warehouseService: WarehouseService) {}
 
-  @Post()
-  create(@Body() createWarehouseDto: CreateWarehouseDto) {
-    return this.warehouseService.create(createWarehouseDto);
-  }
+  // @Post()
+  // create(@Body() createWarehouseDto: CreateWarehouseDto) {
+  //   return this.warehouseService.create(createWarehouseDto);
+  // }
 
   @Get()
-  findAll() {
-    return this.warehouseService.findAll();
+  @ApiOperation({ summary: 'Get all warehouse items' })
+  @ApiResponse({
+    status: 200,
+    description: 'Brands fetched successfully',
+  })
+  findAll(@Query() query: PaginationQueryBrandDto) {
+    return this.warehouseService.findAll(query);
   }
 
   @Get(':id')

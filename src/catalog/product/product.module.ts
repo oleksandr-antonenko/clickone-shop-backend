@@ -9,6 +9,7 @@ import { Brand } from '../brands/entities/brand.entity';
 import { Category } from '../category/entities/category.entity';
 import { ProductFamily } from '../families/entity/product-family.entity';
 import { Warehouse } from '../warehouse/entities/warehouse.entity';
+import { WarehouseModule } from '../warehouse/warehouse.module';
 import { ProductController } from './controller/product.controller';
 import { Product } from './entities/product.entity';
 import { ProductService } from './service/product.service';
@@ -26,6 +27,7 @@ import { ProductService } from './service/product.service';
     ]),
     FilterModule,
     PaginationModule,
+    WarehouseModule,
   ],
   controllers: [ProductController],
   providers: [ProductService],

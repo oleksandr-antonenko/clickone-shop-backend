@@ -2,7 +2,8 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  OneToMany,
+  JoinColumn,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -40,6 +41,7 @@ export class Warehouse {
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 
-  @OneToMany(() => Product, (value) => value.warehouse)
-  products: Product[];
+  @OneToOne(() => Product)
+  @JoinColumn({ name: 'product_id' })
+  product: Product;
 }
