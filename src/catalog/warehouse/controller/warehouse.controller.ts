@@ -7,11 +7,12 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 import { PaginationQueryBrandDto } from '~/catalog/brands/dto/pagination-query-brand';
 import { PublicRead } from '~/common/decorators/public.decorator';
 
+import { CreateWarehouseOperationDto } from '../dto/create-warehouse-operation.dto';
 import { UpdateWarehouseDto } from '../dto/update-warehouse.dto';
 import { WarehouseService } from '../service/warehouse.service';
 
@@ -20,10 +21,23 @@ import { WarehouseService } from '../service/warehouse.service';
 export class WarehouseController {
   constructor(private readonly warehouseService: WarehouseService) {}
 
-  // @Post()
-  // create(@Body() createWarehouseDto: CreateWarehouseDto) {
-  //   return this.warehouseService.create(createWarehouseDto);
-  // }
+  @Post(':id')
+  @ApiOperation({ summary: 'Create a new warehouse operation' })
+  @ApiResponse({
+    status: 201,
+    description: 'Warehouse operation created successfully',
+    type: CreateWarehouseOperationDto,
+  })
+  @ApiBody({ type: CreateWarehouseOperationDto })
+  create(
+    @Param('id') id: string,
+    @Body() createWarehouseOperationDto: CreateWarehouseOperationDto
+  ) {
+    return this.warehouseService.createOperation(
+      id,
+      createWarehouseOperationDto
+    );
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all warehouse items' })

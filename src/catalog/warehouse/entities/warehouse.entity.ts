@@ -3,11 +3,14 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Product } from '~/catalog/product/entities/product.entity';
+
+import { WarehouseOperation } from './warehouse-operation.entity';
 
 @Entity('warehouse')
 export class Warehouse {
@@ -44,4 +47,10 @@ export class Warehouse {
   @OneToOne(() => Product, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_id' })
   product: Product;
+
+  @OneToMany(
+    () => WarehouseOperation,
+    (warehouseOperation) => warehouseOperation.warehouse
+  )
+  warehouseOperations: WarehouseOperation[];
 }

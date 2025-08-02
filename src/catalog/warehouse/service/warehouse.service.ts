@@ -20,6 +20,7 @@ import { FilterParserService } from '~/filter/service/filter-parser.service';
 import { PaginationQuery } from '~/pagination/interface/pagination.interface';
 import { PaginationService } from '~/pagination/service/pagination.service';
 
+import { CreateWarehouseOperationDto } from '../dto/create-warehouse-operation.dto';
 import { UpdateWarehouseDto } from '../dto/update-warehouse.dto';
 import { Warehouse } from '../entities/warehouse.entity';
 
@@ -76,6 +77,11 @@ export class WarehouseService {
     }
   }
 
+  async createOperation(
+    id: string,
+    createWarehouseOperationDto: CreateWarehouseOperationDto
+  ) {}
+
   async findAll(query: Pagination) {
     try {
       const processedQuery = this.processQuery(query, this.request.query);
@@ -83,8 +89,8 @@ export class WarehouseService {
       const qb = this.warehouseRepository
         .createQueryBuilder('warehouse')
         .leftJoinAndSelect('warehouse.product', 'product')
-        .leftJoinAndSelect('product.selectedOptions', 'selectedOptions')
-        .leftJoinAndSelect('selectedOptions.attribute', 'attribute');
+        .leftJoinAndSelect('product.attributes', 'attributes')
+        .leftJoinAndSelect('product.selectedOptions', 'selectedOptions');
 
       const paginationQuery: PaginationQuery = {
         page: processedQuery.page,

@@ -2,21 +2,18 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 import { WarehouseChangeType } from '../interfaces/warehouse-operation.interface';
+import { Warehouse } from './warehouse.entity';
 
 @Entity('warehouse_operation')
 export class WarehouseOperation {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
-  @Column()
-  warehouseId: string;
-
-  @Column()
-  productId: string;
 
   @Column({
     type: 'enum',
@@ -39,6 +36,9 @@ export class WarehouseOperation {
   @Column({ type: 'int', nullable: true })
   afterQuantity?: number;
 
+  @Column({ type: 'float', nullable: true })
+  costPrice?: number;
+
   @Column({ type: 'varchar', nullable: true })
   comment?: string;
 
@@ -47,4 +47,8 @@ export class WarehouseOperation {
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
+
+  @ManyToOne(() => Warehouse, { eager: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'warehouse_id' })
+  warehouse: Warehouse;
 }
