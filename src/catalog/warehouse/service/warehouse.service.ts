@@ -125,8 +125,4 @@ export class WarehouseService {
   update(id: string, updateWarehouseDto: UpdateWarehouseDto) {
     return `This action updates a #${id} warehouse`;
   }
-
-  remove(id: string) {
-    return `This action removes a #${id} warehouse`;
-  }
 }

@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Patch,
@@ -13,7 +12,6 @@ import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PaginationQueryBrandDto } from '~/catalog/brands/dto/pagination-query-brand';
 import { PublicRead } from '~/common/decorators/public.decorator';
 
-import { CreateWarehouseDto } from '../dto/create-warehouse.dto';
 import { UpdateWarehouseDto } from '../dto/update-warehouse.dto';
 import { WarehouseService } from '../service/warehouse.service';
 
@@ -48,10 +46,5 @@ export class WarehouseController {
     @Body() updateWarehouseDto: UpdateWarehouseDto
   ) {
     return this.warehouseService.update(id, updateWarehouseDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.warehouseService.remove(id);
   }
 }

@@ -41,7 +41,7 @@ export class Warehouse {
   @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
 
-  @OneToOne(() => Product)
+  @OneToOne(() => Product, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'product_id' })
   product: Product;
 }
