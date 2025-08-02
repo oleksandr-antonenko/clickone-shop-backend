@@ -16,6 +16,7 @@ import { ProductModule } from './catalog/product/product.module';
 import { SettingsModule } from './catalog/settings/settings.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { AuthConfigService } from './config/auth.config';
+import { getTypeOrmConfig } from './config/typeorm.config';
 import { OrderModule } from './order/order.module';
 
 @Module({
@@ -25,14 +26,7 @@ import { OrderModule } from './order/order.module';
       envFilePath: [`.env.${process.env.NODE_ENV}`, '.env'],
     }),
     TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true,
+      ...getTypeOrmConfig(),
       retryAttempts: 5,
       retryDelay: 3000,
     }),
