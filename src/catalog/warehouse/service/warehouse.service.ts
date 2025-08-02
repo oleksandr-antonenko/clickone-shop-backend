@@ -23,6 +23,7 @@ import { CreateWarehouseOperationDto } from '../dto/create-warehouse-operation.d
 import { UpdateWarehouseDto } from '../dto/update-warehouse.dto';
 import { WarehouseOperation } from '../entities/warehouse-operation.entity';
 import { Warehouse } from '../entities/warehouse.entity';
+import { WarehouseChangeType } from '../interfaces/warehouse-operation.interface';
 
 @Injectable()
 export class WarehouseService {
@@ -84,6 +85,13 @@ export class WarehouseService {
     createWarehouseOperationDto: CreateWarehouseOperationDto
   ) {
     try {
+      const {
+        supplierAddition,
+        costPrice,
+        inventoryWriteOff,
+        lowStockThreshold,
+        type,
+      } = createWarehouseOperationDto;
       const warehouse = await this.warehouseRepository.findOne({
         where: { id },
       });
@@ -93,24 +101,19 @@ export class WarehouseService {
 
       const updateWarehouseDto = {} as UpdateWarehouseDto;
 
-      if (createWarehouseOperationDto.supplierAddition) {
-        updateWarehouseDto.quantity =
-          warehouse.quantity + createWarehouseOperationDto.supplierAddition;
+      if (supplierAddition && type === WarehouseChangeType.ADDITION) {
+        updateWarehouseDto.quantity = warehouse.quantity + supplierAddition;
         updateWarehouseDto.availableQuantity =
-          warehouse.availableQuantity +
-          createWarehouseOperationDto.supplierAddition;
-        updateWarehouseDto.costPrice = createWarehouseOperationDto.costPrice;
+          warehouse.availableQuantity + supplierAddition;
+        updateWarehouseDto.costPrice = costPrice;
       }
-      if (createWarehouseOperationDto.inventoryWriteOff) {
-        updateWarehouseDto.quantity =
-          warehouse.quantity - createWarehouseOperationDto.inventoryWriteOff;
+      if (inventoryWriteOff && type === WarehouseChangeType.WRITE_OFF) {
+        updateWarehouseDto.quantity = warehouse.quantity - inventoryWriteOff;
         updateWarehouseDto.availableQuantity =
-          warehouse.availableQuantity -
-          createWarehouseOperationDto.inventoryWriteOff;
+          warehouse.availableQuantity - inventoryWriteOff;
       }
-      if (createWarehouseOperationDto.lowStockThreshold) {
-        updateWarehouseDto.lowStockThreshold =
-          createWarehouseOperationDto.lowStockThreshold;
+      if (lowStockThreshold && type === WarehouseChangeType.LOW_STOCK_CHANGE) {
+        updateWarehouseDto.lowStockThreshold = lowStockThreshold;
       }
 
       const updated = this.warehouseRepository.merge(
