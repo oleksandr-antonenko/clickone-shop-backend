@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  HttpException,
   Inject,
   Injectable,
   Logger,
@@ -22,6 +21,7 @@ import { PaginationService } from '~/pagination/service/pagination.service';
 
 import { CreateWarehouseOperationDto } from '../dto/create-warehouse-operation.dto';
 import { UpdateWarehouseDto } from '../dto/update-warehouse.dto';
+import { WarehouseOperation } from '../entities/warehouse-operation.entity';
 import { Warehouse } from '../entities/warehouse.entity';
 
 @Injectable()
@@ -31,6 +31,8 @@ export class WarehouseService {
   constructor(
     @InjectRepository(Warehouse)
     private readonly warehouseRepository: Repository<Warehouse>,
+    @InjectRepository(WarehouseOperation)
+    private readonly warehouseOperationRepository: Repository<WarehouseOperation>,
     private readonly filterParserService: FilterParserService,
     private readonly paginationService: PaginationService,
     @Inject(REQUEST) private readonly request: Request
@@ -80,7 +82,64 @@ export class WarehouseService {
   async createOperation(
     id: string,
     createWarehouseOperationDto: CreateWarehouseOperationDto
-  ) {}
+  ) {
+    try {
+      const warehouse = await this.warehouseRepository.findOne({
+        where: { id },
+      });
+      if (!warehouse) {
+        throw new NotFoundException('Warehouse not found');
+      }
+
+      const updateWarehouseDto = {} as UpdateWarehouseDto;
+
+      if (createWarehouseOperationDto.supplierAddition) {
+        updateWarehouseDto.quantity =
+          warehouse.quantity + createWarehouseOperationDto.supplierAddition;
+        updateWarehouseDto.availableQuantity =
+          warehouse.availableQuantity +
+          createWarehouseOperationDto.supplierAddition;
+        updateWarehouseDto.costPrice = createWarehouseOperationDto.costPrice;
+      }
+      if (createWarehouseOperationDto.inventoryWriteOff) {
+        updateWarehouseDto.quantity =
+          warehouse.quantity - createWarehouseOperationDto.inventoryWriteOff;
+        updateWarehouseDto.availableQuantity =
+          warehouse.availableQuantity -
+          createWarehouseOperationDto.inventoryWriteOff;
+      }
+      if (createWarehouseOperationDto.lowStockThreshold) {
+        updateWarehouseDto.lowStockThreshold =
+          createWarehouseOperationDto.lowStockThreshold;
+      }
+
+      const updated = this.warehouseRepository.merge(
+        warehouse,
+        updateWarehouseDto
+      );
+
+      const warehouseOperation = this.warehouseOperationRepository.create({
+        ...createWarehouseOperationDto,
+        beforeQuantity: warehouse.quantity,
+        ...(createWarehouseOperationDto.supplierAddition && {
+          afterQuantity:
+            warehouse.quantity + createWarehouseOperationDto.supplierAddition,
+        }),
+        warehouse,
+      });
+
+      await this.warehouseRepository.save(updated);
+
+      return await this.warehouseOperationRepository.save(warehouseOperation);
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `CreateWarehouseOperation error: ${err.message}`,
+        err.stack
+      );
+      throw new BadRequestException('Failed to create warehouse operation');
+    }
+  }
 
   async findAll(query: Pagination) {
     try {
@@ -121,40 +180,53 @@ export class WarehouseService {
       };
     } catch (error) {
       const err = error as Error;
-      this.logger.error(`FindAllBrands error: ${err.message}`, err.stack);
-      throw new BadRequestException('Failed to find brands');
+      this.logger.error(`FindAllWarehouses error: ${err.message}`, err.stack);
+      throw new BadRequestException('Failed to find warehouses');
     }
   }
 
-  async findOne(id: string) {
+  async findAllOperations(id: string, query: Pagination) {
     try {
-      const warehouseItem = await this.warehouseRepository.findOne({
-        where: {
-          id,
-        },
-        relations: [
-          'product',
-          'product.selectedOptions',
-          'product.selectedOptions.attribute',
-        ],
-      });
+      const processedQuery = this.processQuery(query, this.request.query);
 
-      if (!warehouseItem) {
-        throw new NotFoundException('Warehouse item not found');
-      }
+      const qb = this.warehouseOperationRepository
+        .createQueryBuilder('warehouseOperation')
+        .where('warehouseOperation.warehouseId = :id', { id });
 
-      return warehouseItem;
+      const paginationQuery: PaginationQuery = {
+        page: processedQuery.page,
+        limit: processedQuery.limit,
+        sortBy: processedQuery.sortBy || 'id',
+        sortOrder: processedQuery.sortOrder?.toUpperCase() as
+          | 'ASC'
+          | 'DESC'
+          | undefined,
+        filters: processedQuery.filters,
+      };
+
+      const result = await this.paginationService.paginate(
+        qb,
+        'warehouseOperation',
+        paginationQuery,
+        processedQuery.filters
+      );
+
+      return {
+        warehouseOperations: result.data,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+      };
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
       const err = error as Error;
-      this.logger.error(`FindWarehouseItem error: ${err.message}`, err.stack);
-      throw new BadRequestException('Failed to find warehouse item');
+      this.logger.error(
+        `FindAllWarehouseOperations error: ${err.message}`,
+        err.stack
+      );
+      throw new BadRequestException('Failed to find warehouse operations');
     }
-  }
-
-  update(id: string, updateWarehouseDto: UpdateWarehouseDto) {
-    return `This action updates a #${id} warehouse`;
   }
 }

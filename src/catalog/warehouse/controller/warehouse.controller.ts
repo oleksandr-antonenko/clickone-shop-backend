@@ -1,19 +1,10 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 import { PaginationQueryBrandDto } from '~/catalog/brands/dto/pagination-query-brand';
 import { PublicRead } from '~/common/decorators/public.decorator';
 
 import { CreateWarehouseOperationDto } from '../dto/create-warehouse-operation.dto';
-import { UpdateWarehouseDto } from '../dto/update-warehouse.dto';
 import { WarehouseService } from '../service/warehouse.service';
 
 @Controller('warehouses')
@@ -21,7 +12,7 @@ import { WarehouseService } from '../service/warehouse.service';
 export class WarehouseController {
   constructor(private readonly warehouseService: WarehouseService) {}
 
-  @Post(':id')
+  @Post(':id/operations')
   @ApiOperation({ summary: 'Create a new warehouse operation' })
   @ApiResponse({
     status: 201,
@@ -39,6 +30,19 @@ export class WarehouseController {
     );
   }
 
+  @Get(':id/history')
+  @ApiOperation({ summary: 'Get all warehouse operations' })
+  @ApiResponse({
+    status: 200,
+    description: 'Warehouse operations fetched successfully',
+  })
+  findAllOperations(
+    @Param('id') id: string,
+    @Query() query: PaginationQueryBrandDto
+  ) {
+    return this.warehouseService.findAllOperations(id, query);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Get all warehouse items' })
   @ApiResponse({
@@ -47,24 +51,5 @@ export class WarehouseController {
   })
   findAll(@Query() query: PaginationQueryBrandDto) {
     return this.warehouseService.findAll(query);
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Get a warehouse item by ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Warehouse item fetched successfully',
-  })
-  @ApiResponse({ status: 404, description: 'Warehouse item not found' })
-  findOne(@Param('id') id: string) {
-    return this.warehouseService.findOne(id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateWarehouseDto: UpdateWarehouseDto
-  ) {
-    return this.warehouseService.update(id, updateWarehouseDto);
   }
 }
