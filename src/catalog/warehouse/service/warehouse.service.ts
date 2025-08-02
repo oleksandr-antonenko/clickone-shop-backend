@@ -99,6 +99,27 @@ export class WarehouseService {
         throw new NotFoundException('Warehouse not found');
       }
 
+      const warehouseOperation = this.warehouseOperationRepository.create({
+        ...createWarehouseOperationDto,
+        beforeQuantity: createWarehouseOperationDto.lowStockThreshold
+          ? undefined
+          : warehouse.quantity,
+        ...(createWarehouseOperationDto.supplierAddition && {
+          afterQuantity:
+            warehouse.quantity + createWarehouseOperationDto.supplierAddition,
+        }),
+        ...(createWarehouseOperationDto.inventoryWriteOff && {
+          afterQuantity:
+            warehouse.quantity - createWarehouseOperationDto.inventoryWriteOff,
+        }),
+        ...(createWarehouseOperationDto.lowStockThreshold && {
+          afterQuantity: undefined,
+        }),
+        warehouse,
+      });
+
+      await this.warehouseOperationRepository.save(warehouseOperation);
+
       const updateWarehouseDto = {} as UpdateWarehouseDto;
 
       if (supplierAddition && type === WarehouseChangeType.ADDITION) {
@@ -121,19 +142,9 @@ export class WarehouseService {
         updateWarehouseDto
       );
 
-      const warehouseOperation = this.warehouseOperationRepository.create({
-        ...createWarehouseOperationDto,
-        beforeQuantity: warehouse.quantity,
-        ...(createWarehouseOperationDto.supplierAddition && {
-          afterQuantity:
-            warehouse.quantity + createWarehouseOperationDto.supplierAddition,
-        }),
-        warehouse,
-      });
-
       await this.warehouseRepository.save(updated);
 
-      return await this.warehouseOperationRepository.save(warehouseOperation);
+      return { success: true };
     } catch (error) {
       const err = error as Error;
       this.logger.error(
@@ -193,8 +204,8 @@ export class WarehouseService {
       const processedQuery = this.processQuery(query, this.request.query);
 
       const qb = this.warehouseOperationRepository
-        .createQueryBuilder('warehouseOperation')
-        .where('warehouseOperation.warehouseId = :id', { id });
+        .createQueryBuilder('warehouse_operation')
+        .where('warehouse_operation.warehouse_id = :id', { id });
 
       const paginationQuery: PaginationQuery = {
         page: processedQuery.page,
@@ -209,7 +220,7 @@ export class WarehouseService {
 
       const result = await this.paginationService.paginate(
         qb,
-        'warehouseOperation',
+        'warehouse_operation',
         paginationQuery,
         processedQuery.filters
       );
