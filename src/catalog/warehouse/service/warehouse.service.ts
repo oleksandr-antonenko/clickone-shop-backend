@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,8 +19,11 @@ import { FilterParserService } from '~/filter/service/filter-parser.service';
 import { PaginationQuery } from '~/pagination/interface/pagination.interface';
 import { PaginationService } from '~/pagination/service/pagination.service';
 
+import { CreateWarehouseOperationDto } from '../dto/create-warehouse-operation.dto';
 import { UpdateWarehouseDto } from '../dto/update-warehouse.dto';
+import { WarehouseOperation } from '../entities/warehouse-operation.entity';
 import { Warehouse } from '../entities/warehouse.entity';
+import { WarehouseChangeType } from '../interfaces/warehouse-operation.interface';
 
 @Injectable()
 export class WarehouseService {
@@ -28,6 +32,8 @@ export class WarehouseService {
   constructor(
     @InjectRepository(Warehouse)
     private readonly warehouseRepository: Repository<Warehouse>,
+    @InjectRepository(WarehouseOperation)
+    private readonly warehouseOperationRepository: Repository<WarehouseOperation>,
     private readonly filterParserService: FilterParserService,
     private readonly paginationService: PaginationService,
     @Inject(REQUEST) private readonly request: Request
@@ -74,6 +80,70 @@ export class WarehouseService {
     }
   }
 
+  async createOperation(
+    id: string,
+    createWarehouseOperationDto: CreateWarehouseOperationDto
+  ) {
+    try {
+      const {
+        supplierAddition,
+        costPrice,
+        inventoryWriteOff,
+        lowStockThreshold,
+        type,
+      } = createWarehouseOperationDto;
+      const warehouse = await this.warehouseRepository.findOne({
+        where: { id },
+      });
+      if (!warehouse) {
+        throw new NotFoundException('Warehouse not found');
+      }
+
+      const updateWarehouseDto = {} as UpdateWarehouseDto;
+
+      if (supplierAddition && type === WarehouseChangeType.ADDITION) {
+        updateWarehouseDto.quantity = warehouse.quantity + supplierAddition;
+        updateWarehouseDto.availableQuantity =
+          warehouse.availableQuantity + supplierAddition;
+        updateWarehouseDto.costPrice = costPrice;
+      }
+      if (inventoryWriteOff && type === WarehouseChangeType.WRITE_OFF) {
+        updateWarehouseDto.quantity = warehouse.quantity - inventoryWriteOff;
+        updateWarehouseDto.availableQuantity =
+          warehouse.availableQuantity - inventoryWriteOff;
+      }
+      if (lowStockThreshold && type === WarehouseChangeType.LOW_STOCK_CHANGE) {
+        updateWarehouseDto.lowStockThreshold = lowStockThreshold;
+      }
+
+      const updated = this.warehouseRepository.merge(
+        warehouse,
+        updateWarehouseDto
+      );
+
+      const warehouseOperation = this.warehouseOperationRepository.create({
+        ...createWarehouseOperationDto,
+        beforeQuantity: warehouse.quantity,
+        ...(createWarehouseOperationDto.supplierAddition && {
+          afterQuantity:
+            warehouse.quantity + createWarehouseOperationDto.supplierAddition,
+        }),
+        warehouse,
+      });
+
+      await this.warehouseRepository.save(updated);
+
+      return await this.warehouseOperationRepository.save(warehouseOperation);
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `CreateWarehouseOperation error: ${err.message}`,
+        err.stack
+      );
+      throw new BadRequestException('Failed to create warehouse operation');
+    }
+  }
+
   async findAll(query: Pagination) {
     try {
       const processedQuery = this.processQuery(query, this.request.query);
@@ -81,8 +151,8 @@ export class WarehouseService {
       const qb = this.warehouseRepository
         .createQueryBuilder('warehouse')
         .leftJoinAndSelect('warehouse.product', 'product')
-        .leftJoinAndSelect('product.selectedOptions', 'selectedOptions')
-        .leftJoinAndSelect('selectedOptions.attribute', 'attribute');
+        .leftJoinAndSelect('product.attributes', 'attributes')
+        .leftJoinAndSelect('product.selectedOptions', 'selectedOptions');
 
       const paginationQuery: PaginationQuery = {
         page: processedQuery.page,
@@ -113,16 +183,53 @@ export class WarehouseService {
       };
     } catch (error) {
       const err = error as Error;
-      this.logger.error(`FindAllBrands error: ${err.message}`, err.stack);
-      throw new BadRequestException('Failed to find brands');
+      this.logger.error(`FindAllWarehouses error: ${err.message}`, err.stack);
+      throw new BadRequestException('Failed to find warehouses');
     }
   }
 
-  findOne(id: string) {
-    return `This action returns a #${id} warehouse`;
-  }
+  async findAllOperations(id: string, query: Pagination) {
+    try {
+      const processedQuery = this.processQuery(query, this.request.query);
 
-  update(id: string, updateWarehouseDto: UpdateWarehouseDto) {
-    return `This action updates a #${id} warehouse`;
+      const qb = this.warehouseOperationRepository
+        .createQueryBuilder('warehouseOperation')
+        .where('warehouseOperation.warehouseId = :id', { id });
+
+      const paginationQuery: PaginationQuery = {
+        page: processedQuery.page,
+        limit: processedQuery.limit,
+        sortBy: processedQuery.sortBy || 'id',
+        sortOrder: processedQuery.sortOrder?.toUpperCase() as
+          | 'ASC'
+          | 'DESC'
+          | undefined,
+        filters: processedQuery.filters,
+      };
+
+      const result = await this.paginationService.paginate(
+        qb,
+        'warehouseOperation',
+        paginationQuery,
+        processedQuery.filters
+      );
+
+      return {
+        warehouseOperations: result.data,
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+      };
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `FindAllWarehouseOperations error: ${err.message}`,
+        err.stack
+      );
+      throw new BadRequestException('Failed to find warehouse operations');
+    }
   }
 }
