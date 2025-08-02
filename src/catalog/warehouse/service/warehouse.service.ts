@@ -1,8 +1,10 @@
 import {
   BadRequestException,
+  HttpException,
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -118,8 +120,32 @@ export class WarehouseService {
     }
   }
 
-  findOne(id: string) {
-    return `This action returns a #${id} warehouse`;
+  async findOne(id: string) {
+    try {
+      const warehouseItem = await this.warehouseRepository.findOne({
+        where: {
+          id,
+        },
+        relations: [
+          'product',
+          'product.selectedOptions',
+          'product.selectedOptions.attribute',
+        ],
+      });
+
+      if (!warehouseItem) {
+        throw new NotFoundException('Warehouse item not found');
+      }
+
+      return warehouseItem;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const err = error as Error;
+      this.logger.error(`FindWarehouseItem error: ${err.message}`, err.stack);
+      throw new BadRequestException('Failed to find warehouse item');
+    }
   }
 
   update(id: string, updateWarehouseDto: UpdateWarehouseDto) {

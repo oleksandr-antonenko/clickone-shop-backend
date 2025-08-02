@@ -29,13 +29,19 @@ export class WarehouseController {
   @ApiOperation({ summary: 'Get all warehouse items' })
   @ApiResponse({
     status: 200,
-    description: 'Brands fetched successfully',
+    description: 'Warehouse items fetched successfully',
   })
   findAll(@Query() query: PaginationQueryBrandDto) {
     return this.warehouseService.findAll(query);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get a warehouse item by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Warehouse item fetched successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Warehouse item not found' })
   findOne(@Param('id') id: string) {
     return this.warehouseService.findOne(id);
   }
