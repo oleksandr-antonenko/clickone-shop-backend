@@ -4,11 +4,9 @@ import { ConfigService } from '@nestjs/config';
 const configService = new ConfigService();
 
 export const getTypeOrmConfig = (): DataSourceOptions => {
-  // Check if Neon connection string is provided
   const neonConnectionString = configService.get('DATABASE_URL');
   
   if (neonConnectionString) {
-    // Use Neon connection string
     return {
       type: 'postgres',
       url: neonConnectionString,
@@ -16,12 +14,12 @@ export const getTypeOrmConfig = (): DataSourceOptions => {
       migrations: [__dirname + '/../migrations/*{.ts,.js}'],
       synchronize: false,
       ssl: {
-        rejectUnauthorized: false, // Required for Neon
+        rejectUnauthorized: false, 
       },
     };
   }
 
-  // Fallback to individual environment variables (for local development)
+
   return {
     type: 'postgres',
     host: configService.get('DB_HOST'),
