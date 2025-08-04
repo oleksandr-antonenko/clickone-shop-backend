@@ -59,6 +59,30 @@ export class WarehouseService {
     };
   }
 
+  async reserve(productId: string, quantity: number) {
+    try {
+      const warehouse = await this.warehouseRepository.findOne({
+        where: { product: { id: productId } },
+      });
+      if (!warehouse) {
+        throw new NotFoundException('Warehouse not found for the product');
+      }
+      if (warehouse.availableQuantity < quantity) {
+        throw new BadRequestException('Insufficient stock available');
+      }
+      const updatedWarehouse = this.warehouseRepository.merge(warehouse, {
+        reservedQuantity: warehouse.reservedQuantity + quantity,
+        availableQuantity: warehouse.availableQuantity - quantity,
+      });
+      await this.warehouseRepository.save(updatedWarehouse);
+      return updatedWarehouse;
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`ReserveWarehouse error: ${err.message}`, err.stack);
+      throw new BadRequestException('Failed to reserve warehouse');
+    }
+  }
+
   async create(product: Product) {
     try {
       const dto = {

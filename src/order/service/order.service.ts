@@ -16,6 +16,7 @@ import {
   Pagination,
   ProcessedPagination,
 } from '~/catalog/product/interface/pagination.interface';
+import { WarehouseService } from '~/catalog/warehouse/service/warehouse.service';
 import { FilterParserService } from '~/filter/service/filter-parser.service';
 import { PaginationQuery } from '~/pagination/interface/pagination.interface';
 import { PaginationService } from '~/pagination/service/pagination.service';
@@ -39,6 +40,7 @@ export class OrderService {
     private productRepository: Repository<Product>,
     private readonly filterParserService: FilterParserService,
     private readonly paginationService: PaginationService,
+    private readonly warehouseService: WarehouseService,
     @Inject(REQUEST) private readonly request: Request
   ) {}
 
@@ -68,6 +70,10 @@ export class OrderService {
     try {
       const { shippingAddress, billingAddress, items, ...orderData } =
         createOrderDto;
+
+      for (const item of items) {
+        await this.warehouseService.reserve(item.productId, item.quantity);
+      }
 
       const savedShippingAddress =
         await this.addressRepository.save(shippingAddress);
