@@ -26,6 +26,7 @@ import { UpdateOrderDto } from '../dto/update-order.dto';
 import { Address } from '../entities/address.entity';
 import { Order } from '../entities/order.entity';
 import { OrderItem } from '../entities/orderItem.entity';
+import { PaymentStatus } from '../interface/create-order.interface';
 
 @Injectable()
 export class OrderService {
@@ -196,6 +197,18 @@ export class OrderService {
       if (!existingOrder) {
         this.logger.warn('Order not found');
         throw new NotFoundException('Order not found');
+      }
+
+      if (
+        updateOrderDto.paymentStatus === PaymentStatus.Paid &&
+        existingOrder.paymentStatus !== PaymentStatus.Paid
+      ) {
+        for (const item of existingOrder.items) {
+          await this.warehouseService.approvePayment(
+            item.product.id,
+            item.quantity
+          );
+        }
       }
 
       const updated = this.orderRepository.merge(existingOrder, updateOrderDto);

@@ -83,6 +83,31 @@ export class WarehouseService {
     }
   }
 
+  async approvePayment(productId: string, quantity: number) {
+    try {
+      const warehouse = await this.warehouseRepository.findOne({
+        where: { product: { id: productId } },
+      });
+      if (!warehouse) {
+        throw new NotFoundException('Warehouse not found for the product');
+      }
+      if (warehouse.availableQuantity < quantity) {
+        throw new BadRequestException('Insufficient stock available');
+      }
+      const updatedWarehouse = this.warehouseRepository.merge(warehouse, {
+        reservedQuantity: warehouse.reservedQuantity - quantity,
+        availableQuantity: warehouse.availableQuantity - quantity,
+        quantity: warehouse.quantity - quantity,
+      });
+      await this.warehouseRepository.save(updatedWarehouse);
+      return updatedWarehouse;
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`ApprovePayment error: ${err.message}`, err.stack);
+      throw new BadRequestException('Failed to approve payment');
+    }
+  }
+
   async create(product: Product) {
     try {
       const dto = {
