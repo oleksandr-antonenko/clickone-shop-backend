@@ -18,6 +18,10 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { AuthConfigService } from './config/auth.config';
 import { getTypeOrmConfig } from './config/typeorm.config';
 import { OrderModule } from './order/order.module';
+import { CustomerModule } from './customer/customer.module';
+import { UserModule } from './user/user.module';
+import { AdminModule } from './admin/admin.module';
+import { InternalModule } from './internal/internal.module';
 
 @Module({
   imports: [
@@ -40,6 +44,10 @@ import { OrderModule } from './order/order.module';
     CategoryModule,
     BrandModule,
     AuthModule,
+    CustomerModule,
+    UserModule,
+    AdminModule,
+    InternalModule,
   ],
   controllers: [AppController],
   providers: [

@@ -16,18 +16,15 @@ export class M2MAuthGuard extends AuthGuard('m2m') implements CanActivate {
   canActivate(context: ExecutionContext): boolean | Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     
-    // Check if endpoint requires M2M authentication
     const m2mMetadata = this.reflector.getAllAndOverride<any>(M2M_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
     if (!m2mMetadata?.isM2M) {
-      // If not M2M endpoint, allow regular JWT authentication
       return true;
     }
 
-    // For M2M endpoints, use M2M strategy
     return super.canActivate(context) as Promise<boolean>;
   }
 
@@ -36,12 +33,10 @@ export class M2MAuthGuard extends AuthGuard('m2m') implements CanActivate {
       throw new UnauthorizedException('Invalid M2M token');
     }
 
-    // Verify it's an M2M user
     if (!this.authService.isM2MUser(user)) {
       throw new UnauthorizedException('Invalid token type - M2M endpoint requires M2M token');
     }
 
-    // Check required scopes
     const requiredScopes = this.reflector.getAllAndOverride<string[]>(M2M_SCOPES_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -53,7 +48,6 @@ export class M2MAuthGuard extends AuthGuard('m2m') implements CanActivate {
       }
     }
 
-    // Check required permissions
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(M2M_PERMISSIONS_KEY, [
       context.getHandler(),
       context.getClass(),

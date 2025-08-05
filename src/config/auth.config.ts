@@ -67,6 +67,7 @@ export class AuthConfigService {
       'post:/api/order',
       'patch:/api/order/*',
       'delete:/api/order/*',
+      'get:/api/users/*'
     ];
   }
 

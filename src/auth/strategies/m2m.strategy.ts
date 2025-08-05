@@ -74,7 +74,6 @@ export class M2MStrategy extends PassportStrategy(Strategy, 'm2m') {
   }
 
   async validate(payload: M2MToken) {
-    // Verify this is an M2M token
     if (payload.gty !== 'client-credentials') {
       throw new Error('Invalid token type - expected M2M token');
     }

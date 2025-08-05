@@ -3,6 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { FilterModule } from '../../filter/filter.module';
 import { PaginationModule } from '../../pagination/pagination.module';
+import { AdminModule } from '../../admin/admin.module';
+import { UserModule } from '../../user/user.module';
 import { AttributeOption } from '../attributes/entity/attribute-options.entity';
 import { Attribute } from '../attributes/entity/attribute.entity';
 import { Brand } from '../brands/entities/brand.entity';
@@ -24,6 +26,8 @@ import { ProductService } from './service/product.service';
     ]),
     FilterModule,
     PaginationModule,
+    AdminModule,
+    UserModule,
   ],
   controllers: [ProductController],
   providers: [ProductService],

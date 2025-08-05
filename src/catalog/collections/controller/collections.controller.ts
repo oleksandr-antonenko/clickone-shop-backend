@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBody,
@@ -15,9 +16,13 @@ import {
   ApiQuery,
   ApiResponse,
   ApiTags,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 import { PublicRead } from '~/common/decorators/public.decorator';
+import { PermissionGuard } from '~/admin/guards/permission.guard';
+import { CheckPermission } from '~/admin/decorators/check-permission.decorator';
+import { ResourceType, PermissionAction } from '~/admin/entities/permission.entity';
 
 import {
   AddProductsToCollectionDto,
@@ -31,24 +36,29 @@ import { CollectionsService } from '../service/collections.service';
 
 @ApiTags('Collections')
 @Controller('collections')
-@PublicRead()
+@ApiBearerAuth()
 export class CollectionsController {
   constructor(private readonly collectionsService: CollectionsService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new collection' })
+  @UseGuards(PermissionGuard)
+  @CheckPermission(ResourceType.COLLECTIONS, PermissionAction.CREATE)
+  @ApiOperation({ summary: 'Create a new collection (Admin only)' })
   @ApiResponse({
     status: 201,
     description: 'Collection created successfully',
     type: CollectionsDto,
   })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   @ApiBody({ type: CollectionsDto })
   async create(@Body() createCollectionDto: CollectionsDto) {
     return this.collectionsService.create(createCollectionDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all collections with filtering' })
+  @PublicRead()
+  @ApiOperation({ summary: 'Get all collections with filtering (Public)' })
   @ApiResponse({
     status: 200,
     description: 'Collections retrieved successfully',
@@ -83,7 +93,8 @@ export class CollectionsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get collection by ID' })
+  @PublicRead()
+  @ApiOperation({ summary: 'Get collection by ID (Public)' })
   @ApiResponse({
     status: 200,
     description: 'Collection retrieved successfully',
@@ -95,7 +106,8 @@ export class CollectionsController {
   }
 
   @Get(':id/products')
-  @ApiOperation({ summary: 'Get collection with products' })
+  @PublicRead()
+  @ApiOperation({ summary: 'Get collection with products (Public)' })
   @ApiResponse({
     status: 200,
     description: 'Collection with products retrieved successfully',
@@ -106,12 +118,16 @@ export class CollectionsController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update collection by ID' })
+  @UseGuards(PermissionGuard)
+  @CheckPermission(ResourceType.COLLECTIONS, PermissionAction.UPDATE)
+  @ApiOperation({ summary: 'Update collection by ID (Admin only)' })
   @ApiResponse({
     status: 200,
     description: 'Collection updated successfully',
     type: CollectionsDto,
   })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   @ApiParam({ name: 'id', description: 'Collection ID' })
   @ApiBody({ type: CollectionsDto })
   async update(
@@ -122,11 +138,15 @@ export class CollectionsController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete collection by ID' })
+  @UseGuards(PermissionGuard)
+  @CheckPermission(ResourceType.COLLECTIONS, PermissionAction.DELETE)
+  @ApiOperation({ summary: 'Delete collection by ID (Admin only)' })
   @ApiResponse({
     status: 200,
     description: 'Collection deleted successfully',
   })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   @ApiParam({ name: 'id', description: 'Collection ID' })
   async remove(@Param('id') id: string) {
     await this.collectionsService.remove(id);
@@ -134,11 +154,15 @@ export class CollectionsController {
   }
 
   @Post(':id/products')
-  @ApiOperation({ summary: 'Add multiple products to collection' })
+  @UseGuards(PermissionGuard)
+  @CheckPermission(ResourceType.COLLECTIONS, PermissionAction.UPDATE)
+  @ApiOperation({ summary: 'Add multiple products to collection (Admin only)' })
   @ApiResponse({
     status: 200,
     description: 'Products added to collection successfully',
   })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   @ApiParam({ name: 'id', description: 'Collection ID' })
   @ApiBody({ type: AddProductsToCollectionDto })
   async addProducts(
@@ -150,11 +174,15 @@ export class CollectionsController {
   }
 
   @Post(':id/products/:productId')
-  @ApiOperation({ summary: 'Add single product to collection' })
+  @UseGuards(PermissionGuard)
+  @CheckPermission(ResourceType.COLLECTIONS, PermissionAction.UPDATE)
+  @ApiOperation({ summary: 'Add single product to collection (Admin only)' })
   @ApiResponse({
     status: 200,
     description: 'Product added to collection successfully',
   })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   @ApiParam({ name: 'id', description: 'Collection ID' })
   @ApiParam({ name: 'productId', description: 'Product ID' })
   async addSingleProduct(
@@ -166,11 +194,15 @@ export class CollectionsController {
   }
 
   @Delete(':id/products')
-  @ApiOperation({ summary: 'Remove multiple products from collection' })
+  @UseGuards(PermissionGuard)
+  @CheckPermission(ResourceType.COLLECTIONS, PermissionAction.UPDATE)
+  @ApiOperation({ summary: 'Remove multiple products from collection (Admin only)' })
   @ApiResponse({
     status: 200,
     description: 'Products removed from collection successfully',
   })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   @ApiParam({ name: 'id', description: 'Collection ID' })
   @ApiBody({ type: RemoveProductsFromCollectionDto })
   async removeProducts(
@@ -185,11 +217,15 @@ export class CollectionsController {
   }
 
   @Delete(':id/products/:productId')
-  @ApiOperation({ summary: 'Remove single product from collection' })
+  @UseGuards(PermissionGuard)
+  @CheckPermission(ResourceType.COLLECTIONS, PermissionAction.UPDATE)
+  @ApiOperation({ summary: 'Remove single product from collection (Admin only)' })
   @ApiResponse({
     status: 200,
     description: 'Product removed from collection successfully',
   })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   @ApiParam({ name: 'id', description: 'Collection ID' })
   @ApiParam({ name: 'productId', description: 'Product ID' })
   async removeSingleProduct(
@@ -201,11 +237,15 @@ export class CollectionsController {
   }
 
   @Patch(':id/products/order')
-  @ApiOperation({ summary: 'Update product order in collection' })
+  @UseGuards(PermissionGuard)
+  @CheckPermission(ResourceType.COLLECTIONS, PermissionAction.UPDATE)
+  @ApiOperation({ summary: 'Update product order in collection (Admin only)' })
   @ApiResponse({
     status: 200,
     description: 'Product order updated successfully',
   })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Insufficient permissions' })
   @ApiParam({ name: 'id', description: 'Collection ID' })
   @ApiBody({ type: UpdateProductOrderDto })
   async updateProductOrder(
@@ -221,7 +261,8 @@ export class CollectionsController {
   }
 
   @Get(':id/products/list')
-  @ApiOperation({ summary: 'Get all collection products (without pagination)' })
+  @PublicRead()
+  @ApiOperation({ summary: 'Get all collection products (without pagination) (Public)' })
   @ApiResponse({
     status: 200,
     description: 'Collection products retrieved successfully',
@@ -232,8 +273,9 @@ export class CollectionsController {
   }
 
   @Get(':id/products/paginated')
+  @PublicRead()
   @ApiOperation({
-    summary: 'Get collection products with pagination and filtering',
+    summary: 'Get collection products with pagination and filtering (Public)',
   })
   @ApiResponse({
     status: 200,

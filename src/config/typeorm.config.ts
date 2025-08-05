@@ -23,13 +23,13 @@ export const getTypeOrmConfig = (): DataSourceOptions => {
   return {
     type: 'postgres',
     host: configService.get('DB_HOST'),
-    port: parseInt(configService.get('DB_PORT') || '5432', 10),
-    username: configService.get('DB_USERNAME'),
-    password: configService.get('DB_PASSWORD'),
-    database: configService.get('DB_DATABASE'),
+    port: parseInt(configService.get('POSTGRES_PORT') || '5432', 10),
+    username: configService.get('POSTGRES_USER'),
+    password: configService.get('POSTGRES_PASSWORD'),
+    database: configService.get('POSTGRES_DB'),
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     migrations: [__dirname + '/../migrations/*{.ts,.js}'],
-    synchronize: false,
+    synchronize: true,
   };
 };
 

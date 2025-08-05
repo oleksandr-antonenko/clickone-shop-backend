@@ -3,6 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { FilterModule } from '~/filter/filter.module';
 import { PaginationModule } from '~/pagination/pagination.module';
+import { AdminModule } from '~/admin/admin.module';
+import { UserModule } from '~/user/user.module';
 
 import { Product } from '../product/entities/product.entity';
 import { SettingsController } from './controller/settings.controller';
@@ -14,6 +16,8 @@ import { SettingsService } from './service/settings.service';
     TypeOrmModule.forFeature([ProductSetting, Product]),
     FilterModule,
     PaginationModule,
+    AdminModule,
+    UserModule,
   ],
   controllers: [SettingsController],
   providers: [SettingsService],
