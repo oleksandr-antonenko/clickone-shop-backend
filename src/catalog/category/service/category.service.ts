@@ -46,12 +46,27 @@ export class CategoryService {
 
   async create(createCategoryDto: CreateCategoryDto) {
     try {
-      const categoryBySlug = await this.categoryRepository.findOne({
-        where: { slug: createCategoryDto.slug },
-      });
+      const nameRegex = /^[a-zA-Zа-яА-Я\s]+$/;
+      if (!nameRegex.test(createCategoryDto.name)) {
+        throw new BadRequestException('Category name must contain only letters (no numbers or special characters)');
+      }
+
+      const categoryBySlug = await this.categoryRepository
+        .createQueryBuilder('category')
+        .where('LOWER(category.slug) = LOWER(:slug)', { slug: createCategoryDto.slug })
+        .getOne();
 
       if (categoryBySlug) {
         throw new BadRequestException('Slug already exists');
+      }
+
+      const categoryByName = await this.categoryRepository
+        .createQueryBuilder('category')
+        .where('LOWER(category.name) = LOWER(:name)', { name: createCategoryDto.name })
+        .getOne();
+
+      if (categoryByName) {
+        throw new BadRequestException('Category name already exists');
       }
 
       const categoryData = {
@@ -108,6 +123,35 @@ export class CategoryService {
         throw new ConflictException(
           'This category has been updated. Please refresh the page.'
         );
+      }
+
+      if (updateCategory.slug) {
+        const categoryBySlug = await this.categoryRepository
+          .createQueryBuilder('category')
+          .where('LOWER(category.slug) = LOWER(:slug)', { slug: updateCategory.slug })
+          .andWhere('category.id != :id', { id })
+          .getOne();
+
+        if (categoryBySlug) {
+          throw new BadRequestException('Slug already exists');
+        }
+      }
+
+      if (updateCategory.name) {        
+        const nameRegex = /^[a-zA-Zа-яА-Я\s]+$/;
+        if (!nameRegex.test(updateCategory.name)) {
+          throw new BadRequestException('Category name must contain only letters (no numbers or special characters)');
+        }
+
+        const categoryByName = await this.categoryRepository
+          .createQueryBuilder('category')
+          .where('LOWER(category.name) = LOWER(:name)', { name: updateCategory.name })
+          .andWhere('category.id != :id', { id })
+          .getOne();
+
+        if (categoryByName) {
+          throw new BadRequestException('Category name already exists');
+        }
       }
 
       const updateData = {

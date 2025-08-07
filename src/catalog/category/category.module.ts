@@ -5,6 +5,7 @@ import { AdminModule } from '~/admin/admin.module';
 import { UserModule } from '~/user/user.module';
 
 import { CategoryController } from './controller/category.controller';
+import { CategoryAIController } from './controller/category-ai.controller';
 import { Category } from './entities/category.entity';
 import { CategoryService } from './service/category.service';
 
@@ -14,7 +15,7 @@ import { CategoryService } from './service/category.service';
     AdminModule,
     UserModule,
   ],
-  controllers: [CategoryController],
+  controllers: [CategoryController, CategoryAIController],
   providers: [CategoryService],
   exports: [CategoryService],
 })
