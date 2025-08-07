@@ -9,6 +9,7 @@ import {
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 
+import { Parser } from '@json2csv/plainjs';
 import { Request } from 'express';
 import { Repository } from 'typeorm';
 import { Product } from '~/catalog/product/entities/product.entity';
@@ -122,6 +123,28 @@ export class OrderService {
         throw error;
       }
       throw new BadRequestException('Failed to create order');
+    }
+  }
+
+  async exportOrders() {
+    try {
+      const orders = await this.orderRepository.find({
+        relations: ['items', 'shippingAddress', 'billingAddress'],
+      });
+      if (!orders || orders.length === 0) {
+        throw new NotFoundException('No orders found');
+      }
+      const parser = new Parser();
+      const csv = parser.parse(orders);
+
+      return csv;
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`ExportOrders error: ${err.message}`, err.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to export orders');
     }
   }
 
