@@ -32,7 +32,6 @@ export class OrderController {
     return this.orderService.create(createOrderDto);
   }
 
-  @Public()
   @Get('import-orders')
   @Header('Content-Type', 'text/csv')
   @Header('Content-Disposition', 'attachment; filename="orders.csv"')
