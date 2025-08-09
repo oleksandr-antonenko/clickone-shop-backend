@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpException,
   Inject,
   Injectable,
@@ -27,7 +28,7 @@ import { UpdateOrderDto } from '../dto/update-order.dto';
 import { Address } from '../entities/address.entity';
 import { Order } from '../entities/order.entity';
 import { OrderItem } from '../entities/orderItem.entity';
-import { PaymentStatus } from '../interface/create-order.interface';
+import { OrderStatus } from '../interface/create-order.interface';
 
 @Injectable()
 export class OrderService {
@@ -72,10 +73,6 @@ export class OrderService {
     try {
       const { shippingAddress, billingAddress, items, ...orderData } =
         createOrderDto;
-
-      for (const item of items) {
-        await this.warehouseService.reserve(item.productId, item.quantity);
-      }
 
       const savedShippingAddress =
         await this.addressRepository.save(shippingAddress);
@@ -222,14 +219,66 @@ export class OrderService {
         throw new NotFoundException('Order not found');
       }
 
-      if (
-        updateOrderDto.paymentStatus === PaymentStatus.Paid &&
-        existingOrder.paymentStatus !== PaymentStatus.Paid
-      ) {
+      if (updateOrderDto.status === OrderStatus.Pending) {
+        throw new ForbiddenException('Cannot change status');
+      }
+
+      if (updateOrderDto.status === OrderStatus.Confirmed) {
+        if (existingOrder.status !== OrderStatus.Pending) {
+          throw new ForbiddenException('Cannot change status');
+        }
         for (const item of existingOrder.items) {
-          await this.warehouseService.approvePayment(
+          await this.warehouseService.setOrderStatus(
             item.product.id,
-            item.quantity
+            item.quantity,
+            updateOrderDto.status
+          );
+        }
+      }
+
+      if (
+        updateOrderDto.status === OrderStatus.Processing &&
+        existingOrder.status !== OrderStatus.Confirmed
+      ) {
+        throw new ForbiddenException('Cannot change status');
+      }
+
+      if (updateOrderDto.status === OrderStatus.Shipped) {
+        if (existingOrder.status !== OrderStatus.Processing) {
+          throw new ForbiddenException('Cannot change status');
+        }
+        for (const item of existingOrder.items) {
+          await this.warehouseService.setOrderStatus(
+            item.product.id,
+            item.quantity,
+            updateOrderDto.status
+          );
+        }
+      }
+
+      if (
+        updateOrderDto.status === OrderStatus.Delivered &&
+        existingOrder.status !== OrderStatus.Shipped
+      ) {
+        throw new ForbiddenException('Cannot change status');
+      }
+
+      if (
+        updateOrderDto.status === OrderStatus.Cancelled &&
+        existingOrder.status !== OrderStatus.Delivered
+      ) {
+        throw new ForbiddenException('Cannot change status');
+      }
+
+      if (updateOrderDto.status === OrderStatus.Returned) {
+        if (existingOrder.status !== OrderStatus.Cancelled) {
+          throw new ForbiddenException('Cannot change status');
+        }
+        for (const item of existingOrder.items) {
+          await this.warehouseService.setOrderStatus(
+            item.product.id,
+            item.quantity,
+            updateOrderDto.status
           );
         }
       }

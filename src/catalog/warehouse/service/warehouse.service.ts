@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Inject,
   Injectable,
   Logger,
@@ -16,6 +17,7 @@ import {
   ProcessedPagination,
 } from '~/catalog/product/interface/pagination.interface';
 import { FilterParserService } from '~/filter/service/filter-parser.service';
+import { OrderStatus } from '~/order/interface/create-order.interface';
 import { PaginationQuery } from '~/pagination/interface/pagination.interface';
 import { PaginationService } from '~/pagination/service/pagination.service';
 
@@ -59,7 +61,11 @@ export class WarehouseService {
     };
   }
 
-  async reserve(productId: string, quantity: number) {
+  async setOrderStatus(
+    productId: string,
+    quantity: number,
+    status: OrderStatus
+  ) {
     try {
       const warehouse = await this.warehouseRepository.findOne({
         where: { product: { id: productId } },
@@ -67,44 +73,47 @@ export class WarehouseService {
       if (!warehouse) {
         throw new NotFoundException('Warehouse not found for the product');
       }
-      if (warehouse.availableQuantity < quantity) {
-        throw new BadRequestException('Insufficient stock available');
-      }
-      const updatedWarehouse = this.warehouseRepository.merge(warehouse, {
-        reservedQuantity: warehouse.reservedQuantity + quantity,
-        availableQuantity: warehouse.availableQuantity - quantity,
-      });
-      await this.warehouseRepository.save(updatedWarehouse);
-      return updatedWarehouse;
-    } catch (error) {
-      const err = error as Error;
-      this.logger.error(`ReserveWarehouse error: ${err.message}`, err.stack);
-      throw new BadRequestException('Failed to reserve warehouse');
-    }
-  }
+      const updatedWarehouse = {} as UpdateWarehouseDto;
 
-  async approvePayment(productId: string, quantity: number) {
-    try {
-      const warehouse = await this.warehouseRepository.findOne({
-        where: { product: { id: productId } },
-      });
-      if (!warehouse) {
-        throw new NotFoundException('Warehouse not found for the product');
+      if (status === OrderStatus.Confirmed) {
+        if (warehouse.availableQuantity < quantity) {
+          throw new BadRequestException('Insufficient stock available');
+        }
+
+        updatedWarehouse.reservedQuantity =
+          warehouse.reservedQuantity + quantity;
+        updatedWarehouse.availableQuantity =
+          warehouse.availableQuantity - quantity;
       }
-      if (warehouse.availableQuantity < quantity) {
-        throw new BadRequestException('Insufficient stock available');
+      if (status === OrderStatus.Shipped) {
+        if (warehouse.reservedQuantity < quantity) {
+          throw new BadRequestException(
+            'Insufficient reserved stock available'
+          );
+        }
+        updatedWarehouse.reservedQuantity =
+          warehouse.reservedQuantity - quantity;
+        updatedWarehouse.quantity = warehouse.quantity - quantity;
       }
-      const updatedWarehouse = this.warehouseRepository.merge(warehouse, {
-        reservedQuantity: warehouse.reservedQuantity - quantity,
-        availableQuantity: warehouse.availableQuantity - quantity,
-        quantity: warehouse.quantity - quantity,
-      });
-      await this.warehouseRepository.save(updatedWarehouse);
-      return updatedWarehouse;
+      if (status === OrderStatus.Returned) {
+        updatedWarehouse.quantity = warehouse.quantity + quantity;
+        updatedWarehouse.availableQuantity =
+          warehouse.availableQuantity + quantity;
+      }
+
+      const updated = this.warehouseRepository.merge(
+        warehouse,
+        updatedWarehouse
+      );
+
+      return await this.warehouseRepository.save(updated);
     } catch (error) {
       const err = error as Error;
-      this.logger.error(`ApprovePayment error: ${err.message}`, err.stack);
-      throw new BadRequestException('Failed to approve payment');
+      this.logger.error(`CreateOrder error: ${err.message}`, err.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to create order');
     }
   }
 
