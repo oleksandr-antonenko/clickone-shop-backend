@@ -196,6 +196,7 @@ export class OrderService {
           'items.product',
           'items.product.attributes',
           'items.product.selectedOptions',
+          'items.product.selectedOptions.attribute',
         ],
       });
 
