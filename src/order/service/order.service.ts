@@ -90,8 +90,9 @@ export class OrderService {
 
       const orderItems = [] as OrderItem[];
       for (const itemDto of items) {
-        const product = await this.productRepository.findOneBy({
-          id: itemDto.productId,
+        const product = await this.productRepository.findOne({
+          where: { id: itemDto.productId },
+          relations: ['attributes', 'category', 'brand'],
         });
         if (!product) throw new NotFoundException('Product not found');
 
@@ -99,7 +100,6 @@ export class OrderService {
           quantity: itemDto.quantity,
           price: itemDto.price,
           total: itemDto.total,
-          attributes: itemDto.attributes,
           product,
           order: savedOrder,
         });
@@ -191,6 +191,12 @@ export class OrderService {
         where: {
           id,
         },
+        relations: [
+          'items',
+          'items.product',
+          'items.product.attributes',
+          'items.product.selectedOptions',
+        ],
       });
 
       if (!order) {

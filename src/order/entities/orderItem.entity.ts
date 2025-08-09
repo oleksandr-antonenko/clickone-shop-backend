@@ -23,9 +23,6 @@ export class OrderItem {
   @Column('decimal')
   total: number;
 
-  @Column('json', { nullable: true })
-  attributes?: Record<string, string | number | boolean | string[]>;
-
   @ManyToOne(() => Product, (product) => product.orderItems, { eager: true })
   @JoinColumn({ name: 'product_id' })
   product: Product;
