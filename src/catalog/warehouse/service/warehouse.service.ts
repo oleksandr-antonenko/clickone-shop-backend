@@ -64,7 +64,8 @@ export class WarehouseService {
   async setOrderStatus(
     productId: string,
     quantity: number,
-    status: OrderStatus
+    status: OrderStatus,
+    existingStatus: OrderStatus
   ) {
     try {
       const warehouse = await this.warehouseRepository.findOne({
@@ -86,7 +87,8 @@ export class WarehouseService {
           warehouse.availableQuantity - quantity;
       }
       if (
-        status === OrderStatus.Cancelled ||
+        (status === OrderStatus.Cancelled &&
+          existingStatus !== OrderStatus.Pending) ||
         status === OrderStatus.Processing
       ) {
         updatedWarehouse.reservedQuantity =

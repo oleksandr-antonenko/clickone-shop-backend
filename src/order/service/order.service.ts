@@ -226,82 +226,46 @@ export class OrderService {
         throw new NotFoundException('Order not found');
       }
 
-      if (
-        updateOrderDto.status === OrderStatus.Pending ||
-        existingOrder.status === OrderStatus.Cancelled ||
-        existingOrder.status === OrderStatus.Delivered ||
-        existingOrder.status === OrderStatus.Returned
-      ) {
+      const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
+        [OrderStatus.Pending]: [],
+        [OrderStatus.Confirmed]: [OrderStatus.Pending],
+        [OrderStatus.Processing]: [OrderStatus.Confirmed],
+        [OrderStatus.Shipped]: [OrderStatus.Processing],
+        [OrderStatus.Delivered]: [OrderStatus.Shipped],
+        [OrderStatus.Cancelled]: [
+          OrderStatus.Pending,
+          OrderStatus.Confirmed,
+          OrderStatus.Processing,
+        ],
+        [OrderStatus.Returned]: [OrderStatus.Shipped],
+      };
+
+      function canTransition(from: OrderStatus, to: OrderStatus): boolean {
+        return allowedTransitions[to]?.includes(from);
+      }
+
+      if (!updateOrderDto.status) {
+        throw new BadRequestException('Status is required');
+      }
+
+      if (!canTransition(existingOrder.status, updateOrderDto.status)) {
         throw new ForbiddenException('Cannot change status');
       }
 
-      if (updateOrderDto.status === OrderStatus.Confirmed) {
-        if (existingOrder.status !== OrderStatus.Pending) {
-          throw new ForbiddenException('Cannot change status');
-        }
+      const shouldUpdateWarehouse = [
+        OrderStatus.Confirmed,
+        OrderStatus.Shipped,
+        OrderStatus.Cancelled,
+        OrderStatus.Returned,
+      ];
+
+      if (shouldUpdateWarehouse.includes(updateOrderDto.status)) {
         for (const item of existingOrder.items) {
           await this.warehouseService.setOrderStatus(
             item.product.id,
             item.quantity,
-            updateOrderDto.status
-          );
-        }
-      }
-
-      if (
-        updateOrderDto.status === OrderStatus.Processing &&
-        existingOrder.status !== OrderStatus.Confirmed
-      ) {
-        throw new ForbiddenException('Cannot change status');
-      }
-
-      if (updateOrderDto.status === OrderStatus.Shipped) {
-        if (existingOrder.status !== OrderStatus.Processing) {
-          throw new ForbiddenException('Cannot change status');
-        }
-        for (const item of existingOrder.items) {
-          await this.warehouseService.setOrderStatus(
-            item.product.id,
-            item.quantity,
-            updateOrderDto.status
-          );
-        }
-      }
-
-      if (
-        updateOrderDto.status === OrderStatus.Delivered &&
-        existingOrder.status !== OrderStatus.Shipped
-      ) {
-        throw new ForbiddenException('Cannot change status');
-      }
-
-      if (updateOrderDto.status === OrderStatus.Cancelled) {
-        if (existingOrder.status === OrderStatus.Shipped) {
-          throw new ForbiddenException('Cannot change status');
-        }
-        if (
-          existingOrder.status === OrderStatus.Confirmed ||
-          existingOrder.status === OrderStatus.Processing
-        ) {
-          for (const item of existingOrder.items) {
-            await this.warehouseService.setOrderStatus(
-              item.product.id,
-              item.quantity,
-              updateOrderDto.status
-            );
-          }
-        }
-      }
-
-      if (updateOrderDto.status === OrderStatus.Returned) {
-        if (existingOrder.status !== OrderStatus.Shipped) {
-          throw new ForbiddenException('Cannot change status');
-        }
-        for (const item of existingOrder.items) {
-          await this.warehouseService.setOrderStatus(
-            item.product.id,
-            item.quantity,
-            updateOrderDto.status
+            updateOrderDto.status,
+            existingOrder.status
           );
         }
       }
