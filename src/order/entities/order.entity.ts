@@ -43,6 +43,7 @@ export class Order {
 
   @OneToMany(() => OrderItem, (item) => item.order, {
     eager: true,
+    cascade: true,
   })
   items: OrderItem[];
 

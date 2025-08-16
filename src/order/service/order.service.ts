@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpException,
   Inject,
   Injectable,
@@ -9,6 +10,7 @@ import {
 import { REQUEST } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 
+import { Parser } from '@json2csv/plainjs';
 import { Request } from 'express';
 import { Repository } from 'typeorm';
 import { Product } from '~/catalog/product/entities/product.entity';
@@ -16,6 +18,7 @@ import {
   Pagination,
   ProcessedPagination,
 } from '~/catalog/product/interface/pagination.interface';
+import { WarehouseService } from '~/catalog/warehouse/service/warehouse.service';
 import { FilterParserService } from '~/filter/service/filter-parser.service';
 import { PaginationQuery } from '~/pagination/interface/pagination.interface';
 import { PaginationService } from '~/pagination/service/pagination.service';
@@ -25,6 +28,7 @@ import { UpdateOrderDto } from '../dto/update-order.dto';
 import { Address } from '../entities/address.entity';
 import { Order } from '../entities/order.entity';
 import { OrderItem } from '../entities/orderItem.entity';
+import { OrderStatus } from '../interface/create-order.interface';
 
 @Injectable()
 export class OrderService {
@@ -39,6 +43,7 @@ export class OrderService {
     private productRepository: Repository<Product>,
     private readonly filterParserService: FilterParserService,
     private readonly paginationService: PaginationService,
+    private readonly warehouseService: WarehouseService,
     @Inject(REQUEST) private readonly request: Request
   ) {}
 
@@ -85,8 +90,9 @@ export class OrderService {
 
       const orderItems = [] as OrderItem[];
       for (const itemDto of items) {
-        const product = await this.productRepository.findOneBy({
-          id: itemDto.productId,
+        const product = await this.productRepository.findOne({
+          where: { id: itemDto.productId },
+          relations: ['attributes', 'category', 'brand'],
         });
         if (!product) throw new NotFoundException('Product not found');
 
@@ -94,7 +100,6 @@ export class OrderService {
           quantity: itemDto.quantity,
           price: itemDto.price,
           total: itemDto.total,
-          attributes: itemDto.attributes,
           product,
           order: savedOrder,
         });
@@ -115,6 +120,28 @@ export class OrderService {
         throw error;
       }
       throw new BadRequestException('Failed to create order');
+    }
+  }
+
+  async exportOrders() {
+    try {
+      const orders = await this.orderRepository.find({
+        relations: ['items', 'shippingAddress', 'billingAddress'],
+      });
+      if (!orders || orders.length === 0) {
+        throw new NotFoundException('No orders found');
+      }
+      const parser = new Parser();
+      const csv = parser.parse(orders);
+
+      return csv;
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`ExportOrders error: ${err.message}`, err.stack);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to export orders');
     }
   }
 
@@ -164,6 +191,13 @@ export class OrderService {
         where: {
           id,
         },
+        relations: [
+          'items',
+          'items.product',
+          'items.product.attributes',
+          'items.product.selectedOptions',
+          'items.product.selectedOptions.attribute',
+        ],
       });
 
       if (!order) {
@@ -190,6 +224,50 @@ export class OrderService {
       if (!existingOrder) {
         this.logger.warn('Order not found');
         throw new NotFoundException('Order not found');
+      }
+
+      const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
+        [OrderStatus.Pending]: [],
+        [OrderStatus.Confirmed]: [OrderStatus.Pending],
+        [OrderStatus.Processing]: [OrderStatus.Confirmed],
+        [OrderStatus.Shipped]: [OrderStatus.Processing],
+        [OrderStatus.Delivered]: [OrderStatus.Shipped],
+        [OrderStatus.Cancelled]: [
+          OrderStatus.Pending,
+          OrderStatus.Confirmed,
+          OrderStatus.Processing,
+        ],
+        [OrderStatus.Returned]: [OrderStatus.Shipped],
+      };
+
+      function canTransition(from: OrderStatus, to: OrderStatus): boolean {
+        return allowedTransitions[to]?.includes(from);
+      }
+
+      if (!updateOrderDto.status) {
+        throw new BadRequestException('Status is required');
+      }
+
+      if (!canTransition(existingOrder.status, updateOrderDto.status)) {
+        throw new ForbiddenException('Cannot change status');
+      }
+
+      const shouldUpdateWarehouse = [
+        OrderStatus.Confirmed,
+        OrderStatus.Shipped,
+        OrderStatus.Cancelled,
+        OrderStatus.Returned,
+      ];
+
+      if (shouldUpdateWarehouse.includes(updateOrderDto.status)) {
+        for (const item of existingOrder.items) {
+          await this.warehouseService.setOrderStatus(
+            item.product.id,
+            item.quantity,
+            updateOrderDto.status,
+            existingOrder.status
+          );
+        }
       }
 
       const updated = this.orderRepository.merge(existingOrder, updateOrderDto);

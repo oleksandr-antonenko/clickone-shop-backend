@@ -18,6 +18,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { AuthConfigService } from './config/auth.config';
 import { getTypeOrmConfig } from './config/typeorm.config';
 import { OrderModule } from './order/order.module';
+import { WarehouseModule } from './catalog/warehouse/warehouse.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { OrderModule } from './order/order.module';
     CategoryModule,
     BrandModule,
     AuthModule,
+    WarehouseModule,
   ],
   controllers: [AppController],
   providers: [

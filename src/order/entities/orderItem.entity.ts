@@ -23,13 +23,10 @@ export class OrderItem {
   @Column('decimal')
   total: number;
 
-  @Column('json', { nullable: true })
-  attributes?: Record<string, string | number | boolean | string[]>;
-
   @ManyToOne(() => Product, (product) => product.orderItems, { eager: true })
   @JoinColumn({ name: 'product_id' })
   product: Product;
 
-  @ManyToOne(() => Order, (order) => order.items)
+  @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
   order: Order;
 }
