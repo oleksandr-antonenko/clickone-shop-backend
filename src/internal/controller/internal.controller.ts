@@ -1,9 +1,8 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { InternalService } from '../service/internal.service';
 import { Auth0WebhookDto } from '../dto/auth0-webhook.dto';
 import { CompleteOrderDto } from '../dto/complete-order.dto';
-import { UserResponseDto } from '../../user/dto/user-response.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { Auth0WebhookGuard } from '../../common/guards/auth0-webhook.guard';
 
@@ -12,23 +11,24 @@ import { Auth0WebhookGuard } from '../../common/guards/auth0-webhook.guard';
 export class InternalController {
   constructor(private readonly internalService: InternalService) {}
 
-
   @Post('auth0/user-created')
   @Public()
   @UseGuards(Auth0WebhookGuard)
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ 
     summary: 'Auth0 user creation webhook',
-    description: 'Webhook endpoint for creating users when they first login with Auth0'
+    description: 'Webhook endpoint for creating users when they first login with Auth0. Idempotent - always returns 200 OK.'
   })
   @ApiResponse({ 
-    status: 201, 
-    description: 'User created successfully',
-    type: UserResponseDto
-  })
-  @ApiResponse({ 
-    status: 409, 
-    description: 'User already exists'
+    status: 200,
+    description: 'User processed successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        ok: { type: 'boolean', example: true },
+        created: { type: 'boolean', example: true, description: 'true if new user was created, false if existing user was updated' }
+      }
+    }
   })
   @ApiResponse({ 
     status: 400, 
@@ -38,10 +38,9 @@ export class InternalController {
     status: 401, 
     description: 'Invalid webhook signature'
   })
-  async handleAuth0UserCreated(@Body() webhookData: Auth0WebhookDto): Promise<UserResponseDto> {
+  async handleAuth0UserCreated(@Body() webhookData: Auth0WebhookDto) {
     return this.internalService.handleAuth0UserCreated(webhookData);
   }
-
 
   @Post('orders/complete')
   @HttpCode(HttpStatus.OK)

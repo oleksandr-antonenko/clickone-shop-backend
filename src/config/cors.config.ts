@@ -31,6 +31,8 @@ export class CorsConfigService {
     }
 
     const allowedOrigins = this.getAllowedOrigins();
+    console.log('allowedOrigins', allowedOrigins);
+    console.log('origin', origin);
     const isAllowed = allowedOrigins.includes(origin);
 
     if (!isAllowed) {
@@ -59,7 +61,7 @@ export class CorsConfigService {
   }
 
   getAllowedOrigins(): string[] {
-    const origins: string[] = [];
+    const origins: string[] = ['http://localhost:5173'];
     if (process.env.CORS_ALLOWED_ORIGINS) {
       const configuredOrigins = process.env.CORS_ALLOWED_ORIGINS.split(',')
         .map((origin) => origin.trim())
@@ -76,14 +78,5 @@ export class CorsConfigService {
     }
 
     return [...new Set(origins)];
-  }
-
-  getDebugInfo(): object {
-    return {
-      environment: process.env.NODE_ENV || 'development',
-      allowedOrigins: this.getAllowedOrigins(),
-      configuredCorsOrigins: process.env.CORS_ALLOWED_ORIGINS || 'Not set',
-      configuredClientOrigin: process.env.CLIENT_ORIGIN || 'Not set',
-    };
   }
 }

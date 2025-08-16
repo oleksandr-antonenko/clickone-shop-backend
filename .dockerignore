@@ -1,7 +1,15 @@
-node_modules
-dist
-Dockerfile
-.dockerignore
-.env
+# Exclude development artifacts from Docker build context
 .git
-.gitignore
+.github
+node_modules
+npm-debug.log*
+yarn-error.log*
+.pnpm-store
+.idea
+.vscode
+coverage
+Dockerfile*
+docker-compose*.yml
+test
+src
+# keep dist (we copy it into the image)

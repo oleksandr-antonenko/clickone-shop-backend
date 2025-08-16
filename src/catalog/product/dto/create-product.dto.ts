@@ -10,6 +10,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsUUID,
   Min,
 } from 'class-validator';
 
@@ -22,6 +23,7 @@ export class CreateProductDto {
     required: true,
   })
   @IsString()
+  @IsNotEmpty()
   name: string;
 
   @ApiProperty({
@@ -38,10 +40,11 @@ export class CreateProductDto {
   @ApiProperty({
     description: 'Product description',
     example: 'Latest iPhone model with advanced features',
-    required: true,
+    required: false,
   })
+  @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 
   @ApiProperty({
     description: 'SKU - unique product identifier',
@@ -49,13 +52,16 @@ export class CreateProductDto {
     required: true,
   })
   @IsString()
+  @IsNotEmpty()
   sku: string;
 
   @ApiProperty({
     description: 'Category ID',
-    example: '1',
+    example: '123e4567-e89b-12d3-a456-426614174000',
     required: true,
   })
+  @IsUUID()
+  @IsNotEmpty()
   categoryId: string;
 
   @ApiProperty({
@@ -79,10 +85,11 @@ export class CreateProductDto {
 
   @ApiProperty({
     description: 'Product family ID for grouping',
-    example: 1,
+    example: '123e4567-e89b-12d3-a456-426614174000',
     required: false,
   })
   @IsOptional()
+  @IsUUID()
   familyId?: string;
 
   @ApiProperty({
@@ -160,27 +167,37 @@ export class CreateProductDto {
   @IsObject()
   dimensions?: { length: number; width: number; height: number };
 
-  @ApiProperty({ description: 'Brand ID', example: '1', required: false })
-  @IsString()
-  @IsNotEmpty()
-  brandId: string;
+  @ApiProperty({ 
+    description: 'Brand ID', 
+    example: '123e4567-e89b-12d3-a456-426614174000', 
+    required: false 
+  })
+  @IsOptional()
+  @IsUUID()
+  brandId?: string;
 
   @ApiProperty({
     description: 'IDs of attributes linked to the product',
-    type: [Number],
+    type: [String],
     required: false,
-    example: ['1', '3', '7'],
+    example: ['123e4567-e89b-12d3-a456-426614174000', '456e7890-e89b-12d3-a456-426614174000'],
   })
   @IsOptional()
   @IsArray()
+  @IsUUID('4', { each: true })
   @Transform(({ value }) =>
-    typeof value === 'string' ? value.split(',') : (value as string)
+    typeof value === 'string' ? value.split(',') : (value as string[])
   )
   attributes?: string[];
 
-  @ApiProperty({ type: [Number], description: 'Selected attribute option IDs' })
+  @ApiProperty({ 
+    type: [String], 
+    description: 'Selected attribute option IDs',
+    example: ['123e4567-e89b-12d3-a456-426614174000', '456e7890-e89b-12d3-a456-426614174000']
+  })
   @IsArray()
   @IsOptional()
+  @IsUUID('4', { each: true })
   @Transform(({ value }) =>
     typeof value === 'string' ? value.split(',') : (value as string[])
   )

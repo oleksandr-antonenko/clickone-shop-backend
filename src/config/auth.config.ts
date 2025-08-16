@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Global } from '@nestjs/common';
 
 
+@Global()
 @Injectable()
-export class AuthConfigService {
-
+export class AuthConfig {
   get auth0Domain(): string {
     return process.env.AUTH0_DOMAIN || '';
   }
@@ -21,6 +21,7 @@ export class AuthConfigService {
 
   get defaultPublicRoutes(): string[] {
     return [
+      'post:/api/internal/auth0/user-created',
       'get:/api/products',
       'get:/api/products/*',
       'get:/api/category',
@@ -33,6 +34,9 @@ export class AuthConfigService {
       'get:/api/attributes/values',
       'get:/api/settings',
       'get:/api/settings/*',
+      'get:/api/customers',
+      'get:/api/customers/all/statistics',
+      'get:/api/users/roles',
       'get:/api',
       'get:/docs',
       'get:/docs/*',

@@ -101,6 +101,41 @@ export class UserController {
     return this.userService.getAllUsers(page, limit);
   }
 
+  @Get('roles')
+  @ApiOperation({
+    summary: 'Get available roles (Authenticated users)',
+    description: 'Retrieve list of all available roles in the system. Accessible to all authenticated users.'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Available roles retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        roles: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', example: 'admin' },
+              displayName: { type: 'string', example: 'Administrator' },
+              description: { type: 'string', example: 'Full system access' },
+              permissions: { type: 'array', items: { type: 'string' } }
+            }
+          }
+        },
+        total: { type: 'number', example: 5 }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Authentication required'
+  })
+  async getAvailableRoles() {
+    return this.userService.getAvailableRoles();
+  }
+
   @Get('statistics')
   @ApiOperation({
     summary: 'Get user statistics',

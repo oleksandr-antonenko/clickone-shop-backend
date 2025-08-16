@@ -23,31 +23,23 @@ export class InternalService {
     private readonly orderRepository: Repository<Order>,
   ) {}
 
-
-  async handleAuth0UserCreated(webhookData: Auth0WebhookDto): Promise<UserResponseDto> {
+  async handleAuth0UserCreated(webhookData: Auth0WebhookDto): Promise<{ ok: boolean; created: boolean }> {
     this.logger.log(`Auth0 webhook received for user: ${webhookData.sub}`);
     this.logger.debug(`Webhook data: ${JSON.stringify(webhookData, null, 2)}`);
     
     try {
       this.validateWebhookData(webhookData);
       
-      const existingUser = await this.checkForExistingUser(webhookData);
+      const { user, wasCreated } = await this.findOrCreateByAuth0Id(webhookData);
       
-      if (existingUser) {
-        this.logger.log(`🔄 Updating last login for existing user: ${existingUser.id}`);
-        existingUser.lastLoginAt = new Date();
-        const updatedUser = await this.userRepository.save(existingUser);
-        this.logger.log(`✅ Last login updated for user: ${updatedUser.id}`);
-        return this.mapToResponseDto(updatedUser);
-      }
+      user.lastLoginAt = new Date();
+      await this.userRepository.save(user);
       
-      const user = await this.createUserAndCustomerFromWebhook(webhookData);
-      
-      this.logger.log(`✅ User and Customer created successfully: User ID ${user.id}, Customer ID ${user.customer?.id}`);
-      return this.mapToResponseDto(user);
+      this.logger.log(`User ${wasCreated ? 'created' : 'updated'}: ${user.id}`);
+      return { ok: true, created: wasCreated };
       
     } catch (error) {
-      this.logger.error(`❌ Failed to create user from Auth0 webhook: ${error.message}`, error.stack);
+      this.logger.error(`Failed to process Auth0 webhook: ${error.message}`, error.stack);
       
       if (error instanceof ConflictException) {
         throw error;
@@ -56,10 +48,9 @@ export class InternalService {
         throw error;
       }
       
-      throw new BadRequestException(`Failed to create user: ${error.message}`);
+      throw new BadRequestException(`Failed to process webhook: ${error.message}`);
     }
   }
-
 
   async completeOrder(completeOrderData: CompleteOrderDto): Promise<Order> {
     this.logger.log(`Completing order: ${completeOrderData.orderId}`);
@@ -87,11 +78,13 @@ export class InternalService {
 
       const updatedOrder = await this.orderRepository.save(order);
       
+      await this.updateCustomerOrderStatistics(order);
+      
       this.logger.log(`Order completed successfully: ${order.id}`);
       return updatedOrder;
 
     } catch (error) {
-      this.logger.error(`❌ Failed to complete order: ${error.message}`, error.stack);
+      this.logger.error(`Failed to complete order: ${error.message}`, error.stack);
       
       if (error instanceof NotFoundException) {
         throw error;
@@ -101,6 +94,54 @@ export class InternalService {
       }
       
       throw new BadRequestException(`Failed to complete order: ${error.message}`);
+    }
+  }
+
+  private async updateCustomerOrderStatistics(order: Order): Promise<void> {
+    if (!order.customerId) {
+      this.logger.debug('Order has no customerId, skipping statistics update');
+      return;
+    }
+
+    try {
+      const customer = await this.customerRepository.findOne({
+        where: { id: order.customerId },
+        relations: ['user'],
+      });
+
+      if (!customer) {
+        this.logger.warn(`Customer not found for order: ${order.id}`);
+        return;
+      }
+      const allOrders = await this.orderRepository.find({
+        where: { customerId: customer.id },
+        select: ['total', 'status'],
+      });
+
+      const completedOrders = allOrders.filter(o => o.status === OrderStatus.Delivered);
+      const totalOrders = completedOrders.length;
+      const totalSpent = completedOrders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+      const averageOrderValue = totalOrders > 0 ? totalSpent / totalOrders : 0;
+
+      customer.totalOrders = totalOrders;
+      customer.totalSpent = totalSpent;
+      customer.averageOrderValue = averageOrderValue;
+      customer.lastOrderDate = new Date();
+
+      if (totalOrders === 0) {
+        customer.segment = 'new';
+      } else if (totalSpent >= 10000) {
+        customer.segment = 'vip';
+      } else if (totalSpent >= 1000) {
+        customer.segment = 'regular';
+      } else {
+        customer.segment = 'new';
+      }
+
+      await this.customerRepository.save(customer);
+      this.logger.debug(`Customer statistics updated: ${customer.id}, orders: ${totalOrders}, spent: ${totalSpent}`);
+    } catch (error) {
+      this.logger.error(`Failed to update customer statistics: ${error.message}`);
     }
   }
 
@@ -137,45 +178,40 @@ export class InternalService {
       throw new BadRequestException('Auth0 ID (sub) is required');
     }
     if (!webhookData.email) {
-      this.logger.error('❌ Email is missing');
+      this.logger.error('Email is missing');
       throw new BadRequestException('Email is required');
     }
     
     this.logger.debug('Webhook data validation passed');
   }
 
-
-  private async checkForExistingUser(webhookData: Auth0WebhookDto): Promise<UserEntity | null> {
-    this.logger.debug(`Checking for existing User with Auth0 ID: ${webhookData.sub}`);
-    
-    const existingByAuth0Id = await this.userRepository.findOne({
+  private async findOrCreateByAuth0Id(webhookData: Auth0WebhookDto): Promise<{ user: UserEntity; wasCreated: boolean }> {
+    let user = await this.userRepository.findOne({
       where: { auth0Id: webhookData.sub },
       relations: ['customer'],
     });
-    if (existingByAuth0Id) {
+
+    if (user) {
       this.logger.debug(`Found existing User with Auth0 ID: ${webhookData.sub}`);
-      return existingByAuth0Id;
+      return { user, wasCreated: false };
     }
 
-    this.logger.debug(`🔍 Checking for existing User with email: ${webhookData.email}`);
-    const existingByEmail = await this.userRepository.findOne({
+    this.logger.debug(`Checking for existing User with email: ${webhookData.email}`);
+    user = await this.userRepository.findOne({
       where: { email: webhookData.email },
       relations: ['customer'],
     });
-    if (existingByEmail) {
-      this.logger.debug(`Found existing User with email: ${webhookData.email}`);
-      return existingByEmail;
+
+    if (user) {
+      this.logger.debug(`Found existing User with email: ${webhookData.email}, updating auth0Id`);
+      user.auth0Id = webhookData.sub;
+      await this.userRepository.save(user);
+      return { user, wasCreated: false };
     }
-    
-    this.logger.debug('No existing User found');
-    return null;
-  }
 
-
-  private async createUserAndCustomerFromWebhook(webhookData: Auth0WebhookDto): Promise<UserEntity> {
-    this.logger.debug(`🏗️ Creating new User and Customer with Auth0 ID: ${webhookData.sub}`);
+    this.logger.debug(`Creating new User with Auth0 ID: ${webhookData.sub}`);
     
-    const user = this.userRepository.create({
+    const newUser = this.userRepository.create({
       auth0Id: webhookData.sub,
       email: webhookData.email,
       firstName: this.extractFirstName(webhookData),
@@ -186,35 +222,10 @@ export class InternalService {
       lastLoginAt: new Date(),
     });
 
-    const savedUser = await this.userRepository.save(user);
-    this.logger.debug(`💾 User saved to database: ${savedUser.id}`);
+    const savedUser = await this.userRepository.save(newUser);
+    this.logger.debug(`New User saved to database: ${savedUser.id}`);
 
-    const customer = this.customerRepository.create({
-      user: savedUser,
-      email: webhookData.email,
-      firstName: this.extractFirstName(webhookData),
-      lastName: this.extractLastName(webhookData),
-      segment: 'new',
-      status: 'active',
-      emailVerified: false,
-      phoneVerified: false,
-      marketingConsent: false,
-      preferredLanguage: 'uk',
-      preferredCurrency: 'UAH',
-      totalOrders: 0,
-      totalSpent: 0,
-      averageOrderValue: 0,
-      tags: []
-    });
-
-    const savedCustomer = await this.customerRepository.save(customer);
-    this.logger.debug(`💾 Customer (shop customer) saved to database: ${savedCustomer.id}`);
-
-    savedUser.customer = savedCustomer;
-    const updatedUser = await this.userRepository.save(savedUser);
-    this.logger.debug(`✅ User customer relationship updated: ${updatedUser.id}`);
-
-    return updatedUser;
+    return { user: savedUser, wasCreated: true };
   }
 
 

@@ -15,7 +15,7 @@ import { FamiliesModule } from './catalog/families/families.module';
 import { ProductModule } from './catalog/product/product.module';
 import { SettingsModule } from './catalog/settings/settings.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
-import { AuthConfigService } from './config/auth.config';
+import { AuthConfig } from './config/auth.config';
 import { getTypeOrmConfig } from './config/typeorm.config';
 import { OrderModule } from './order/order.module';
 import { CustomerModule } from './customer/customer.module';
@@ -52,7 +52,7 @@ import { InternalModule } from './internal/internal.module';
   controllers: [AppController],
   providers: [
     AppService,
-    AuthConfigService,
+    AuthConfig,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

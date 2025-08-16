@@ -1,24 +1,22 @@
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci
-
-COPY . .
-RUN npm run build
-
-
+# Minimal production runtime (expects local build)
 FROM node:20-alpine
 
-ENV NODE_ENV=production
 WORKDIR /app
 
+# Security: run as non-root
+RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
+
+ENV NODE_ENV=production
+ENV PORT=3030
+
+# Install only production dependencies
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --only=production --silent && npm cache clean --force
 
-COPY --from=builder /app/dist ./dist
+# Copy only compiled output
+COPY dist/ ./dist/
 
-EXPOSE 3000
-CMD ["node", "dist/main"]
+USER nestjs
 
+EXPOSE 3030
+CMD ["node", "dist/main"] 

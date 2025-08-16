@@ -1,0 +1,13 @@
+name: Deploy to Development
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  deploy-dev:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: development
+    secrets: inherit 

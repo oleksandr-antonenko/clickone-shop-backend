@@ -155,40 +155,6 @@ export class ProductService {
     }
   }
 
-  private async saveFileToDisc(file: Express.Multer.File): Promise<string> {
-    const uploadsDir = path.join(process.cwd(), 'uploads', 'products');
-    const fileExtension = path.extname(file.originalname);
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}${fileExtension}`;
-    const filePath = path.join(uploadsDir, fileName);
-
-    await fs.writeFile(filePath, file.buffer);
-
-    return path.join('uploads', 'products', fileName);
-  }
-
-  private async ensureUploadsDir(): Promise<void> {
-    const uploadsDir = path.join(process.cwd(), 'uploads', 'products');
-    try {
-      await fs.mkdir(uploadsDir, { recursive: true });
-    } catch (error) {
-      console.error('Failed to create uploads directory:', error);
-    }
-  }
-
-  private async deleteFile(filePath: string): Promise<void> {
-    try {
-      const fullPath = path.join(process.cwd(), filePath);
-      await fs.unlink(fullPath);
-    } catch (error) {
-      const err = error as Error;
-      this.logger.error(
-        `FindAllProductFamilies error: ${err.message}`,
-        err.stack
-      );
-      console.warn('Failed to delete file:', filePath);
-    }
-  }
-
   async findAll(query: Pagination) {
     try {
       const processedQuery = this.processQuery(query, this.request.query);
@@ -300,7 +266,6 @@ export class ProductService {
         if (product.image) {
           await this.deleteFile(product.image);
         }
-
         imagePath = await this.saveFileToDisc(file);
       }
 
@@ -390,6 +355,47 @@ export class ProductService {
         throw error;
       }
       throw new BadRequestException('Failed to delete product');
+    }
+  }
+
+  private async ensureUploadsDir(): Promise<void> {
+    const isLambda = process.env.AWS_LAMBDA_FUNCTION_NAME;
+    const baseDir = isLambda ? '/tmp' : process.cwd();
+    const uploadsDir = path.join(baseDir, 'uploads', 'products');
+    
+    try {
+      await fs.mkdir(uploadsDir, { recursive: true });
+    } catch (error) {
+      console.error('Failed to create uploads directory:', error);
+    }
+  }
+
+  private async saveFileToDisc(file: Express.Multer.File): Promise<string> {
+    const isLambda = process.env.AWS_LAMBDA_FUNCTION_NAME;
+    const baseDir = isLambda ? '/tmp' : process.cwd();
+    const uploadsDir = path.join(baseDir, 'uploads', 'products');
+    const fileExtension = path.extname(file.originalname);
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}${fileExtension}`;
+    const filePath = path.join(uploadsDir, fileName);
+
+    await fs.writeFile(filePath, file.buffer);
+
+    return path.join('uploads', 'products', fileName);
+  }
+
+  private async deleteFile(filePath: string): Promise<void> {
+    try {
+      const isLambda = process.env.AWS_LAMBDA_FUNCTION_NAME;
+      const baseDir = isLambda ? '/tmp' : process.cwd();
+      const fullPath = path.join(baseDir, filePath);
+      await fs.unlink(fullPath);
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(
+        `FindAllProductFamilies error: ${err.message}`,
+        err.stack
+      );
+      console.warn('Failed to delete file:', filePath);
     }
   }
 }

@@ -1,0 +1,49 @@
+service: nestjs-lambda
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  architecture: arm64
+  region: eu-central-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    DATABASE_URL: ${env:DATABASE_URL}
+    PORT: 3030
+    # Swagger disabled by default for faster cold starts
+    ENABLE_SWAGGER: false
+
+package:
+  excludeDevDependencies: true
+  patterns:
+    - dist/**
+    - node_modules/**
+    - node_modules/reflect-metadata/**
+    - node_modules/@vendia/serverless-express/**
+    - node_modules/@nestjs/**
+    - node_modules/typeorm/**
+    - node_modules/pg/**
+    - package.json
+    - '!src/**'
+    - '!test/**'
+    - '!**/*.md'
+    - '!uploads/**'
+    - '!Dockerfile*'
+    - '!docker-compose.yaml'
+    - '!.git/**'
+    - '!.github/**'
+
+functions:
+  api:
+    handler: dist/main.handler
+    timeout: 30
+    memorySize: 3008  # Increased from 1024 to 2048 for faster initialization
+    reservedConcurrency: 5  # Limit concurrent executions to avoid overwhelming DB
+    provisionedConcurrency: 2  # Keep 1 instance warm to avoid cold starts
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+      - httpApi:
+          path: /
+          method: ANY

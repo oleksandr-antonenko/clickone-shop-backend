@@ -1,0 +1,23 @@
+# Lambda production runtime
+FROM public.ecr.aws/lambda/nodejs:20
+
+# Set production environment variables
+ENV NODE_ENV=production
+ENV PORT=3030
+
+# Copy package files first for better Docker layer caching
+COPY package*.json ./
+
+# Install only production dependencies with optimizations
+RUN npm ci --only=production --silent --no-audit --no-fund && \
+    npm cache clean --force && \
+    rm -rf /tmp/*
+
+# Copy pre-built application (build locally before Docker)
+COPY dist/ ./dist/
+
+# Set proper permissions for Lambda
+RUN chmod -R 755 ${LAMBDA_TASK_ROOT}
+
+# Set the unified Lambda handler (from main.ts)
+CMD ["dist/main.handler"] 

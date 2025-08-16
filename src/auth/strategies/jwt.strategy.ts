@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import * as jwt from 'jsonwebtoken';
-import * as jwksRsa from 'jwks-rsa';
+import jwt from 'jsonwebtoken';
+import jwksRsa from 'jwks-rsa';
 
 interface DecodedToken extends jwt.JwtPayload {
   gty?: string;

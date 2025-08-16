@@ -1,0 +1,113 @@
+name: Deploy NestJS API to AWS Lambda
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      image_tag:
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set environment variables
+        id: set-vars
+        run: |
+          echo "ECR_REPOSITORY=${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPO_NAME }}" >> $GITHUB_ENV
+          if [ -z "${{ inputs.image_tag }}" ]; then
+            echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          else
+            echo "IMAGE_TAG=${{ inputs.image_tag }}" >> $GITHUB_ENV
+          fi
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run database migrations
+        run: |
+          # Install dependencies for migration
+          npm ci
+          
+          # Run TypeORM migrations
+          npm run migration:run
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Build and push Docker image to ECR
+        run: |
+          docker buildx build --platform linux/arm64 --provenance=false \
+            -t ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }} \
+            -t ${{ env.ECR_REPOSITORY }}:latest \
+            -f Dockerfile.lambda --push .
+
+      - name: Update Lambda function
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ vars.LAMBDA_FUNCTION_NAME }} \
+            --image-uri ${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+
+      - name: Update Lambda environment variables
+        run: |
+          aws lambda update-function-configuration \
+            --function-name ${{ vars.LAMBDA_FUNCTION_NAME }} \
+            --environment "Variables={DATABASE_URL=${{ secrets.DATABASE_URL }},NODE_ENV=production,PORT=3030}"
+
+      - name: Wait for Lambda deployment to complete
+        run: |
+          while true; do
+            STATE=$(aws lambda get-function \
+              --function-name ${{ vars.LAMBDA_FUNCTION_NAME }} \
+              --query 'Configuration.LastUpdateStatus' \
+              --output text)
+            echo "Current status: $STATE"
+            [[ "$STATE" != "InProgress" ]] && break
+            echo "Waiting for update to complete..."
+            sleep 5
+          done
+
+      - name: Publish new Lambda version
+        run: |
+          aws lambda publish-version --function-name ${{ vars.LAMBDA_FUNCTION_NAME }}
+
+      - name: Test deployment
+        run: |
+          # Get Lambda function URL if exists
+          FUNCTION_URL=$(aws lambda get-function-url-config \
+            --function-name ${{ vars.LAMBDA_FUNCTION_NAME }} \
+            --query FunctionUrl --output text 2>/dev/null || echo "")
+          
+          if [ ! -z "$FUNCTION_URL" ]; then
+            echo "Testing Lambda Function URL: $FUNCTION_URL"
+            curl -f "$FUNCTION_URL/api" || echo "Health check failed"
+          else
+            echo "No Function URL configured"
+          fi 

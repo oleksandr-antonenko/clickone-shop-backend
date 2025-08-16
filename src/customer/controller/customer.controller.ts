@@ -1,19 +1,119 @@
-import { Controller, Get, Patch, Req, UseGuards, Body, Post } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { Controller, Get, Patch, Req, UseGuards, Body, Post, Query, Request } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { CustomerService } from '../service/customer.service';
-import { CustomerResponseDto } from '../dto/customer-response.dto';
-import { RequestUser } from '~/user/interface/request-user.interface';
 import { UpdateCustomerProfileDto } from '../dto/update-customer-profile.dto';
 import { PublicRead } from '~/common/decorators/public.decorator';
+import { CreateCustomerDto } from '../dto/create-customer.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RequestUser } from '../../user/interface/request-user.interface';
+import { CustomerEntity } from '../entities/customer.entity';
 
-
-@ApiTags('Customer Profile')
-@Controller('profile')
+@ApiTags('Customers')
+@Controller('customers')
 @ApiBearerAuth()
 export class CustomerController {
-   constructor(private readonly customerService: CustomerService) {}
+  constructor(private readonly customerService: CustomerService) {}
+
+  @Post('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: 'Create customer profile for current user',
+    description: 'Creates a customer profile for the authenticated user. Idempotent - if customer already exists, returns existing profile.'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Customer profile created or retrieved successfully',
+    type: CustomerEntity
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid request data'
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Authentication required'
+  })
+  async createCurrentUserCustomer(
+    @Request() req: any,
+    @Body() createCustomerDto: CreateCustomerDto
+  ) {
+    const user = req.user as RequestUser;
+    return this.customerService.createCustomer({
+      ...createCustomerDto,
+      email: user.email || createCustomerDto.email,
+      firstName: createCustomerDto.firstName,
+      lastName: createCustomerDto.lastName,
+    });
+  }
 
   @Get()
+  @ApiOperation({ 
+    summary: 'Get all customers (Authenticated users)',
+    description: 'Retrieve all customers with pagination, search, and filtering by status/segment. Accessible to all authenticated users.'
+  })
+  @ApiQuery({ 
+    name: 'page', 
+    required: false, 
+    description: 'Page number (default: 1)',
+    type: Number
+  })
+  @ApiQuery({ 
+    name: 'limit', 
+    required: false, 
+    description: 'Items per page (default: 10)',
+    type: Number
+  })
+  @ApiQuery({ 
+    name: 'search', 
+    required: false, 
+    description: 'Search by email, firstName, or lastName',
+    type: String
+  })
+  @ApiQuery({ 
+    name: 'status', 
+    required: false, 
+    description: 'Filter by status',
+    enum: ['active', 'inactive', 'blocked']
+  })
+  @ApiQuery({ 
+    name: 'segment', 
+    required: false, 
+    description: 'Filter by customer segment',
+    enum: ['vip', 'regular', 'new', 'inactive']
+  })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Customers retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        customers: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/CustomerResponseDto' }
+        },
+        total: { type: 'number' },
+        page: { type: 'number' },
+        limit: { type: 'number' },
+        filters: { type: 'object' },
+        pagination: { type: 'object' }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'Unauthorized - Authentication required'
+  })
+  async getAllCustomers(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('search') search?: string,
+    @Query('status') status?: string,
+    @Query('segment') segment?: string
+  ) {
+    return this.customerService.getAllCustomers(page, limit, search, status, segment);
+  }
+
+  @Get('profile')
   @ApiOperation({ 
     summary: 'Get my customer profile',
     description: 'Retrieve the current authenticated user\'s customer profile information. This endpoint requires authentication and returns detailed customer data including personal information, preferences, addresses, and statistics. The customer profile is automatically created when a user first logs in through Auth0. This endpoint is used by the frontend to display user profile information and manage account settings.'
@@ -21,7 +121,7 @@ export class CustomerController {
   @ApiResponse({ 
     status: 200, 
     description: 'Customer profile retrieved successfully. Returns complete customer information including personal details, preferences, and statistics.',
-    type: CustomerResponseDto
+    type: CustomerEntity
   })
   @ApiResponse({ 
     status: 401, 
@@ -31,7 +131,7 @@ export class CustomerController {
     status: 404, 
     description: 'Customer profile not found. This may happen if the user exists in the users table but does not have an associated customer profile. The profile will be created automatically on next login.'
   })
-  async getMyProfile(@Req() req: { user: RequestUser }): Promise<CustomerResponseDto> {
+  async getMyProfile(@Req() req: { user: RequestUser }): Promise<CustomerEntity> {
     return this.customerService.getCurrentUserCustomer(req.user);
   }
 
@@ -87,7 +187,7 @@ export class CustomerController {
   @ApiResponse({ 
     status: 200, 
     description: 'Customer profile updated successfully. The changes are immediately reflected in the customer profile.',
-    type: CustomerResponseDto
+    type: CustomerEntity
   })
   @ApiResponse({ 
     status: 400, 
@@ -104,7 +204,7 @@ export class CustomerController {
   async updateMyProfile(
     @Req() req: { user: RequestUser },
     @Body() updateData: UpdateCustomerProfileDto
-  ): Promise<CustomerResponseDto> {
+  ): Promise<CustomerEntity> {
     return this.customerService.updateCurrentUserCustomer(req.user, updateData);
   }
 
@@ -160,7 +260,7 @@ export class CustomerController {
   @ApiResponse({
     status: 201,
     description: 'Customer registered successfully. The customer profile has been created and is ready for use.',
-    type: CustomerResponseDto
+    type: CustomerEntity
   })
   @ApiResponse({
     status: 400,
@@ -190,12 +290,18 @@ export class CustomerController {
 
   @Get('statistics')
   @ApiOperation({ 
-    summary: 'Get customer statistics',
+    summary: 'Get my customer statistics',
     description: 'Retrieve comprehensive customer statistics for the current authenticated user. This endpoint provides detailed analytics about the customer\'s shopping behavior including total orders, spending patterns, average order value, and segment information. The statistics are calculated in real-time from the customer\'s order history and profile data. This information is used by the frontend to display customer dashboard and analytics.'
+  })
+
+  @Get('all/statistics')
+  @ApiOperation({ 
+    summary: 'Get all customers statistics (Authenticated users)',
+    description: 'Retrieve statistics for all customers including total customers, VIP customers, new customers, and average check. Accessible to all authenticated users.'
   })
   @ApiResponse({ 
     status: 200, 
-    description: 'Customer statistics retrieved successfully. Returns detailed analytics about the customer\'s shopping behavior and profile.',
+    description: 'My customer statistics retrieved successfully. Returns detailed analytics about the customer\'s shopping behavior and profile.',
     schema: {
       type: 'object',
       properties: {
@@ -254,5 +360,67 @@ export class CustomerController {
   })
   async getCustomerStatistics(@Req() req: { user: RequestUser }) {
     return this.customerService.getCustomerStatistics(req.user);
+  }
+
+  @ApiResponse({ 
+    status: 200, 
+    description: 'All customers statistics retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        totalCustomers: {
+          type: 'number',
+          example: 2,
+          description: 'Total number of customers'
+        },
+        vipCustomers: {
+          type: 'number',
+          example: 1,
+          description: 'Number of VIP customers'
+        },
+        newCustomers: {
+          type: 'number',
+          example: 0,
+          description: 'Number of new customers'
+        },
+        averageCheck: {
+          type: 'number',
+          example: 3000,
+          description: 'Average check amount in USD'
+        },
+        activeCustomers: {
+          type: 'number',
+          example: 2,
+          description: 'Number of active customers'
+        },
+        inactiveCustomers: {
+          type: 'number',
+          example: 0,
+          description: 'Number of inactive customers'
+        },
+        segments: {
+          type: 'object',
+          properties: {
+            vip: { type: 'number', example: 1 },
+            regular: { type: 'number', example: 1 },
+            new: { type: 'number', example: 0 },
+            inactive: { type: 'number', example: 0 }
+          }
+        },
+        lastUpdated: {
+          type: 'string',
+          format: 'date-time',
+          example: '2024-01-15T10:30:00.000Z',
+          description: 'When statistics were last updated'
+        }
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: 'Unauthorized - Authentication required'
+  })
+  async getAllCustomersStatistics() {
+    return this.customerService.getAllCustomersStatistics();
   }
 }

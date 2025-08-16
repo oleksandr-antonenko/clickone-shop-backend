@@ -83,13 +83,13 @@ export class AdminManagementService {
 
 
   async getAllAdminsSimple(): Promise<any[]> {
-    this.logger.log('🔍 Getting all admins (simple)');
+    this.logger.log('Getting all admins (simple)');
     
     const admins = await this.adminRepository.find({
       select: ['id', 'auth0Id', 'email', 'firstName', 'lastName', 'roles', 'status', 'isSuperAdmin']
     });
 
-    this.logger.log(`✅ Retrieved ${admins.length} admins`);
+    this.logger.log(`Retrieved ${admins.length} admins`);
     return admins;
   }
 
@@ -154,7 +154,7 @@ export class AdminManagementService {
     });
 
     const savedAdmin = await this.adminRepository.save(admin);
-    this.logger.log(`✅ Admin created successfully: ${savedAdmin.id}`);
+    this.logger.log(`Admin created successfully: ${savedAdmin.id}`);
 
     if (adminData.roles && adminData.roles.length > 0) {
       await this.permissionService.createDefaultPermissions(savedAdmin.id, adminData.roles[0]);
@@ -165,7 +165,7 @@ export class AdminManagementService {
 
 
   async updateAdmin(id: string, updateData: Partial<AdminEntity>): Promise<AdminResponseDto> {
-    this.logger.log(`🔄 Updating admin: ${id}`);
+    this.logger.log(`Updating admin: ${id}`);
 
     const admin = await this.findById(id);
     if (!admin) {
@@ -180,13 +180,13 @@ export class AdminManagementService {
     Object.assign(admin, updateData);
     const updatedAdmin = await this.adminRepository.save(admin);
 
-    this.logger.log(`✅ Admin updated successfully: ${id}`);
+    this.logger.log(`Admin updated successfully: ${id}`);
     return this.mapToResponseDto(updatedAdmin);
   }
 
 
   async updateLastLogin(auth0Id: string): Promise<void> {
-    this.logger.debug(`🔄 Updating last login for admin: ${auth0Id}`);
+    this.logger.debug(`Updating last login for admin: ${auth0Id}`);
 
     const admin = await this.findByAuth0Id(auth0Id);
     if (admin) {

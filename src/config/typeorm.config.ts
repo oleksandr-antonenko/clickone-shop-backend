@@ -14,7 +14,12 @@ export const getTypeOrmConfig = (): DataSourceOptions => {
       migrations: [__dirname + '/../migrations/*{.ts,.js}'],
       synchronize: false,
       ssl: {
-        rejectUnauthorized: false, 
+        rejectUnauthorized: false,
+      },
+      extra: {
+        ssl: {
+          rejectUnauthorized: false,
+        },
       },
     };
   }

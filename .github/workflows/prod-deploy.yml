@@ -1,0 +1,19 @@
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Image tag to deploy (optional, defaults to latest commit)'
+        required: false
+        type: string
+
+jobs:
+  deploy-prod:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: production
+      image_tag: ${{ inputs.image_tag }}
+    secrets: inherit 

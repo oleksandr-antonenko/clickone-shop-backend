@@ -2,19 +2,102 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
-import { join } from 'path';
 import { AppModule } from '~/app.module';
-import { CategoryModule } from '~/catalog/category/category.module';
-
 import { CorsConfigService } from './config/cors.config';
 
-async function bootstrap() {
+const serverlessExpress = require('@vendia/serverless-express');
+
+const isAiTag = (tag: string): boolean => /\bai\b/i.test(tag) || /AI Integration/i.test(tag);
+
+const filterSwaggerDocument = (
+  doc: any,
+  options: { includeAi: boolean }
+): any => {
+  const shouldKeepOperation = (operation: any): boolean => {
+    const tags: string[] = Array.isArray(operation?.tags) ? operation.tags : [];
+    const hasAi = tags.some((t) => isAiTag(String(t)));
+    return options.includeAi ? hasAi : !hasAi;
+  };
+
+  const filteredPaths: Record<string, any> = {};
+  for (const [path, methods] of Object.entries<any>(doc.paths ?? {})) {
+    const keptMethods: Record<string, any> = {};
+    for (const [method, operation] of Object.entries<any>(methods)) {
+      if (shouldKeepOperation(operation)) {
+        keptMethods[method] = operation;
+      }
+    }
+    if (Object.keys(keptMethods).length > 0) {
+      filteredPaths[path] = keptMethods;
+    }
+  }
+
+  const filteredTags = (doc.tags ?? []).filter((t: any) => {
+    const name = typeof t === 'string' ? t : t?.name;
+    const hasAi = isAiTag(String(name));
+    return options.includeAi ? hasAi : !hasAi;
+  });
+
+  return {
+    ...doc,
+    paths: filteredPaths,
+    tags: filteredTags,
+  };
+};
+
+async function createApp(minimal: boolean): Promise<NestExpressApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  const PORT = process.env.PORT ?? 3310;
-
+  app.setGlobalPrefix('api');
   const corsConfig = new CorsConfigService();
+
+  if (minimal) {
+    
+    app.enableCors({
+      origin: corsConfig.getAllowedOrigins(),
+      allowedHeaders: corsConfig.getAllowedHeaders(),
+      methods: corsConfig.getAllowedMethods(),
+      credentials: true,
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
+    });
+    
+    const baseConfig = new DocumentBuilder()
+      .setTitle('Clickone Shop Backend API')
+      .setVersion('1.0')
+      .setDescription('API for Clickone Shop Backend')
+      .addBearerAuth()
+      .build();
+
+    const baseDocument = SwaggerModule.createDocument(app, baseConfig, {
+      ignoreGlobalPrefix: false,
+    });
+
+    const publicDocument = filterSwaggerDocument(baseDocument, { includeAi: false });
+    const aiDocument = filterSwaggerDocument(baseDocument, { includeAi: true });
+
+    SwaggerModule.setup('docs', app, publicDocument, {
+      customSiteTitle: 'Clickone Shop API',
+    });
+
+    SwaggerModule.setup('docs/ai', app, aiDocument, {
+      customSiteTitle: 'Clickone Shop API - AI',
+    });
+
+    app.useGlobalPipes(
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: false,
+        transformOptions: { enableImplicitConversion: true },
+      })
+    );
+    
+    await app.init();
+    return app;
+  }
+
+  const PORT = process.env.PORT ?? 3310;
 
   app.enableCors({
     origin: corsConfig.getAllowedOrigins(),
@@ -25,60 +108,54 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
-  app.useStaticAssets(join(process.cwd(), 'uploads'), {
-    prefix: '/uploads/',
-  });
+
 
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: false,
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
+      transformOptions: { enableImplicitConversion: true },
     })
   );
 
-  app.setGlobalPrefix('api');
-
-  const frontendConfig = new DocumentBuilder()
-    .setTitle('Clickone Shop API - Frontend')
+  const baseConfig = new DocumentBuilder()
+    .setTitle('Clickone Shop Backend API')
     .setVersion('1.0')
-    .setDescription('API documentation for frontend developers. Simplified descriptions and examples for web and mobile applications.')
+    .setDescription('API for Clickone Shop Backend')
     .addBearerAuth()
-    .addServer(`http://localhost:${PORT}/api`, 'Development server')
     .build();
 
-  const frontendDocument = SwaggerModule.createDocument(app, frontendConfig, {
-    ignoreGlobalPrefix: true,
+  const baseDocument = SwaggerModule.createDocument(app, baseConfig, {
+    ignoreGlobalPrefix: false,
   });
 
-  SwaggerModule.setup('docs', app, frontendDocument, {
-    customSiteTitle: 'Clickone Shop API - Frontend',
-    customCss: '.swagger-ui .topbar { display: none }',
-  });
+  const publicDocument = filterSwaggerDocument(baseDocument, { includeAi: false });
+  const aiDocument = filterSwaggerDocument(baseDocument, { includeAi: true });
 
-
-  const aiConfig = new DocumentBuilder()
-    .setTitle('Clickone Shop API - AI Integration')
-    .setVersion('1.0')
-    .setDescription('Comprehensive API documentation for AI integrations and automated systems. Includes detailed technical descriptions, error handling, validation rules, and business logic explanations. This documentation focuses on Categories module with detailed technical specifications.')
-    .addBearerAuth()
-    .addServer(`http://localhost:${PORT}/api`, 'Development server')
-    .build();
-
-  const aiDocument = SwaggerModule.createDocument(app, aiConfig, {
-    ignoreGlobalPrefix: true,
-    include: [CategoryModule],
+  SwaggerModule.setup('docs', app, publicDocument, {
+    customSiteTitle: 'Clickone Shop API',
   });
 
   SwaggerModule.setup('docs/ai', app, aiDocument, {
-    customSiteTitle: 'Clickone Shop API - AI Integration (Categories Only)',
-    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Clickone Shop API - AI',
   });
 
   await app.listen(PORT);
+  return app;
 }
 
-void bootstrap();
+if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  void createApp(false);
+}
+
+
+export const handler = process.env.AWS_LAMBDA_FUNCTION_NAME
+  ? async (event: any, context: any) => {
+      context.callbackWaitsForEmptyEventLoop = false;
+      const app = await createApp(true);
+      const expressApp = app.getHttpAdapter().getInstance();
+      const server = serverlessExpress({ app: expressApp });
+      return server(event, context);
+    }
+  : undefined;

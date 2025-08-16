@@ -169,6 +169,57 @@ export class UserService {
     };
   }
 
+  async getAvailableRoles(): Promise<{
+    roles: Array<{
+      name: string;
+      displayName: string;
+      description: string;
+      permissions: string[];
+    }>;
+    total: number;
+  }> {
+    this.logger.log('Getting available roles');
+
+    const roles = [
+      {
+        name: 'user',
+        displayName: 'User',
+        description: 'Basic user with limited access',
+        permissions: ['read:own_profile', 'update:own_profile']
+      },
+      {
+        name: 'admin',
+        displayName: 'Administrator',
+        description: 'System administrator with full access',
+        permissions: ['read:all', 'write:all', 'delete:all', 'manage:users', 'manage:customers']
+      },
+      {
+        name: 'manager',
+        displayName: 'Manager',
+        description: 'Department manager with moderate access',
+        permissions: ['read:all', 'write:limited', 'manage:customers']
+      },
+      {
+        name: 'operator',
+        displayName: 'Operator',
+        description: 'Customer service operator',
+        permissions: ['read:customers', 'write:customers', 'read:orders']
+      },
+      {
+        name: 'viewer',
+        displayName: 'Viewer',
+        description: 'Read-only access to system data',
+        permissions: ['read:all']
+      }
+    ];
+
+    this.logger.log(`Available roles retrieved: ${roles.length} roles`);
+    return {
+      roles,
+      total: roles.length
+    };
+  }
+
   async getUserStatistics(): Promise<{
     totalUsers: number;
     administrators: number;
@@ -287,7 +338,7 @@ export class UserService {
       throw new BadRequestException('Role must be a non-empty string');
     }
 
-    const validRoles = ['admin', 'manager', 'user', 'moderator'];
+    const validRoles = ['admin', 'manager', 'user', 'operator', 'viewer'];
     if (!validRoles.includes(role)) {
       throw new BadRequestException(`Invalid role: ${role}. Valid roles are: ${validRoles.join(', ')}`);
     }

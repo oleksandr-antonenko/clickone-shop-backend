@@ -4,7 +4,6 @@ import { AdminService } from '../service/admin.service';
 import { AdminManagementService } from '../service/admin-management.service';
 import { PermissionService } from '../service/permission.service';
 import { AdminUsersResponseDto } from '../dto/admin-users-response.dto';
-import { AdminCustomersResponseDto } from '../dto/admin-customers-response.dto';
 import { AdminAdminsResponseDto } from '../dto/admin-admins-response.dto';
 import { AdminUpdateUserRolesDto } from '../dto/update-user-roles.dto';
 import { UpdateCustomerDto } from '../dto/update-customer.dto';
@@ -87,136 +86,9 @@ export class AdminController {
     return this.adminService.getAllUsers(page, limit, search, role, status);
   }
 
-  @Get('customers')
-  @CheckPermission(ResourceType.CUSTOMERS, PermissionAction.READ)
-  @ApiOperation({ 
-    summary: 'Get all customers (Admin only)',
-    description: 'Retrieve all customers with pagination and advanced filtering. Admin access required.'
-  })
-  @ApiQuery({ 
-    name: 'page', 
-    required: false, 
-    description: 'Page number (default: 1)',
-    type: Number
-  })
-  @ApiQuery({ 
-    name: 'limit', 
-    required: false, 
-    description: 'Items per page (default: 10)',
-    type: Number
-  })
-  @ApiQuery({ 
-    name: 'search', 
-    required: false, 
-    description: 'Search by email, firstName, or lastName',
-    type: String
-  })
-  @ApiQuery({ 
-    name: 'status', 
-    required: false, 
-    description: 'Filter by status',
-    enum: ['active', 'inactive', 'blocked']
-  })
-  @ApiQuery({ 
-    name: 'segment', 
-    required: false, 
-    description: 'Filter by customer segment',
-    enum: ['vip', 'regular', 'new', 'inactive']
-  })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'Customers retrieved successfully',
-    type: AdminCustomersResponseDto
-  })
-  @ApiResponse({ 
-    status: 401, 
-    description: 'Unauthorized - Admin access required'
-  })
-  @ApiResponse({ 
-    status: 403, 
-    description: 'Forbidden - Insufficient permissions'
-  })
-  async getAllCustomers(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
-    @Query('search') search?: string,
-    @Query('status') status?: string,
-    @Query('segment') segment?: string
-  ): Promise<AdminCustomersResponseDto> {
-    return this.adminService.getAllCustomers(page, limit, search, status, segment);
-  }
 
-  @Get('customers/statistics')
-  @CheckPermission(ResourceType.CUSTOMERS, PermissionAction.READ)
-  @ApiOperation({ 
-    summary: 'Get all customers statistics (Admin only)',
-    description: 'Retrieve statistics for all customers including total customers, VIP customers, new customers, and average check'
-  })
-  @ApiResponse({ 
-    status: 200, 
-    description: 'All customers statistics retrieved successfully',
-    schema: {
-      type: 'object',
-      properties: {
-        totalCustomers: {
-          type: 'number',
-          example: 2,
-          description: 'Total number of customers'
-        },
-        vipCustomers: {
-          type: 'number',
-          example: 1,
-          description: 'Number of VIP customers'
-        },
-        newCustomers: {
-          type: 'number',
-          example: 0,
-          description: 'Number of new customers'
-        },
-        averageCheck: {
-          type: 'number',
-          example: 3000,
-          description: 'Average check amount in USD'
-        },
-        activeCustomers: {
-          type: 'number',
-          example: 2,
-          description: 'Number of active customers'
-        },
-        inactiveCustomers: {
-          type: 'number',
-          example: 0,
-          description: 'Number of inactive customers'
-        },
-        segments: {
-          type: 'object',
-          properties: {
-            vip: { type: 'number', example: 1 },
-            regular: { type: 'number', example: 1 },
-            new: { type: 'number', example: 0 },
-            inactive: { type: 'number', example: 0 }
-          }
-        },
-        lastUpdated: {
-          type: 'string',
-          format: 'date-time',
-          example: '2024-01-15T10:30:00.000Z',
-          description: 'When statistics were last updated'
-        }
-      }
-    }
-  })
-  @ApiResponse({ 
-    status: 401, 
-    description: 'Unauthorized - Admin access required'
-  })
-  @ApiResponse({ 
-    status: 403, 
-    description: 'Forbidden - Insufficient permissions'
-  })
-  async getAllCustomersStatistics() {
-    return this.adminService.getAllCustomersStatistics();
-  }
+
+
 
   @Get('admins')
   @CheckPermission(ResourceType.ADMINS, PermissionAction.READ)
