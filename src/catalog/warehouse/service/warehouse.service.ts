@@ -85,6 +85,15 @@ export class WarehouseService {
         updatedWarehouse.availableQuantity =
           warehouse.availableQuantity - quantity;
       }
+      if (
+        status === OrderStatus.Cancelled ||
+        status === OrderStatus.Processing
+      ) {
+        updatedWarehouse.reservedQuantity =
+          warehouse.reservedQuantity - quantity;
+        updatedWarehouse.availableQuantity =
+          warehouse.availableQuantity + quantity;
+      }
       if (status === OrderStatus.Shipped) {
         if (warehouse.reservedQuantity < quantity) {
           throw new BadRequestException(

@@ -226,7 +226,12 @@ export class OrderService {
         throw new NotFoundException('Order not found');
       }
 
-      if (updateOrderDto.status === OrderStatus.Pending) {
+      if (
+        updateOrderDto.status === OrderStatus.Pending ||
+        existingOrder.status === OrderStatus.Cancelled ||
+        existingOrder.status === OrderStatus.Delivered ||
+        existingOrder.status === OrderStatus.Returned
+      ) {
         throw new ForbiddenException('Cannot change status');
       }
 
@@ -270,15 +275,26 @@ export class OrderService {
         throw new ForbiddenException('Cannot change status');
       }
 
-      if (
-        updateOrderDto.status === OrderStatus.Cancelled &&
-        existingOrder.status !== OrderStatus.Delivered
-      ) {
-        throw new ForbiddenException('Cannot change status');
+      if (updateOrderDto.status === OrderStatus.Cancelled) {
+        if (existingOrder.status === OrderStatus.Shipped) {
+          throw new ForbiddenException('Cannot change status');
+        }
+        if (
+          existingOrder.status === OrderStatus.Confirmed ||
+          existingOrder.status === OrderStatus.Processing
+        ) {
+          for (const item of existingOrder.items) {
+            await this.warehouseService.setOrderStatus(
+              item.product.id,
+              item.quantity,
+              updateOrderDto.status
+            );
+          }
+        }
       }
 
       if (updateOrderDto.status === OrderStatus.Returned) {
-        if (existingOrder.status !== OrderStatus.Cancelled) {
+        if (existingOrder.status !== OrderStatus.Shipped) {
           throw new ForbiddenException('Cannot change status');
         }
         for (const item of existingOrder.items) {
